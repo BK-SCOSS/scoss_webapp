@@ -3,14 +3,13 @@ from sctokenizer.token import TokenType
 import hashlib
 
 class Similarity():
-	__name = None
+	name = None
 
 	def __init__(self):
 		pass
 
-	@staticmethod
-	def get_name():
-		return self.__name
+	def get_name(self):
+		return self.name
 
 	def get_language(self, source):
 		return source.lang
@@ -24,37 +23,6 @@ class Similarity():
 			if token.token_type == TokenType.OPERATOR :
 				new_tokens.append(token)
 		return new_tokens
-
-	def get_vecfrec(self, source):
-
-		tokens = self.get_tokens(source)
-		tokens = self.get_tokens_normalize(tokens)
-		vecfrec = {}
-		for token in tokens:
-			if token.token_value in vecfrec.keys():
-				vecfrec[token.token_value] += 1
-			else:
-				vecfrec[token.token_value] = 1
-		return vecfrec
-
-	def get_hash(self, source):
-		hashes = {}
-		tokens = self.get_tokens(source)
-		last = ['', '', '', '']
-		for token in tokens:
-			if token.token_type == TokenType.OPERATOR:
-				for i in range(len(last)-1):
-					last[i] = last[i+1]
-				last[-1] = token.token_value
-				item = ''
-				for i in range(len(last)):
-					item += last[i]
-				has = int(hashlib.sha256(item.encode('utf-8')).hexdigest(), 16) % 10**3
-				if has in hashes.keys():
-					hashes[has] += 1
-				else:
-					hashes[has] = 1
-		return hashes
                 
 	def get_size(self, vecfrec):
 		"""
@@ -68,12 +36,24 @@ class Similarity():
 	def get_similarity(self, source1, source2):
 		pass
 
-class OperatorOneSimilarity(Similarity):
+class OperatorFrequencySimilarity(Similarity):
 	"""
 		What does this similarity measure?
-		similarity 1
+		operator frequence
 	"""
-	__name = 'similarity_1'
+	name = 'similarity_1'
+	def get_vecfrec(self, source):
+
+		tokens = self.get_tokens(source)
+		tokens = self.get_tokens_normalize(tokens)
+		vecfrec = {}
+		for token in tokens:
+			if token.token_value in vecfrec.keys():
+				vecfrec[token.token_value] += 1
+			else:
+				vecfrec[token.token_value] = 1
+		return vecfrec
+
 	def get_similarity(self, source1, source2):
 		if self.get_language(source1) != self.get_language(source2):
 			return 0
@@ -91,12 +71,23 @@ class OperatorOneSimilarity(Similarity):
 		diff2 = len(vecfrec2) - taken
 		return 100*(1 - ((diff1 + diff2)/ (len(vecfrec1) + len(vecfrec2))))
 
-class OperatorTwoSimilarity(Similarity):
+class OperatorAppearanceSimilarity(Similarity):
 	"""
 		What does this similarity measure?
-		similarity 2
+		operator appearance
 	"""
-	__name = 'similarity_2'
+	name = 'similarity_2'
+	def get_vecfrec(self, source):
+		tokens = self.get_tokens(source)
+		tokens = self.get_tokens_normalize(tokens)
+		vecfrec = {}
+		for token in tokens:
+			if token.token_value in vecfrec.keys():
+				vecfrec[token.token_value] += 1
+			else:
+				vecfrec[token.token_value] = 1
+		return vecfrec
+
 	def get_similarity(self, source1, source2):
 		if self.get_language(source1) != self.get_language(source2):
 			return 0
@@ -120,7 +111,26 @@ class HashedOperatorSimilarity(Similarity):
 	"""
 		What does this similarity measure?
 	"""
-	__name = 'similarity_3'
+	name = 'similarity_3'
+	def get_hash(self, source):
+		hashes = {}
+		tokens = self.get_tokens(source)
+		last = ['', '', '', '']
+		for token in tokens:
+			if token.token_type == TokenType.OPERATOR:
+				for i in range(len(last)-1):
+					last[i] = last[i+1]
+				last[-1] = token.token_value
+				item = ''
+				for i in range(len(last)):
+					item += last[i]
+				has = int(hashlib.sha256(item.encode('utf-8')).hexdigest(), 16) % 10**3
+				if has in hashes.keys():
+					hashes[has] += 1
+				else:
+					hashes[has] = 1
+		return hashes
+
 	def get_similarity(self, source1, source2):
 		if self.get_language(source1) != self.get_language(source2):
 					return 0
@@ -140,7 +150,7 @@ class HashedOperatorSimilarity(Similarity):
 		return 100*(1-(diff/ (size1 + size2)))
 
 all_similarities = [
-	OperatorOneSimilarity(),
-	OperatorTwoSimilarity(),
+	OperatorFrequencySimilarity(),
+	OperatorAppearanceSimilarity(),
 	HashedOperatorSimilarity()
 ]
