@@ -133,7 +133,7 @@ class HashedOperatorSimilarity(Similarity):
 
 	def get_similarity(self, source1, source2):
 		if self.get_language(source1) != self.get_language(source2):
-					return 0
+			return 0
 		hashes1 = self.get_hash(source1)
 		hashes2 = self.get_hash(source2)
 		size1 = self.get_size(hashes1)
