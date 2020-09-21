@@ -1,258 +1,285 @@
 from __future__ import absolute_import
-from similarities import all_similarities
+
+from scoss.metrics import MetricList, Metric
 from sctokenizer import Source
+from jinja2 import Environment
+from collections import OrderedDict
+
 import os
 import glob
-from jinja2 import Environment
+import enum
+
+class ScossState(enum.Enum):
+    INIT = 0 
+    RUNNING = 1 
+    CLOSE = 3
+
 class Scoss():
-	def __init__(self, language, id_scoss=None, measures={'similarity_1': 0, 'similarity_2':0, 'similarity_3':0}):
-		self.id_scoss = id_scoss
-		self.id_file = 0
-		self.list_file = {} #save id file
-		self.list_source = [] # save source file
-		self.list_score_similarity = [] #save similarity between files
-		self.measures_similarity = []
-		self.copy_code = []
-		self.threshold = []
-		self.language = language
-		# if len(threshold) != len(measures) and len(threshold) < 3:
-		for mea in measures:
-			self.threshold.append(int(measures[mea]))
-			for simi in all_similarities:
-				if mea == simi.get_name():
-					self.measures_similarity.append(simi)
-	def get_idx_scoss(self):
-		return self.id_scoss
+    __id = 0
 
-	def check_file(self, filepath):
-		for file in self.list_file:
-			if self.list_file[file] == filepath:
-				return True
-		return False
+    def __init__(self, lang, used_metrics=None):
+        Scoss.__id= 1
+        self.id = Scoss.__id
 
-	def add_file(self, filepath):
-		if not self.check_file(filepath):
-			self.list_file[self.id_file] = filepath
-			self.list_source.append(Source.from_file(filepath, lang=self.language))
-			self.id_file += 1
-			if len(self.list_source) > 1:
-				self.update_similarity(self.list_source)
-		else:
-			position = -1
-			for index, value in enumerate(self.list_file.keys()):
-				if value == self.get_id_file(filepath):
-					position = index
-			if position != -1:
-				self.list_source[position] = Source.from_file(filepath, lang=self.language)
-				if len(self.list_source) > 1:
-					self.compute_similarity(self.list_source)
-	def add_list_file(self, dirpath):
-		for file in glob.glob(dirpath, recursive=True):
-			self.add_file(file)
+        self.__lang = lang
+        self.__state = ScossState.INIT
+        
+        self.__metric_list = MetricList(used_metrics)
+        self.__thresholds = OrderedDict()
+        for metric_name in self.__metric_list.get_metric_names():
+            self.__thresholds[metric_name] = 0.0
+        
+        self.__sources = OrderedDict()
+        self.__pending_pool = OrderedDict()
 
-	def add_zip(self, filepath):
-		pass
+        self.__similarity_matrix = dict()
+        self.__alignment_matrix = dict()
 
-	def compute_similarity(self, list_source):
-		self.list_score_similarity = []
-		self.copy_code = []
-		for i in range(1, len(list_source)):
-			simi = []
-			for j in range(0,i):
-				tem = []
-				check_score = 0
-				for k in range(len(self.measures_similarity)):
-					score = self.measures_similarity[k].get_similarity(list_source[i], list_source[j])
-					tem.append(score)
-					if score >= self.threshold[k]:
-						check_score += 1
-				if check_score == 3:
-					self.copy_code.append([i,j])
-				simi.append(tem)	
-			self.list_score_similarity.append(simi)
-			
-	def update_similarity(self, list_source):
-		simi = []
-		for i in range(len(list_source) -1):
-			tem = []
-			check_score = 0
-			score = 0
-			for k in range(len(self.measures_similarity)):
-				score = self.measures_similarity[k].get_similarity(list_source[-1], list_source[i])
-				tem.append(score)
-				if score >= self.threshold[k]:
-					check_score += 1
-			if check_score == 3:
-				self.copy_code.append([(len(list_source) -1),i])
-			simi.append(tem)
-		self.list_score_similarity.append(simi)
+    def set_metric_threshold(self, metric_name, threshold: float):
+        if metric_name not in self.__thresholds:
+            raise ValueError(f'metric_name:{metric_name} is not in metric_list')
+        self.__thresholds[metric_name] = threshold
 
-	def get_score(self):
-		list_copy = []
-		for i in range(len(self.copy_code)):
-			dic = {}
-			dic['file1'] = self.list_file[self.copy_code[i][0]]
-			dic['file2'] = self.list_file[self.copy_code[i][1]]
-			dic['score'] = self.list_score_similarity[(self.copy_code[i][0]) - 1][(self.copy_code[i][1])]
-			list_copy.append(dic)
+    def add_metric(self, metric, threshold: float=0.0, exist_ok=False):
+        if self.__state != ScossState.INIT:
+            raise ValueError('Cannot add metric after running')
 
-		return list_copy
-	def get_score_id(self, idx):
+        self.__metric_list.add_metric(metric, exist_ok=exist_ok)
+        if isinstance(metric, Metric):
+            metric_name = metric.get_name()
+        else:
+            metric_name = metric
+        self.__thresholds[metric_name] = threshold
 
-		list_score = []
-		if idx >= 1 and idx < self.id_file:
-			for i in self.list_score_similarity[idx-1]:
-				list_score.append(i)
-			for i in range(int(idx)+1,len(self.list_score_similarity)):
-				list_score.append(self.list_score_similarity[i][idx])
-		if idx == 0:
-			for i in range(0,len(self.list_score_similarity)):
-				list_score.append(self.list_score_similarity[i][idx])
-		return list_score
+    def add_source_str(self, source_str, mask):
+        if mask in self.__sources.keys() or mask in self.__pending_pool.keys():
+            raise ValueError(f'mask:{mask} is already exist')
+        src = Source.from_str(source_str, lang=self.__lang)
+        src.name = mask
+        self.__pending_pool[mask] = src 
 
-	def get_list_idx_file(self):
-		return self.list_file
+        if self.__state == ScossState.RUNNING:
+            self.run()
 
-	def get_id_file(self, filepath):
-		if self.check_file(filepath):
-			for id_file in self.list_file:
-				if self.list_file[id_file] == filepath:
-					return id_file
 
-	def saveWebPage(self, url):
-		HTML1 = """<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>Result</title>
-			<style>
-				table {
-				font-family: arial, sans-serif;
-				border-collapse: collapse;
-				}
-				
-				td, th {
-				border: 1px solid #dddddd;
-				text-align: left;
-				padding: 8px;
-				}
-				
-				tr:nth-child(even) {
-				background-color: #dddddd;
-				}
-				</style>
-		</head>
-		<body>
+    def update_source_str(self, source_str, mask):
+        src = Source.from_str(source_str, lang=self.__lang)
+        src.name = mask
+        self.__pending_pool[mask] = src
 
-		<h2>Result</h2>
+        if self.__state == ScossState.RUNNING:
+            self.run()
 
-		<table>
-			<tr>
-			<th>File1</th>
-			<th>File2</th>
-			<th>Score</th>
-			</tr>
-			<tr>
-			{%for res in result%}
-			<td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file1']}}</a></td>
-			<td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file2']}}</a></td>
-			<td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['score']}}</a></td>
-			</tr>
-			{%endfor%}
-		</table>
+    def add_file(self, file, mask=None):
+        if mask is None:
+            mask = file
+        if mask in self.__sources.keys() or mask in self.__pending_pool:
+            raise ValueError(f'mask:{mask} is already exist')
+        src = Source.from_file(file, lang=self.__lang)
+        src.name = mask
+        self.__pending_pool[mask] = src
 
-		</body>
-		</html>
-		"""
-		HTML2 = """
-		<!DOCTYPE html>
-		<html>
-		<body>
-		<h2>File</h2>
-		<table style="width:75%">
-		<tr>
-			<th>{{file1}}</th>
-			<th>{{file2}}</th> 
-		</tr>
-		<tr>
-			<td>{{data1}}</td>
-			<td>{{data2}}</td>
-		</tr>
-		</table>
-		</body>
-		</html>
-		"""
-		result = self.get_score()
-		index1 = -1
-		index2 = -1
-		index_save_file = 0
-		position_file = []
-		links = []
-		for res in result:
-			for index, value in enumerate(self.list_file.keys()):
-				if value == self.get_id_file(res['file1']):
-					index1 = index
-				if value == self.get_id_file(res['file2']):
-					index2 = index
-			position_file.append([index1, index2])
-		for pos in position_file:
-			
-			token_per_lines1 = {}
-			token_per_lines2 = {}
-			lines1 = []
-			lines2 = []
-			for token1 in self.list_source[pos[0]].tokenize():
-				if token1.position[0] in token_per_lines1.keys():
-					token_per_lines1[token1.position[0]].append(token1.token_value)
-				else:
-					token_per_lines1[token1.position[0]] = []
-					token_per_lines1[token1.position[0]].append(token1.token_value)
-			for token2 in self.list_source[pos[1]].tokenize():
-				if token2.position[0] in token_per_lines2.keys():
-					token_per_lines2[token2.position[0]].append(token2.token_value)
-				else:
-					token_per_lines2[token2.position[0]] = []
-					token_per_lines2[token2.position[0]].append(token2.token_value)
-			# print(token_per_lines1)
-			for line1 in token_per_lines1:
-				for line2 in token_per_lines2:
-					count = 0
-					for i in token_per_lines1[line1]:
-						for j in token_per_lines2[line2]:
-							if i == j:
-								count += 1
-					# print(count,len(token_per_lines1[line1]), len(token_per_lines2[line2]), line1, line2)
-					if count/len(token_per_lines1[line1]) > 0.75 and count/len(token_per_lines2[line2]) > 0.75:
-						lines1.append(line1-1)
-						lines2.append(line2-1)
-			with open(self.list_file[pos[0]], 'r') as file:
-				data1 = file.read().split('\n')
-	
-			with open(self.list_file[pos[1]], 'r') as file:
-				data2 = file.read().split('\n') 
-			for i in range(len(data1)):
-				data1[i] = data1[i].replace('<', '&lt').replace('>', '&gt')
-				if i in list(set(lines1)):
-					data1[i] = '<pre style="color: red">'+ str(i+1)+ '    '+ data1[i] + '</pre>'
-				else:
-					data1[i] = '<pre >'+ str(i+1)+ '	' + data1[i] + '</pre>'
-			for i in range(len(data2)):
-				data2[i] = data2[i].replace('<', '&lt').replace('>', '&gt')
-				if i in list(set(lines2)):
-					data2[i] =  '<pre style="color: red">'+  str(i+1)+ '	'+  data2[i] + '</pre>'
-				else:
-					data2[i] = '<pre >'+ str(i+1)+ '	'+ data2[i] + '</pre>'
-			
-			mess = Environment().from_string(HTML2).render(file1=self.list_file[pos[0]], file2=self.list_file[pos[1]], \
-				data1=' '.join(data1), data2=' '.join(data2))
-			index_save_file += 1
-			name_file = 'result_' + str(index_save_file) + '.html'
-			links.append(name_file)
+        if self.__state == ScossState.RUNNING:
+            self.run()
 
-			with open(os.path.join(url, name_file), 'w') as file:
-				file.write(mess)
+    def update_file(self, file, mask=None):
+        if mask is None:
+            mask = file
+        src = Source.from_file(file, lang=self.__lang)
+        src.name = mask
+        self.__pending_pool[mask] = src
 
-		page = Environment().from_string(HTML1).render(result=result, links=links)
-		with open(os.path.join(url, 'result.html'), 'w') as file:
-			file.write(page)
+        if self.__state == ScossState.RUNNING:
+            self.run()
+
+    def add_file_by_wildcard(self, dirpath, recursive=True):
+        for file in glob.glob(dirpath, recursive=recursive):
+            self.add_file(file)
+
+    def check_similarity(self, src):
+        """check_similarity.
+            Check similarity between src and current sources 
+
+        Args:
+            src:
+        """
+        ret = dict()
+        for other_mask, other in self.__sources.items():
+            scores = self.__metric_list.evaluate(src, other)
+            ret[other_mask] = scores
+
+        return ret
+
+    def align_source(self, src):
+        """align_source.
+
+        Args:
+            src:
+        """
+        ret = dict()
+        for other_mask, other in self.__sources.items():
+            alignments = self.__metric_list.align_source(src, other)
+            ret[other_mask] = alignments
+
+        return ret
+
+    def run(self):
+        """run.
+            compute similarity source from pending_pool vs solved sources
+        """
+        self.__state = ScossState.RUNNING
+        pending_pool_items = list(self.__pending_pool.items())
+        for name, src in pending_pool_items:
+            scores = self.check_similarity(src)
+            alignments = self.align_source(src)
+            self.__similarity_matrix[name] = scores
+            self.__alignment_matrix[name] = alignments
+            
+            for other_name, score in scores.items():
+                self.__similarity_matrix[other_name][name] = score
+
+            for other_name, alignment in alignments.items():
+                self.__alignment_matrix[other_name][name] = alignment
+
+            self.__sources[name] = src
+            self.__pending_pool.pop(name)
+
+    def get_similarity_matrix(self):
+        self.run()
+        return self.__similarity_matrix
+
+    def sort_matches(self, matches, by=None):
+        """sort_matches.
+
+        Args:
+            matches:
+            by: 'sum': sort by sum of all metrics
+                List[metric_name]: sort by order in this list
+        """
+        # TODO: Vien 
+        pass
+
+    def get_matches(self, or_thresholds=False, and_thresholds=False):
+        """get_similarity_scores.
+
+        Args:
+            or_thresholds: a match is detected if similarity score in any metrics is greater than threshold
+            and_thresholds: a match is detected if similarity score in all metrics is greater than threshold
+        """
+        if or_thresholds and and_thresholds:
+            raise ValueError('Cannot trim result by both OR and AND thresholds')
+        self.run()
+        match_dict = {}
+        for name, score_dict in self.__similarity_matrix.items():
+            for other_name, scores in score_dict:
+                key = hash(name) ^ hash(other_name)
+                match = {}
+                match['source1'] = name
+                match['source2'] = other_name
+                match['scores'] = scores
+                match_dict[key] = match
+
+        matches = match_dict.values()
+
+        if not or_thresholds and not and_thresholds:
+            return self.sort_matches(matches, by='sum')
+        elif or_thresholds:
+            # TODO: (Vien) implement trim matches.  
+            pass
+        elif and_thresholds:
+            # TODO: (Vien) implement this
+            pass
+
+    def save_matches_to_csv(self, or_thresholds=False, and_thresholds=False):
+        # TODO: (Vien) 
+        pass
+
+    def save_as_html(self, trimmed=True, output_dir=None):
+        HTML1 = ""
+        HTML2 = ""
+        with open('./assets/summary.html', mode='r') as f:
+            HTML1 = f.read()
+        with open('./assets/comparison.html', mode='r') as f:
+            HTML2 = f.read()
+
+        # TODO: Implement this
+        # result = self.get_score()
+        # index1 = -1
+        # index2 = -1
+        # index_save_file = 0
+        # position_file = []
+        # links = []
+        # for res in result:
+        #     for index, value in enumerate(self.list_file.keys()):
+        #         if value == self.get_id_file(res['file1']):
+        #             index1 = index
+        #         if value == self.get_id_file(res['file2']):
+        #             index2 = index
+        #     position_file.append([index1, index2])
+        # for pos in position_file:
+
+        #     token_per_lines1 = {}
+        #     token_per_lines2 = {}
+        #     lines1 = []
+        #     lines2 = []
+        #     for token1 in self.list_source[pos[0]].tokenize():
+        #         if token1.position[0] in token_per_lines1.keys():
+        #             token_per_lines1[token1.position[0]].append(
+        #                 token1.token_value)
+        #         else:
+        #             token_per_lines1[token1.position[0]] = []
+        #             token_per_lines1[token1.position[0]].append(
+        #                 token1.token_value)
+        #     for token2 in self.list_source[pos[1]].tokenize():
+        #         if token2.position[0] in token_per_lines2.keys():
+        #             token_per_lines2[token2.position[0]].append(
+        #                 token2.token_value)
+        #         else:
+        #             token_per_lines2[token2.position[0]] = []
+        #             token_per_lines2[token2.position[0]].append(
+        #                 token2.token_value)
+        #     # print(token_per_lines1)
+        #     for line1 in token_per_lines1:
+        #         for line2 in token_per_lines2:
+        #             count = 0
+        #             for i in token_per_lines1[line1]:
+        #                 for j in token_per_lines2[line2]:
+        #                     if i == j:
+        #                         count += 1
+        #             # print(count,len(token_per_lines1[line1]), len(token_per_lines2[line2]), line1, line2)
+        #             if count/len(token_per_lines1[line1]) > 0.75 and count/len(token_per_lines2[line2]) > 0.75:
+        #                 lines1.append(line1-1)
+        #                 lines2.append(line2-1)
+        #     with open(self.list_file[pos[0]], 'r') as file:
+        #         data1 = file.read().split('\n')
+
+        #     with open(self.list_file[pos[1]], 'r') as file:
+        #         data2 = file.read().split('\n')
+        #     for i in range(len(data1)):
+        #         data1[i] = data1[i].replace('<', '&lt').replace('>', '&gt')
+        #         if i in list(set(lines1)):
+        #             data1[i] = '<pre style="color: red">' + \
+        #                 str(i+1) + '    ' + data1[i] + '</pre>'
+        #         else:
+        #             data1[i] = '<pre >' + str(i+1) + '	' + data1[i] + '</pre>'
+        #     for i in range(len(data2)):
+        #         data2[i] = data2[i].replace('<', '&lt').replace('>', '&gt')
+        #         if i in list(set(lines2)):
+        #             data2[i] = '<pre style="color: red">' + \
+        #                 str(i+1) + '	' + data2[i] + '</pre>'
+        #         else:
+        #             data2[i] = '<pre >' + str(i+1) + '	' + data2[i] + '</pre>'
+
+        #     mess = Environment().from_string(HTML2).render(file1=self.list_file[pos[0]], file2=self.list_file[pos[1]],
+        #                                                    data1=' '.join(data1), data2=' '.join(data2))
+        #     index_save_file += 1
+        #     name_file = 'result_' + str(index_save_file) + '.html'
+        #     links.append(name_file)
+
+        #     with open(os.path.join(url, name_file), 'w') as file:
+        #         file.write(mess)
+
+        # page = Environment().from_string(HTML1).render(result=result, links=links)
+        # with open(os.path.join(url, 'result.html'), 'w') as file:
+        #     file.write(page)
+

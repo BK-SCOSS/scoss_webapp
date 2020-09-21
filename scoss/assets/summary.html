@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <style>
+        table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        }
+        
+        td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+        background-color: #dddddd;
+        }
+        </style>
+</head>
+<body>
+
+<h2>Result</h2>
+
+<table>
+    <tr>
+    <th>File1</th>
+    <th>File2</th>
+    <th>Score</th>
+    </tr>
+    <tr>
+    {%for res in result%}
+    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file1']}}</a></td>
+    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file2']}}</a></td>
+    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['score']}}</a></td>
+    </tr>
+    {%endfor%}
+</table>
+
+</body>
+</html>
