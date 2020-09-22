@@ -288,16 +288,19 @@ class Scoss():
                     match['scores'] = scores
                     match_dict[key] = match
             matches_alignment = list(match_dict.values())
-            # print(matches_alignment)
+
             links = []
             index_file = 0
+            # print(len(matches_alignment))
             for match in matches_alignment:
+               
                 dic = {}
                 dic['source1'] = match['source1']
                 dic['source2'] = match['source2']
                 dic['scores'] = {}
-                for metric, score in scores.items():
-                   
+                # print(match)
+                for metric, score in match['scores'].items():
+                    # print(score)
                     with open(match['source1'], 'r') as f:
                         data1 = f.read().split('\n')
                     with open(match['source2'], 'r') as f:
@@ -307,15 +310,23 @@ class Scoss():
                     html1 = ''
                     html2 = ''
                     for line in score:
-                        if line[0] == -1:
-                            htmt1 += '<br>'
-                        elif line[1] == -1:
-                            htmt2 += '<br>'
-                        else:
+                
+                        if line[0] == -1 :
+                            html1 += '<br>'
+                            temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                            html2 += temp2
+                        elif line[1] == -1 :
+                            html2 += '<br>'
+                            temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                            html1 += temp1
+                        elif line[0] != -1 and line[0] != -1:
+                            
+                            index1 = line[0]
+                            index2 = line[1]
                             if line[2] >=0.25 and line[2] <0.75:
-                                temp1 = '<pre style="color: orange">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                                temp1 = '<pre style="color: #ffb600">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                 html1 += temp1
-                                temp2 = '<pre style="color: orange">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                                temp2 = '<pre style="color: #ffb600">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                 html2 += temp2
                             elif line[2] >= 0.75:
                                 temp1 = '<pre style="color: red">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
@@ -327,6 +338,7 @@ class Scoss():
                                 html1 += temp1
                                 temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                 html2 += temp2
+                    
                     mess = Environment().from_string(HTML2).render(file1=match['source1'], file2=match['source2'], \
                                     data1=html1, data2=html2)
                     name_file = 'comparison_' + str(index_file) +'.html'

@@ -10,7 +10,7 @@ int main()
 {
     
     int n;
-    string a = "sfdadf\"\"asldkfasd";
+    string a = "sfdadfasldkfasd";
     char b1e_n1='1';
     a<<=1;
     a = 1 > 2 ? 1 : 2;
