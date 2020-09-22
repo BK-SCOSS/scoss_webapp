@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from scoss.metrics import MetricList, Metric
+from scoss.metrics import MetricList, Metric, all_metrics
 from sctokenizer import Source
 from jinja2 import Environment
 from collections import OrderedDict
@@ -18,13 +18,23 @@ class Scoss():
     __id = 0
 
     def __init__(self, lang, used_metrics=None):
+        """__init__.
+
+        Args:
+            lang:
+            used_metrics:
+        """
         Scoss.__id= 1
         self.id = Scoss.__id
 
         self.__lang = lang
         self.__state = ScossState.INIT
         
-        self.__metric_list = MetricList(used_metrics)
+        if used_metrics is not None:
+            self.__metric_list = MetricList(used_metrics)
+        else:
+            self.__metric_list = None
+
         self.__thresholds = OrderedDict()
         for metric_name in self.__metric_list.get_metric_names():
             self.__thresholds[metric_name] = 0.0
@@ -128,6 +138,10 @@ class Scoss():
             compute similarity source from pending_pool vs solved sources
         """
         self.__state = ScossState.RUNNING
+
+        if self.__metric_list is None:
+            self.__metric_list = MetricList(all_metrics)
+
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
             scores = self.check_similarity(src)
@@ -190,11 +204,27 @@ class Scoss():
             # TODO: (Vien) implement this
             pass
 
-    def save_matches_to_csv(self, or_thresholds=False, and_thresholds=False):
+    def save_matches_to_csv(self, filepath, or_thresholds=False, and_thresholds=False):
+        """save_matches_to_csv.
+
+        Args:
+            filepath: save to filepath
+            or_thresholds: see get_matches, use get_matches 
+            and_thresholds:
+        """
         # TODO: (Vien) 
         pass
 
-    def save_as_html(self, trimmed=True, output_dir=None):
+    def save_as_html(self, output_dir=None, or_thresholds=False, and_thresholds=True):
+        """save_as_html.
+            use self.__alignment_matrix to align 2 source, 
+
+        Args:
+            trimmed:
+            output_dir: save all html files in output_dir, if output_dir=None -> donot save
+        Return:
+            ret: A dictionary of html files. example: {'summary.html': HTML1, 'match1.html': HTML2, ....}
+        """
         HTML1 = ""
         HTML2 = ""
         with open('./assets/summary.html', mode='r') as f:

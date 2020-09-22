@@ -8,6 +8,6 @@ void main()
     scanf("%d", &n);
     while(i++<n)
         s=s+i;
-    printf("Tong la: %d\n", s);
+    printf("Tong la: %d\n", s)    ;
     getch();
 }

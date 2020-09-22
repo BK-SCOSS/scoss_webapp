@@ -1,19 +1,22 @@
 from __future__ import absolute_import
 
 from scoss.metrics.operator_based_metric import *
+from scoss.metrics.token_based_metric import *
 
 all_metrics = [
     CountOperator(),
     SetOperator(),
-    HashOperator()
+    HashOperator(),
+    TokenBasedMetric()
 ]
 
 
 class MetricList():
     def __init__(self, metric_list=None):
         self.metric_list = []
-        for metric in metric_list:
-            self.add_metric(metric)
+        if metric_list is not None:
+            for metric in metric_list:
+                self.add_metric(metric)
 
     def get_metric_names(self):
         ret = []
