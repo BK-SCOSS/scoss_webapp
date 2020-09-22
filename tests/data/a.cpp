@@ -6,8 +6,6 @@ int a = 1;
 # define PI 3.1415
 
 using namespace std;
-
-
 int main()
 {
     

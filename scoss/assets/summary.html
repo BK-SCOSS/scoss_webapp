@@ -27,15 +27,17 @@
 
 <table>
     <tr>
-    <th>File1</th>
-    <th>File2</th>
-    <th>Score</th>
+        {%for head in heads%}
+        <th>{{head}}</th>
+        {%endfor%}
     </tr>
     <tr>
-    {%for res in result%}
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file1']}}</a></td>
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file2']}}</a></td>
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['score']}}</a></td>
+    {%for link in links%}
+    <td>{{link['source1']}}</a></td>
+    <td>{{link['source2']}}</a></td>
+    {%for metric in link['scores'] %}
+    <td><a href="{{link['scores'][metric][0]}}"  target="_blank" >{{link['scores'][metric][1]}}</a></td>
+    {%endfor%}
     </tr>
     {%endfor%}
 </table>
