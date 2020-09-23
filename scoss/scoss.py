@@ -288,7 +288,7 @@ class Scoss():
 
             links = []
             index_file = 0
-            for match in matches_alignment[0:1]:
+            for match in matches_alignment:
                 # print(match)
                 dic = {}
                 dic['source1'] = match['source1']
