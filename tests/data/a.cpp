@@ -6,13 +6,11 @@ int a = 1;
 # define PI 3.1415
 
 using namespace std;
-
-
 int main()
 {
     
     int n;
-    string a = "sfdadf\"\"asldkfasd";
+    string a = "sfdadfasldkfasd";
     char b1e_n1='1';
     a<<=1;
     a = 1 > 2 ? 1 : 2;

@@ -2,23 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
     <title>Result</title>
     <style>
         table {
         font-family: arial, sans-serif;
         border-collapse: collapse;
+        text-align: center;
         }
-        
+
+        a {
+            text-decoration: none;
+        }
         td, th {
+        min-width: 150px;
         border: 1px solid #dddddd;
-        text-align: left;
         padding: 8px;
         }
         
-        tr:nth-child(even) {
-        background-color: #dddddd;
-        }
+
         </style>
 </head>
 <body>
@@ -27,15 +29,17 @@
 
 <table>
     <tr>
-    <th>File1</th>
-    <th>File2</th>
-    <th>Score</th>
+        {%for head in heads%}
+        <th>{{head}}</th>
+        {%endfor%}
     </tr>
     <tr>
-    {%for res in result%}
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file1']}}</a></td>
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['file2']}}</a></td>
-    <td><a href="{{links[loop.index-1]}}"  target="_blank" >{{res['score']}}</a></td>
+    {%for link in links%}
+    <td>{{link['source1']}}</a></td>
+    <td>{{link['source2']}}</a></td>
+    {%for metric in link['scores'] %}
+    <td><a href="{{link['scores'][metric][0]}}"  target="_blank" >{{link['scores'][metric][1]}}</a></td>
+    {%endfor%}
     </tr>
     {%endfor%}
 </table>

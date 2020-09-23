@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 
 from scoss.metrics import MetricList, Metric, all_metrics
+from scoss.metrics.token_based_metric import *
 from sctokenizer import Source
 from jinja2 import Environment
 from collections import OrderedDict
-
+import pandas as pd
 import os
 import glob
 import enum
-
+import time
 class ScossState(enum.Enum):
     INIT = 0 
     RUNNING = 1 
@@ -29,16 +30,13 @@ class Scoss():
 
         self.__lang = lang
         self.__state = ScossState.INIT
-        
-        if used_metrics is not None:
-            self.__metric_list = MetricList(used_metrics)
-        else:
-            self.__metric_list = None
-
         self.__thresholds = OrderedDict()
+       
+        self.__metric_list = MetricList(used_metrics)
         for metric_name in self.__metric_list.get_metric_names():
             self.__thresholds[metric_name] = 0.0
-        
+    
+
         self.__sources = OrderedDict()
         self.__pending_pool = OrderedDict()
 
@@ -136,12 +134,12 @@ class Scoss():
     def run(self):
         """run.
             compute similarity source from pending_pool vs solved sources
+            
         """
         self.__state = ScossState.RUNNING
 
-        if self.__metric_list is None:
-            self.__metric_list = MetricList(all_metrics)
-
+        # if self.__metric_list is None:
+        #     self.__metric_list = MetricList(all_metrics)
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
             scores = self.check_similarity(src)
@@ -151,13 +149,14 @@ class Scoss():
             
             for other_name, score in scores.items():
                 self.__similarity_matrix[other_name][name] = score
-
+        
             for other_name, alignment in alignments.items():
                 self.__alignment_matrix[other_name][name] = alignment
 
             self.__sources[name] = src
             self.__pending_pool.pop(name)
-
+        # print(self.__similarity_matrix)
+        # print(self.__alignment_matrix)
     def get_similarity_matrix(self):
         self.run()
         return self.__similarity_matrix
@@ -170,9 +169,16 @@ class Scoss():
             by: 'sum': sort by sum of all metrics
                 List[metric_name]: sort by order in this list
         """
-        # TODO: Vien 
-        pass
+        matches = list(matches)
+        
+        if by == 'sum' or by == None:
+            matches.sort(reverse=True, key=lambda match:  sum(match['scores'].values()))
+            return matches
+        else:
+            matches.sort(reverse=True, key=lambda match:  match['scores'][by])
+            return matches
 
+       
     def get_matches(self, or_thresholds=False, and_thresholds=False):
         """get_similarity_scores.
 
@@ -185,7 +191,7 @@ class Scoss():
         self.run()
         match_dict = {}
         for name, score_dict in self.__similarity_matrix.items():
-            for other_name, scores in score_dict:
+            for other_name, scores in score_dict.items():
                 key = hash(name) ^ hash(other_name)
                 match = {}
                 match['source1'] = name
@@ -193,27 +199,53 @@ class Scoss():
                 match['scores'] = scores
                 match_dict[key] = match
 
-        matches = match_dict.values()
-
+        matches = list(match_dict.values())
+      
         if not or_thresholds and not and_thresholds:
             return self.sort_matches(matches, by='sum')
         elif or_thresholds:
-            # TODO: (Vien) implement trim matches.  
-            pass
+            index = 0
+            for i in range(len(matches)):
+                for metric, score in matches[i]['scores'].items():
+                    if score > self.__thresholds[metric]:
+                        matches[index] = matches[i] 
+                        index += 1
+                        break
+            return self.sort_matches(matches[:index], by='sum')
         elif and_thresholds:
-            # TODO: (Vien) implement this
-            pass
+            index = 0
+            for i in range(len(matches)):
+                check = True
+                for metric, score in matches[i]['scores'].items():
+                    if score < self.__thresholds[metric]:
+                        check = False
+                if check :
+                    matches[index] = matches[i] 
+                    index += 1
+            
+            return self.sort_matches(matches[:index], by='sum')
+                  
+        
 
     def save_matches_to_csv(self, filepath, or_thresholds=False, and_thresholds=False):
         """save_matches_to_csv.
-
         Args:
             filepath: save to filepath
             or_thresholds: see get_matches, use get_matches 
             and_thresholds:
         """
-        # TODO: (Vien) 
-        pass
+        matches = self.get_matches(or_thresholds, and_thresholds)
+        new_matches = []
+        for match in matches:
+            dic = {}
+            dic['source1'] = match['source1']
+            dic['source2'] = match['source2']
+            for metric, score in match['scores'].items():
+                dic[metric] = score
+            new_matches.append(dic)
+        df_data = pd.DataFrame.from_dict(new_matches)
+        name_file = 'result_' +str(int(time.time())) +'.csv'
+        df_data.to_csv(os.path.join(filepath, name_file))
 
     def save_as_html(self, output_dir=None, or_thresholds=False, and_thresholds=True):
         """save_as_html.
@@ -227,89 +259,112 @@ class Scoss():
         """
         HTML1 = ""
         HTML2 = ""
-        with open('./assets/summary.html', mode='r') as f:
+        with open('./scoss/assets/summary.html', mode='r') as f:
             HTML1 = f.read()
-        with open('./assets/comparison.html', mode='r') as f:
+        with open('./scoss/assets/comparison.html', mode='r') as f:
             HTML2 = f.read()
 
-        # TODO: Implement this
-        # result = self.get_score()
-        # index1 = -1
-        # index2 = -1
-        # index_save_file = 0
-        # position_file = []
-        # links = []
-        # for res in result:
-        #     for index, value in enumerate(self.list_file.keys()):
-        #         if value == self.get_id_file(res['file1']):
-        #             index1 = index
-        #         if value == self.get_id_file(res['file2']):
-        #             index2 = index
-        #     position_file.append([index1, index2])
-        # for pos in position_file:
+        matches = self.get_matches(or_thresholds, and_thresholds)
+        new_matches = []
+        for match in matches:
+            dic = {}
+            dic['source1'] = match['source1']
+            dic['source2'] = match['source2']
+            for metric, score in match['scores'].items():
+                dic[metric] = score
+            new_matches.append(dic)
+        if len(new_matches) != 0:
+            heads = new_matches[0].keys()
+            match_dict = {}
+            for name, score_dict in self.__alignment_matrix.items():
+                for other_name, scores in score_dict.items():
+                    key = hash(name) ^ hash(other_name)
+                    match = {}
+                    match['source1'] = name
+                    match['source2'] = other_name
+                    match['scores'] = scores
+                    match_dict[key] = match
+            matches_alignment = list(match_dict.values())
 
-        #     token_per_lines1 = {}
-        #     token_per_lines2 = {}
-        #     lines1 = []
-        #     lines2 = []
-        #     for token1 in self.list_source[pos[0]].tokenize():
-        #         if token1.position[0] in token_per_lines1.keys():
-        #             token_per_lines1[token1.position[0]].append(
-        #                 token1.token_value)
-        #         else:
-        #             token_per_lines1[token1.position[0]] = []
-        #             token_per_lines1[token1.position[0]].append(
-        #                 token1.token_value)
-        #     for token2 in self.list_source[pos[1]].tokenize():
-        #         if token2.position[0] in token_per_lines2.keys():
-        #             token_per_lines2[token2.position[0]].append(
-        #                 token2.token_value)
-        #         else:
-        #             token_per_lines2[token2.position[0]] = []
-        #             token_per_lines2[token2.position[0]].append(
-        #                 token2.token_value)
-        #     # print(token_per_lines1)
-        #     for line1 in token_per_lines1:
-        #         for line2 in token_per_lines2:
-        #             count = 0
-        #             for i in token_per_lines1[line1]:
-        #                 for j in token_per_lines2[line2]:
-        #                     if i == j:
-        #                         count += 1
-        #             # print(count,len(token_per_lines1[line1]), len(token_per_lines2[line2]), line1, line2)
-        #             if count/len(token_per_lines1[line1]) > 0.75 and count/len(token_per_lines2[line2]) > 0.75:
-        #                 lines1.append(line1-1)
-        #                 lines2.append(line2-1)
-        #     with open(self.list_file[pos[0]], 'r') as file:
-        #         data1 = file.read().split('\n')
-
-        #     with open(self.list_file[pos[1]], 'r') as file:
-        #         data2 = file.read().split('\n')
-        #     for i in range(len(data1)):
-        #         data1[i] = data1[i].replace('<', '&lt').replace('>', '&gt')
-        #         if i in list(set(lines1)):
-        #             data1[i] = '<pre style="color: red">' + \
-        #                 str(i+1) + '    ' + data1[i] + '</pre>'
-        #         else:
-        #             data1[i] = '<pre >' + str(i+1) + '	' + data1[i] + '</pre>'
-        #     for i in range(len(data2)):
-        #         data2[i] = data2[i].replace('<', '&lt').replace('>', '&gt')
-        #         if i in list(set(lines2)):
-        #             data2[i] = '<pre style="color: red">' + \
-        #                 str(i+1) + '	' + data2[i] + '</pre>'
-        #         else:
-        #             data2[i] = '<pre >' + str(i+1) + '	' + data2[i] + '</pre>'
-
-        #     mess = Environment().from_string(HTML2).render(file1=self.list_file[pos[0]], file2=self.list_file[pos[1]],
-        #                                                    data1=' '.join(data1), data2=' '.join(data2))
-        #     index_save_file += 1
-        #     name_file = 'result_' + str(index_save_file) + '.html'
-        #     links.append(name_file)
-
-        #     with open(os.path.join(url, name_file), 'w') as file:
-        #         file.write(mess)
-
-        # page = Environment().from_string(HTML1).render(result=result, links=links)
-        # with open(os.path.join(url, 'result.html'), 'w') as file:
-        #     file.write(page)
+            links = []
+            index_file = 0
+            for match in matches_alignment:
+                # print(match)
+                dic = {}
+                dic['source1'] = match['source1']
+                dic['source2'] = match['source2']
+                dic['scores'] = {}
+                for metric, score in match['scores'].items():
+                    src1 = self.__sources[dic['source1']]
+                    data1 = []
+                    for r in all_metrics[-1].compact_line(src1.tokenize()):
+                        row = []
+                        for c in r:
+                            row.append(c.token_value)
+                        data1.append(' '.join(row))
+                    src2 = self.__sources[dic['source2']]
+                    data2 = []
+                    for r in all_metrics[-1].compact_line(src2.tokenize()):
+                        row = []
+                        for c in r:
+                            row.append(c.token_value)
+                        data2.append(' '.join(row))
+                    # with open(match['source1'], 'r') as f:
+                    #     data1 = f.read().split('\n')
+                    # with open(match['source2'], 'r') as f:
+                    #     data2 = f.read().split('\n')
+                    data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1]
+                    data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2]
+                    html1 = ''
+                    html2 = ''
+                    for line in score:
+                
+                        if line[0] == -1 :
+                           
+                            html1 += '<pre >  </pre>'
+                            temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                            html2 += temp2
+                        elif line[1] == -1 :
+                            html2 += '<pre >  </pre>'
+                            temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                            html1 += temp1
+                        elif line[0] != -1 and line[0] != -1:
+                            
+                            index1 = line[0]
+                            index2 = line[1]
+                            if line[2] >=0.25 and line[2] <0.75:
+                                temp1 = '<pre style="color: #ffb600">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                                html1 += temp1
+                                temp2 = '<pre style="color: #ffb600">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                                html2 += temp2
+                            elif line[2] >= 0.75:
+                                temp1 = '<pre style="color: red">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                                html1 += temp1
+                                temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                                html2 += temp2
+                            else:
+                                temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+                                html1 += temp1
+                                temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+                                html2 += temp2
+                    name_file = 'comparison_' + str(index_file) +'.html'
+                    index_file += 1
+                    for new_match in new_matches:
+                        if new_match['source1'] == match['source1'] and \
+                            new_match['source2'] == match['source2'] :
+                            C = int(new_match[metric]*255)
+                            R = C
+                            G = 0
+                            B = 0;
+                            span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(new_match[metric]*100, '.2f')) +'%</span>'
+                            dic['scores'][metric] = [name_file, span]
+                    mess = Environment().from_string(HTML2).render(file1=match['source1'], file2=match['source2'], \
+                                    metric=metric, score=span, \
+                                    data1=html1, data2=html2)
+                    with open(os.path.join(output_dir, name_file), 'w') as file:
+                        file.write(mess)
+                links.append(dic)
+        page = Environment().from_string(HTML1).render(heads=heads, links=links)
+        with open(os.path.join(output_dir, 'summary.html'), 'w') as file:
+            file.write(page)
 
