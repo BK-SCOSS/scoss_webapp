@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from scoss.metrics import MetricList, Metric, all_metrics
+from scoss.metrics.token_based_metric import *
 from sctokenizer import Source
 from jinja2 import Environment
 from collections import OrderedDict
@@ -269,15 +270,11 @@ class Scoss():
             dic = {}
             dic['source1'] = match['source1']
             dic['source2'] = match['source2']
-            
             for metric, score in match['scores'].items():
                 dic[metric] = score
             new_matches.append(dic)
-        # print(new_matches)
         if len(new_matches) != 0:
             heads = new_matches[0].keys()
-            # print(heads)
-            # print(self.__alignment_matrix)
             match_dict = {}
             for name, score_dict in self.__alignment_matrix.items():
                 for other_name, scores in score_dict.items():
@@ -291,20 +288,31 @@ class Scoss():
 
             links = []
             index_file = 0
-            # print(len(matches_alignment))
-            for match in matches_alignment:
-               
+            for match in matches_alignment[0:1]:
+                # print(match)
                 dic = {}
                 dic['source1'] = match['source1']
                 dic['source2'] = match['source2']
                 dic['scores'] = {}
-                # print(match)
                 for metric, score in match['scores'].items():
-                    # print(score)
-                    with open(match['source1'], 'r') as f:
-                        data1 = f.read().split('\n')
-                    with open(match['source2'], 'r') as f:
-                        data2 = f.read().split('\n')
+                    src1 = self.__sources[dic['source1']]
+                    data1 = []
+                    for r in all_metrics[-1].compact_line(src1.tokenize()):
+                        row = []
+                        for c in r:
+                            row.append(c.token_value)
+                        data1.append(' '.join(row))
+                    src2 = self.__sources[dic['source2']]
+                    data2 = []
+                    for r in all_metrics[-1].compact_line(src2.tokenize()):
+                        row = []
+                        for c in r:
+                            row.append(c.token_value)
+                        data2.append(' '.join(row))
+                    # with open(match['source1'], 'r') as f:
+                    #     data1 = f.read().split('\n')
+                    # with open(match['source2'], 'r') as f:
+                    #     data2 = f.read().split('\n')
                     data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1]
                     data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2]
                     html1 = ''
@@ -312,11 +320,12 @@ class Scoss():
                     for line in score:
                 
                         if line[0] == -1 :
-                            html1 += '<br>'
+                           
+                            html1 += '<pre >  </pre>'
                             temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                             html2 += temp2
                         elif line[1] == -1 :
-                            html2 += '<br>'
+                            html2 += '<pre >  </pre>'
                             temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                             html1 += temp1
                         elif line[0] != -1 and line[0] != -1:
@@ -338,16 +347,20 @@ class Scoss():
                                 html1 += temp1
                                 temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                 html2 += temp2
-                    
-                    mess = Environment().from_string(HTML2).render(file1=match['source1'], file2=match['source2'], \
-                                    data1=html1, data2=html2)
                     name_file = 'comparison_' + str(index_file) +'.html'
                     index_file += 1
                     for new_match in new_matches:
                         if new_match['source1'] == match['source1'] and \
                             new_match['source2'] == match['source2'] :
-                            dic['scores'][metric] = [name_file, new_match[metric]]
-                    
+                            C = int(new_match[metric]*255)
+                            R = C
+                            G = 0
+                            B = 0;
+                            span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(new_match[metric]*100, '.2f')) +'%</span>'
+                            dic['scores'][metric] = [name_file, span]
+                    mess = Environment().from_string(HTML2).render(file1=match['source1'], file2=match['source2'], \
+                                    metric=metric, score=span, \
+                                    data1=html1, data2=html2)
                     with open(os.path.join(output_dir, name_file), 'w') as file:
                         file.write(mess)
                 links.append(dic)

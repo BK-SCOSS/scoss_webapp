@@ -50,9 +50,9 @@ def test_scoss_save_html():
     sc = Scoss(lang='cpp')
     sc.add_metric('count_operator')
     sc.add_metric('set_operator')
-    sc.add_file('./tests/data/a.cpp')
-    sc.add_file('./tests/data/b.cpp')
-    sc.add_file('./tests/data/c.cpp')
+    sc.add_file('./tests/data/a.cpp', mask='Thai')
+    sc.add_file('./tests/data/b.cpp', mask='Vien')
+    sc.add_file('./tests/data/c.cpp', mask='Ngoc')
     sc.run()
     sc.save_as_html('./tests/result/')
 

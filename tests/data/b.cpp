@@ -5,8 +5,10 @@
 #include <conio.h>
 
 
+
 void main()
 {
+    
     int i=0, s=0,n;
     printf("Nhap vao so n:");
     scanf("%d", &n);
