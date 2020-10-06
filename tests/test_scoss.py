@@ -56,6 +56,7 @@ def test_scoss_save_html():
     sc.run()
     sc.save_as_html('./tests/result/')
     print(sc.get_matches(or_thresholds=True))
+    print(sc.get_similarity_matrix())
 
 
 if __name__ == '__main__':

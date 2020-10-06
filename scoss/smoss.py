@@ -1,6 +1,9 @@
 import os
 import glob
+import enum
 import mosspy 
+import time
+import pandas as pd
 from collections import OrderedDict
 from bs4 import BeautifulSoup
 from jinja2 import Environment
@@ -8,6 +11,11 @@ try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
+
+class SMossState(enum.Enum):
+    INIT = 0 
+    RUNNING = 1 
+    CLOSE = 3
 
 class SMoss():
     __id = 0
@@ -21,43 +29,60 @@ class SMoss():
         if lang == 'cpp':
             lang = 'cc'
         self.__lang = lang
+        self.__state = SMossState.INIT
         self.__threshold = 0
         self.__pending_pool = OrderedDict()
 
         self.__matches = []
-
-    def get_matches(self):
-        matches = []
-        if not self.__matches:
-            print('matches list is empty! You should execute run function first!')
-        else:
-            for match in self.__matches:
-                copied_match = match.copy()
-                if 'link' in copied_match:
-                    del copied_match['link']
-                matches.append(copied_match)
-        return matches
+        self.__similarity_matrix = dict()
 
     def set_threshold(self, threshold: float):
         self.__threshold = threshold
     
     def add_file(self, file, mask=None):
-        if mask is None:
-            mask = file
-        if mask in self.__pending_pool.keys():
-            raise ValueError(f'mask:{mask} is already exist')
-        self.__pending_pool[mask] = file
-    
+        if self.__state != SMossState.CLOSE:
+            if mask is None:
+                mask = file
+            if mask in self.__pending_pool.keys():
+                raise ValueError(f'mask:{mask} is already exist')
+            self.__pending_pool[mask] = file
+        else:
+            raise ValueError('Cannot add file after running')
+
     def update_file(self, file, mask=None):
-        if mask is None:
-            mask = file
-        self.__pending_pool[mask] = file
+        if self.__state != SMossState.CLOSE:
+            if mask is None:
+                mask = file
+            self.__pending_pool[mask] = file
+        else:
+            raise ValueError('Cannot update file after running')
 
     def add_file_by_wildcard(self, dirpath, recursive=True):
-        for file in glob.glob(dirpath, recursive=recursive):
-            self.add_file(file)
+        if self.__state != SMossState.CLOSE:
+            for file in glob.glob(dirpath, recursive=recursive):
+                self.add_file(file)
+        else:
+            raise ValueError('Cannot add file after running')
+
+    def get_matches(self):
+        if self.__state == SMossState.INIT:
+            self.run()
+        matches = []
+        for match in self.__matches:
+            copied_match = match.copy()
+            if 'link' in copied_match:
+                del copied_match['link']
+            matches.append(copied_match)
+        return matches
+
+    def get_similarity_matrix(self):
+        if self.__state == SMossState.INIT:
+            self.run()
+        return self.__similarity_matrix
     
-    def save_matches_to_csv(self, filepath, or_thresholds=False, and_thresholds=False):
+    def save_matches_to_csv(self, filepath):
+        if self.__state == SMossState.INIT:
+            self.run()
         new_matches = []
         for match in self.__matches:
             dic = {}
@@ -83,14 +108,34 @@ class SMoss():
             if score < self.__threshold:
                 i += 3
                 continue
-            a_match = {}
-            a_match['source1'] = tds[i].contents[0].contents[0].split()[0]
-            a_match['source2'] = tds[i+1].contents[0].contents[0].split()[0]
             a_score = {'moss_score': score}
+            src1 = tds[i].contents[0].contents[0].split()[0]
+            src2 = tds[i+1].contents[0].contents[0].split()[0]
+
+            # Construct matches
+            a_match = {}
+            a_match['source1'] = src1
+            a_match['source2'] = src2
             a_match['scores'] = a_score
             a_match['link'] = tds[0].contents[0].attrs['href']
             self.__matches.append(a_match)
+
+            #Construct similarity_matrix
+            self.__similarity_matrix[src1] = {src2:a_score}
+            self.__similarity_matrix[src2] = {src1:a_score}
+            
             i += 3
+
+    def run(self):
+        if self.__state != SMossState.CLOSE:
+            m = mosspy.Moss(self.__userid, self.__lang)
+            for mask, file in self.__pending_pool.items():
+                m.addFile(file, mask)
+            url = m.send()
+            self.parse_html_table(url)
+            self.__state = SMossState.CLOSE
+        else:
+            raise ValueError("Can only execute run function once.")
 
     def process_url(self, url, file_name, path):
         def save_html(url, file_name):
@@ -109,6 +154,8 @@ class SMoss():
             save_html(base_url + '/' + file_name, file_name)
 
     def save_as_html(self, output_dir=None):
+        if self.__state == SMossState.INIT:
+            self.run()
         HTML1 = ""
         with open('./scoss/assets/summary.html', mode='r') as f:
             HTML1 = f.read()
@@ -138,9 +185,20 @@ class SMoss():
             with open(os.path.join(output_dir, 'summary.html'), 'w') as file:
                 file.write(page)
 
-    def run(self):
-        m = mosspy.Moss(self.__userid, self.__lang)
-        for mask, file in self.__pending_pool.items():
-            m.addFile(file, mask)
-        url = m.send()
-        self.parse_html_table(url)
+    def set_metric_threshold(self, metric_name, threshold: float):
+        raise ValueError("smoss doesn't support this function. Use set_threshold() instead.")
+
+    def add_metric(self, metric, threshold: float=0.0, exist_ok=False):
+        raise ValueError("smoss doesn't support this function.")
+
+    def add_source_str(self, source_str, mask):
+        raise ValueError("smoss doesn't support this function.")
+
+    def update_source_str(self, source_str, mask):
+        raise ValueError("smoss doesn't support this function.")
+
+    def check_similarity(self, src):
+        raise ValueError("smoss doesn't support this function.")
+
+    def align_source(self, src):
+        raise ValueError("smoss doesn't support this function.")
