@@ -55,6 +55,7 @@ def test_scoss_save_html():
     sc.add_file('./tests/data/c.cpp', mask='Ngoc')
     sc.run()
     sc.save_as_html('./tests/result/')
+    print(sc.get_matches(or_thresholds=True))
 
 
 if __name__ == '__main__':
