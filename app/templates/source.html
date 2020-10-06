@@ -1,0 +1,69 @@
+{% include "header.html" %}
+    
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Sources</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body table-responsive p-0">
+            <table class="table table-hover table-bordered">
+              <tr>
+                <th style="width: 4em;">#</th>
+                <th>Name</th>
+              </tr>
+              <tr>
+                <td>Mid1</td>
+                <td><a href="#">a.cpp</a></td>
+              </tr>
+              <tr>
+                <td>Fin1</td>
+                <td><a href="#">b.java</a></td>
+              </tr>
+              <tr>
+                <td>Mid2</td>
+                <td><a href="#">c.py</a></td>
+              </tr>
+              <tr>
+                <td>Fin2</td>
+                <td><a href="#">d.c</a></td>
+              </tr>
+            </table>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Add source</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body">
+            
+            <form action="" class="form-horizontal">
+              <div class="form-group row">
+                <div class="col-sm-3">
+                  <label for="cname"><b>Add <source>: </b></label>
+                </div>
+                <div class="col-sm-7">
+                  <input type="text" placeholder="Enter contest name" name="cname" required>						
+                  <input type="hidden" name="author" value="">
+                  <input type="hidden" name="time" value="">
+                </div>
+                <div class="col-sm-2">
+                  <input type="submit" class="btn btn-primary" name="submit" value="Create">
+                </div>
+              </div>		
+            </form>
+          </div>
+        </div>	
+      </div>
+    </div>
+
+</body>
+</html>

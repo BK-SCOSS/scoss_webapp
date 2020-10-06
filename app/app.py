@@ -10,14 +10,40 @@ app = Flask(__name__)
 app.register_blueprint(scoss_api.mod)
 @app.route('/api/login', methods=["GET"])
 def login():
-	pass
+	return render_template('login.html')
+
 @app.route('/api/signup', methods=["POST"])
 def signup():
 	pass
+
 @app.route('/')
 def index():
-	pass
+	return render_template('index.html')
+
+@app.route('/document')
+def document():
+	return render_template('document.html')
+
+@app.route('/api')
+def api():
+	return render_template('api.html')
+
+@app.route('/test')
+def test():
+	return render_template('test.html')
+
+@app.route('/contest')
+def contest():
+	return render_template('contest.html')
+
+@app.route('/problem')
+def problem():
+	return render_template('problem.html')
+
+@app.route('/source')
+def source():
+	return render_template('source.html')
 
 if __name__ == "__main__":
 	app.debug = True
-	app.run(host='0.0.0.0', port=5005)
+	app.run()
