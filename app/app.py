@@ -48,6 +48,10 @@ def source():
 def admin():
 	return render_template('admin.html')
 
+@app.route('/result')
+def result():
+	return render_template('result.html')
+
 if __name__ == "__main__":
 	app.debug = True
 	app.run()
