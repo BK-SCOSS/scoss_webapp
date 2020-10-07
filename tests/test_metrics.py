@@ -2,8 +2,8 @@ from sctokenizer import Source
 from scoss.metrics.token_based_metric import TokenBasedMetric
 from scoss.metrics import CountOperator, SetOperator, HashOperator
 
-src1 = Source.from_file('./data/a.cpp')
-src2 = Source.from_file('./data/b.cpp')
+src1 = Source.from_file('./tests/data/a.cpp')
+src2 = Source.from_file('./tests/data/b.cpp')
 
 def test_token_based_metric():
     metric = TokenBasedMetric()
