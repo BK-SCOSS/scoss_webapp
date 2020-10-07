@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCOSS</title>
+  <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+  <div>
+    <header><h1>SCOSS - A Source Code Similarity System</h1></header>
+    <hr>
+    <div class="box">
+      <form action="/login" method="POST">
+        <h2>Login</h2>
+        <hr>
+        {%if info == 'error_pass'%}
+        <div class="alert alert-danger alert-dismissible fade show">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <p>Wrong password</p>
+        </div>
+        {%endif%}
+        {%if info == 'error_account'%}
+        <div class="alert alert-danger alert-dismissible fade show">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <p>Don't have an account</p>
+        </div>
+        {%endif%}
+        <div class="row">
+          <div class="col-25">
+            <label for="username"><b>Username</b></label>
+          </div>
+          <div class="col-75">
+            <input type="text" placeholder="Enter username" name="user-name" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <label for="password"><b>Password</b></label>
+          </div>
+          <div class="col-12">
+            <input type="password" placeholder="Enter password" name="password" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+              <input type="submit" value="submit" style="float: left; margin-top: 6px;">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12" style="float: left; margin-top: 6px;">
+              Don't have an account yet ? <a href="/signup">Click here</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

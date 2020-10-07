@@ -1,0 +1,49 @@
+{%include ('header.html', author)%}
+    <hr>
+
+    <h2>Contest</h2>
+    
+
+      {%if error == 'error_ids'%}
+      <div class="container"></div>
+      <div class="alert alert-danger alert-dismissible fade show">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>ID already exists </p>
+      </div>
+    </div>
+      {%endif%}
+    {% if data_contest|length > 0 %}
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Author</th>
+      </tr>
+      {%for data in data_contest%}
+      <tr>
+        <td>{{data['id_contest']}}</td>
+        <td><a href="/problem?id_contest={{data['id_contest']}}">{{data['name']}}</a></td>
+        <td>{{data['author']}}</td>
+      </tr>
+      {%endfor%}
+     
+    </table>
+    {%endif%}
+
+    <br>
+
+    <div id="myForm">
+        <form action="/add_contest" class="form-container" method="POST">
+          <label for=""><b>ID: </b></label>
+            <input type="text" name="id-contest" value="">
+
+            <label for="name"><b>Contest name: </b></label>
+            <input type="text" placeholder="Enter contest name" name="name" required>
+            <label for=""><b>Author: </b></label>
+            <input type="text" name="author" value="{{author}}">
+             <input type="submit" name="submit" value="Create">
+        </form>
+    </div>
+    
+</body>
+</html>

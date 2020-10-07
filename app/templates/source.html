@@ -1,0 +1,95 @@
+{%include ('header.html', author)%}
+
+    <hr>
+    {% if data_problem['source']|length > 0 %}
+    <h2>Source</h2>
+    
+    <table>
+      <tr>
+        <th style="width: 4em;">#</th>
+        <th>Name</th>
+      </tr>
+      {%for data in data_problem['source']%}
+      <tr>
+        <td>{{loop.index}}</td>
+        <td><a href="#">{{data.split('/')[-1]}}</a></td>
+      </tr>
+      {%endfor%}
+    </table>   
+    {%endif%}
+    <br>
+
+    
+    <form class="form-container" action="/source?problem_name={{data_problem['problem_name']}}" method="POST" enctype = "multipart/form-data">
+        <label for="source"><b>Add source: </b></label>
+        <input type="file" name="file" required>
+        <input type="submit" >
+    </form>
+        <br>
+    <form class="form-container" enctype = "multipart/form-data">
+        <label for="contestFile"><b>Add from zip: </b></label>
+        <input type="file" name="contestFile" required>
+        <input type="submit" name="fileSubmit" value="Submit">
+    </form>
+    <br>
+    {% if data_problem['source']|length > 1 %}
+    <h2>Metrics</h2>
+    <p>Bellow are some metrics you must enter to run the test. Description of the metric can be found at document.</p>
+    <form class="form-container" action="/similarity?problem_name={{data_problem['problem_name']}}" method="POST">
+
+        <div class="row">
+            <div class="col-25">
+                <input type="checkbox" id="countCheckBox">
+                <label for="countOperator"><b>CountOperator: </b></label>        
+            </div>
+            <div class="col-75">
+                <input type="number" id="countOperator" name="count_operator" min="1" max="100" disabled>        
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-25">
+                <input type="checkbox" id="setCheckBox">
+                <label for="setOperator"><b>SetOperator: </b></label>        
+            </div>
+            <div class="col-75">
+                <input type="number" id="setOperator" name="set_operator" min="1" max="100" disabled>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-25">
+                <input type="checkbox" id="hashCheckBox">
+                <label for="hashOperator"><b>HashOperator: </b></label>        
+            </div>
+            <div class="col-75">
+                <input type="number" id="hashOperator" name="hash_operator" min="1" max="100" disabled>
+            </div>
+        </div>
+
+        <div class="row">
+            <button type="submit">Search</button>
+        </div>
+    </form>
+
+    <script type="text/javascript">
+        document.getElementById('countCheckBox').onchange = function() {
+            document.getElementById('countOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('setCheckBox').onchange = function() {
+            document.getElementById('setOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('hashCheckBox').onchange = function() {
+            document.getElementById('hashOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('tokenCheckBox').onchange = function() {
+            document.getElementById('tokenBasedMetric').disabled = !this.checked;
+        };
+    </script>
+    {%endif%}
+
+</body>
+</html>

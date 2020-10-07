@@ -1,0 +1,40 @@
+{%include 'header.html'%}
+    <hr>
+    {%if error == 'error_ids'%}
+    <div class="container"></div>
+    <div class="alert alert-danger alert-dismissible fade show">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>Name already exists </p>
+    </div>
+    </div>
+    {%endif%}
+    {% if data_problem|length > 0 %}
+    <h2>Problem</h2>
+    
+   
+    <table>
+      <tr>
+        <th style="width: 4em;">#</th>
+        <th>Name</th>
+      </tr>
+      {%for data in data_problem%}
+      <tr>
+        <td>{{loop.index}}</td>
+        <td><a href="/source?problem_name={{data['problem_name']}}">{{data['problem_name']}}</a></td>
+      </tr>
+      {%endfor%}
+   
+    </table>   
+   <br>
+    {%endif%}
+
+    <form class="form-container" action="/problem?id_contest={{id_contest}}" method='POST'>
+        <label for="problem"><b>Add problem: </b></label>
+        <input type="text" name="problem" placeholder="Enter problem">
+        <input type="submit" name="submit" value="Submit">
+    </form> 
+    <br>
+
+    
+</body>
+</html>

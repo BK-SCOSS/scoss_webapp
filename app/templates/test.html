@@ -1,22 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCOSS</title>
-    <link rel="stylesheet" type="text/css" href="resources/css/style.css">
-<body>
-    <header>
-        <h1>SCOSS - A Source Code Similarity System</h1>
-    </header>
-    <nav>
-        <a href="index.html"><b>home</b></a>
-        <a href="document.html"><b>document</b></a>
-        <a href="api.html"><b>apis</b></a>
-        <a href="test.html"><b>test</b></a>
-        <a href="contest.html"><b>contest</b></a>
-    </nav>
-    
+{%include ('header.html', author)%}
+
     <hr>
     <h2>Problem</h2>
    
@@ -27,39 +10,33 @@
       </tr>
       <tr>
         <td>Mid1</td>
-        <td><a href="source.html">Problem A</a></td>
+        <td><a href="#">a.cpp</a></td>
       </tr>
       <tr>
         <td>Fin1</td>
-        <td><a href="#">Problem B</a></td>
+        <td><a href="#">b.java</a></td>
       </tr>
       <tr>
         <td>Mid2</td>
-        <td><a href="#">Problem C</a></td>
+        <td><a href="#">c.py</a></td>
       </tr>
       <tr>
         <td>Fin2</td>
-        <td><a href="#">Problem D</a></td>
+        <td><a href="#">d.c</a></td>
       </tr>
-    </table>   
-    
+    </table>
+
     <br>
     <form class="form-container">
-        <label for="contestFile"><b>Add from zip: </b></label>
-        <input type="file" name="contestFile">
+        <label for="file"><b>Add source from zip: </b></label>
+        <input type="file" name="file">
         <input type="submit" name="fileSubmit" value="Submit">
     </form>
-    <br>
-    <form class="form-container">
-        <label for="problem"><b>Add problem: </b></label>
-        <input type="text" name="problem" placeholder="Enter problem">
-        <input type="submit" name="submit" value="Submit">
-    </form> 
-    <br>
 
+    
     <h2>Metrics</h2>
     <p>Bellow are some metrics you must enter to run the test. Description of the metric can be found at document.</p>
-    <form class="form-container">
+    <form class="form-container" action="result.html">
 
         <div class="row">
             <div class="col-25">
@@ -122,5 +99,6 @@
             document.getElementById('tokenBasedMetric').disabled = !this.checked;
         };
     </script>
+
 </body>
 </html>
