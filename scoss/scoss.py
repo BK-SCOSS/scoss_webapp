@@ -247,7 +247,7 @@ class Scoss():
         name_file = 'result_' +str(int(time.time())) +'.csv'
         df_data.to_csv(os.path.join(filepath, name_file))
 
-    def save_as_html(self, output_dir=None, or_thresholds=False, and_thresholds=True):
+    def save_as_html(self, output_dir='./', or_thresholds=False, and_thresholds=True):
         """save_as_html.
             use self.__alignment_matrix to align 2 source, 
 
