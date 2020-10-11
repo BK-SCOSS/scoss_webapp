@@ -13,6 +13,7 @@ mod = Blueprint('scoss_api', __name__)
 @mod.route('/api/user', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def create_user():
     if request.method == "GET":
+        # get username password
         try:
             username = request.args.get('username')
             data_user = User.objects.get(username=username)
@@ -23,11 +24,12 @@ def create_user():
             return jsonify({'info': "Account information is not correct"}), 400
         return jsonify({'user_id': user_id, 'username': username, 'password': password, 'level': level})
     if request.method == "POST":
+        # create account
         try:
             user_id = str(int(time.time()) * 1000)
             username = request.form['username']
             password = request.form['password']
-            level = request.form['level']
+            level = request.form['level']#0- admin , 1-user
 
             User(user_id=user_id, username=username, password=password, level=level).save()
         except Exception:
