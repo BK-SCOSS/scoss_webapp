@@ -17,7 +17,7 @@ URL = 'http://0.0.0.0:5005'
 app = Flask(__name__)
 app.register_blueprint(mod)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-app.config["MONGODB_HOST"] = 'mongodb://172.18.0.3:27017/scoss'
+app.config["MONGODB_HOST"] = 'mongodb://172.18.0.2:27017/scoss'
 app.config["MONGODB_DATABASE"] = 'scoss'
 db.init_app(app)
 # program = []
@@ -26,16 +26,23 @@ def login():
 	if request.method == "GET":
 		return render_template('login.html')
 	else:
+		session['logged_in'] = False 
 		username = request.form['username']
 		password = request.form['password']
 		params = {'username': username}
 		url = URL + '/api/user'
 		req = requests.get(url=url, params=params)
 		if 'password' in req.json().keys():
-			return jsonify({'check': check_password_hash( req.json()['password'], password)})
-		return jsonify({'info': 'flase'})
+			if check_password_hash( req.json()['password'], password):
+				session['username'] = username
+				session['logged_in'] = True
+				return redirect(url_for('index'))
+			else:
+				return render_template('login.html', info='wrong_pass')
+		return render_template('login.html', info='wrong_user')
 @app.route('/logout')
 def logout():
+	session.clear()
 	return render_template('login.html', info='')
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -45,7 +52,8 @@ def signup():
 	else:
 		username = request.form['username']
 		password = request.form['password']
-		data = {'username': username , 'password': generate_password_hash(password)}
+		level = request.form['level']
+		data = {'username': username , 'password': generate_password_hash(password), 'level':level}
 		url = URL +'/api/user'
 		req = requests.post(url=url, data=data)
 		if 'user_id' not in req.json().keys():
@@ -55,127 +63,78 @@ def signup():
 
 @app.route('/')
 def index():
-	return render_template('login.html')
+	return render_template('index.html')
 
-@app.route('/home')
-def home():
-	author = request.args.get('author')
-	return render_template('index.html', author=author)
+@app.route('/document')
+def document():
+	return render_template('document.html')
 
+@app.route('/api')
+def api():
+	return render_template('api.html')
+
+@app.route('/test')
+def test():
+	return render_template('test.html')
 
 @app.route('/contest', methods=['GET', 'POST'])
 def contest():
-	# if request.method == 'GET':
-	error = request.args.get('error')
-	author = 'tranvien98'
-	query = {'author': author}
-	data_contest = my_db.find_db('contest', query)
-	return render_template('contest.html', data_contest=data_contest, author=author ,error=error)
-	
-@app.route('/add_contest', methods=['POST'])
-def add_contest():
-	ids = request.form['id-contest']
-	name = request.form['name']
-	author = request.form['author']
-	contest_doc = {
-		'id_contest': ids,
-		'name': name,
-		'author': author
-	}
-	id_query = {'id_contest': ids}
-	# print(contest_doc)
-	res = my_db.insert_db('contest',contest_doc , id_query)
-	if res == False:
-		return redirect(url_for('.contest', error = 'error_ids'))
-	return redirect(url_for('.contest'))
-
+	if 'logged_in' in session:
+		if session['logged_in'] == True:
+			if request.method == 'GET':
+				contest_author = session['username']
+				info = request.args.get('info')
+				params = {'contest_author': contest_author}
+				url = URL + '/api/contest'
+				data = requests.get(url=url, params=params)
+				print(data.json())
+				return render_template('contest.html', data=data.json()['data'], info=info)
+			else: 
+				print(request.form)
+				contest_name = request.form['contest_name']
+				data_form = {'contest_name': contest_name, 'contest_author': session['username']}
+				url = URL + '/api/contest'
+				req = requests.post(url=url,data=data_form)
+				if 'contest_name' in req.json().keys():
+					return redirect(url_for('contest'))
+				else:
+					return redirect(url_for('contest', info='wrong'))
+		else:
+			return redirect(url_for('login'))
+	else: 
+		return redirect(url_for('login'))
 
 @app.route('/problem', methods=['GET', 'POST'])
 def problem():
-	id_contest = request.args.get('id_contest')
-	if request.method == 'GET':
-		error = request.args.get('error')
-		query = {'id_contest': id_contest}
-		data_problem = my_db.find_db('problem', query)
-		print(data_problem)
-		return render_template('problem.html', data_problem=data_problem, id_contest=id_contest, error =error)
-	else:
-		problem_name = request.form['problem']
-		problem_doc = {
-			'id_contest': id_contest,
-			'problem_name': problem_name,
-			'source': [],
-			'result': []
-		}
-		id_query = {'problem_name': problem_name}
-		res = my_db.insert_db('problem',problem_doc , id_query)
-		if res == False:
-			return redirect(url_for('.problem', error = 'error_ids'))
-		return redirect(url_for('.problem', id_contest=id_contest))
+	if 'logged_in' in session:
+		if session['logged_in'] == True:
+			if request.method == 'GET':
+				info = request.args.get('info')
+				contest_name = request.args.get('contest_name')
+				params = {'contest_name': contest_name}
+				url = URL + '/api/problem'
+				req = requests.get(url=url, params=params)
+				return render_template('problem.html', contest_name=contest_name,info=info, data=req.json()['problems'])
+			if request.method == 'POST':
+				problem_name = request.form['problem_name']
+				contest_name = request.args.get('contest_name')
+				data = {'problem_name': problem_name, 'contest_name':contest_name}
+				url = URL + '/api/problem'
+				req = requests.post(url=url, data=data)
+				print(req.json())
+				if 'problem_name' in req.json().keys():
+					return redirect(url_for('problem', contest_name=contest_name))
+				else:
+					return redirect(url_for('problem',contest_name=contest_name, info='wrong'))
+	return redirect(url_for('login'))
 
-
-@app.route('/source', methods=['GET', 'POST'])
+@app.route('/source')
 def source():
-	problem_name = request.args.get('problem_name')
-	if request.method == 'GET':
-		query = {'problem_name': problem_name}
-		data_problem = my_db.find_db('problem', query)
-		# print(data_problem)
-		return render_template('source.html', data_problem=data_problem[0])
-	else:
-		query = {'problem_name': problem_name}
-		data_problem = my_db.find_db('problem', query)
-		id_contest = data_problem[0]['id_contest']
-		source = data_problem[0]['source']
-		file = request.files['file']
-		path_dir = os.path.join(UPLOAD_FILE, str(id_contest))
-		if not os.path.exists(path_dir):
-			os.mkdir(path_dir)
-		path_dir = os.path.join(path_dir, str(problem_name))
-		if not os.path.exists(path_dir):
-			os.mkdir(path_dir)
-		filepath = os.path.join(path_dir, secure_filename(file.filename))
-		file.save(filepath)
-		if filepath not in source:
-			source.append(filepath)
-		my_db.update_db('problem',query, data={'source': source})
-		return redirect(url_for('source', problem_name=problem_name))
+	return render_template('source.html')
 
-@app.route('/similarity', methods=["POST"])
-def similarity():
-	if request.method == "POST":
-		problem_name = request.args.get('problem_name')
-		query = {'problem_name': problem_name}
-		data_problem = my_db.find_db('problem', query)
-		source = data_problem[0]['source']
-		lang = source[0].split('.')[-1]
-		metric_list = []
-		for metric in request.form:
-			if metric in METRIC_LIST:
-				metric_list.append(metric)
-		sc = Scoss(lang=lang)
-		for metric in metric_list:
-			if request.form[metric] != '':
-				sc.add_metric(metric, int(request.form[metric])/100)
-			else:
-				sc.add_metric(metric)
-		for path in source:
-			sc.add_file(path)
-		res = sc.get_matches(and_thresholds=True)
-		my_db.update_db('problem',query, data={'result': res})
-		id_contest = data_problem[0]['id_contest']
-		path_dir = os.path.join(TEMPLATES, str(id_contest))
-		if not os.path.exists(path_dir):
-			os.mkdir(path_dir)
-		path_dir = os.path.join(path_dir, str(problem_name))
-		if not os.path.exists(path_dir):
-			os.mkdir(path_dir)
-		path_dir = os.path.join(path_dir, 'result')
-		if not os.path.exists(path_dir):
-			os.mkdir(path_dir)
-		sc.save_as_html(path_dir, and_thresholds=True)
-		path_summary = path_dir.replace(TEMPLATES, '.')
-		return render_template(path_summary+'/summary.html')
+@app.route('/res')
+def res():
+	return render_template('result.html')
 
 if __name__ == "__main__":
 	app.debug = True

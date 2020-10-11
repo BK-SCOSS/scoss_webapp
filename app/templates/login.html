@@ -1,65 +1,80 @@
-<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SCOSS</title>
-  <link rel="stylesheet" type="text/css" href="/static/css/style.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-</head>
-<body>
-  <div>
-    <header><h1>SCOSS - A Source Code Similarity System</h1></header>
-    <hr>
-    <div class="box">
-      <form action="/login" method="POST">
-        <h2>Login</h2>
-        <hr>
-        {%if info == 'error_pass'%}
-        <div class="alert alert-danger alert-dismissible fade show">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          <p>Wrong password</p>
-        </div>
-        {%endif%}
-        {%if info == 'error_account'%}
-        <div class="alert alert-danger alert-dismissible fade show">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          <p>Don't have an account</p>
-        </div>
-        {%endif%}
-        <div class="row">
-          <div class="col-25">
-            <label for="username"><b>Username</b></label>
-          </div>
-          <div class="col-75">
-            <input type="text" placeholder="Enter username" name="user-name" required>
-          </div>
-        </div>
+    <title>SCOSS</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta http-equiv='x-ua-compatible' content='ie=edge'>
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'adminlte.min.css') }}">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <script src="https://kit.fontawesome.com/3089485309.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+  </head>
+  
+  <body>
+    <div class="wrapper">
+    <div class="login-box">
+      <div class="login-logo">
+        <a href="../../index2.html"><b>SCOSS</b></a>
+      </div>
+      {%if info == 'wrong_pass'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong password please try again.
+      </div>
+      {%endif%}
+      {%if info == 'wrong_user'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong account information password please try again.
+      </div>
+      {%endif%}
 
-        <div class="row">
-          <div class="col-12">
-            <label for="password"><b>Password</b></label>
-          </div>
-          <div class="col-12">
-            <input type="password" placeholder="Enter password" name="password" required>
-          </div>
-        </div>
+      
+      <!-- /.login-logo -->
+      <div class="card">
+        <div class="card-body login-card-body">
+          <p class="login-box-msg">Sign in to start your session</p>
 
-        <div class="row">
-          <div class="col-12">
-              <input type="submit" value="submit" style="float: left; margin-top: 6px;">
-          </div>
+          <form action="/login" method="POST">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" name="username" placeholder='Username' required>
+              <div class="input-group-append">
+                <div class="input-group-text">
+                  <span class="fas fa-user"></span>
+                </div>
+              </div>
+            </div>
+            <div class="input-group mb-3">
+              <input type="password" class="form-control" name="password" placeholder='Password' required>
+              <div class="input-group-append">
+                <div class="input-group-text">
+                  <span class="fas fa-lock"></span>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-8">
+                <div class="icheck-primary">
+                  <input type="checkbox" id="remember">
+                  <label for="remember">
+                    Remember Me
+                  </label>
+                </div>
+              </div>
+              <!-- /.col -->
+              <div class="col-4">
+                <button type="submit" class="btn btn-primary btn-block btn-flat" name="login">Sign In</button>
+              </div>
+              <!-- /.col -->
+            </div>
+          </form>
         </div>
-        <div class="row">
-          <div class="col-12" style="float: left; margin-top: 6px;">
-              Don't have an account yet ? <a href="/signup">Click here</a>
-          </div>
-        </div>
-      </form>
+        <!-- /.login-card-body -->
+      </div>
     </div>
-  </div>
-</body>
+    </div>
+  </body>
 </html>

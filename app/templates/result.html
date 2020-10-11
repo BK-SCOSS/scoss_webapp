@@ -1,79 +1,78 @@
-{%include 'header.html'%}
-    <header>
-        <h1>SCOSS - A Source Code Similarity System</h1>
-    </header>
-    <nav>
-        <a href="index.html"><b>home</b></a>
-        <a href="document.html"><b>document</b></a>
-        <a href="api.html"><b>apis</b></a>
-        <a href="test.html"><b>test</b></a>
-        <a href="contest.html"><b>contest</b></a>
-    </nav>
+{% include "header.html" %}
     
-    <hr>
-    <h3>Result</h3>
-
-    <table>
-        <tr>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Result</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body table-responsive p-0">
+            <table class="table table-hover table-bordered">
+                <tr>
             
-            <th>Source1</th>
-            
-            <th>Source2</th>
-            
-            <th>CountOperator</th>
-            
-            <th>SetOperator</th>
-
-            <th>HashOperator</th>
-
-            <th>TokenBasedMetric</th>
-
-            <th>Average</th>
-        </tr>
-        <tr>
+                    <th>Source1</th>
+                    
+                    <th>Source2</th>
+                    
+                    <th>CountOperator</th>
+                    
+                    <th>SetOperator</th>
         
-        <td>Vien</a></td>
-        <td>Thai</a></td>
+                    <th>HashOperator</th>
         
-        <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
+                    <th>TokenBasedMetric</th>
         
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
+                    <th>Average</th>
+                </tr>
+                <tr>
+                
+                <td>Vien</a></td>
+                <td>Thai</a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
         
-        <td></td>
-        </tr>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
         
-        <td>Ngoc</a></td>
-        <td>Thai</a></td>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
+                
+                <td></td>
+                </tr>
+                
+                <td>Ngoc</a></td>
+                <td>Thai</a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
         
-        <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
         
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
+                
+                <td></td>
+                </tr>
+                
+                <td>Ngoc</a></td>
+                <td>Vien</a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
+                
+                <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
         
-        <td></td>
-        </tr>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
         
-        <td>Ngoc</a></td>
-        <td>Vien</a></td>
-        
-        <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
-        
-        <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-
-        <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-        <td></td>
-        </tr>
-        
-    </table>   
-</body>
-</html>
+                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
+                
+                <td></td>
+                </tr>
+            </table>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+    </div>
+    
+{% include "footer.html" %}

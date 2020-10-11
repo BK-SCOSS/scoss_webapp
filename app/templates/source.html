@@ -1,76 +1,157 @@
-{%include ('header.html', author)%}
-
-    <hr>
-    {% if data_problem['source']|length > 0 %}
-    <h2>Source</h2>
+{% include "header.html" %}
     
-    <table>
-      <tr>
-        <th style="width: 4em;">#</th>
-        <th>Name</th>
-      </tr>
-      {%for data in data_problem['source']%}
-      <tr>
-        <td>{{loop.index}}</td>
-        <td><a href="#">{{data.split('/')[-1]}}</a></td>
-      </tr>
-      {%endfor%}
-    </table>   
-    {%endif%}
-    <br>
-
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Sources</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body table-responsive p-0">
+            <table class="table table-hover table-bordered">
+              <tr>
+                <th style="width: 4em;">#</th>
+                <th>Name</th>
+              </tr>
+              <tr>
+                <td>Mid1</td>
+                <td><a href="#">a.cpp</a></td>
+              </tr>
+              <tr>
+                <td>Fin1</td>
+                <td><a href="#">b.java</a></td>
+              </tr>
+              <tr>
+                <td>Mid2</td>
+                <td><a href="#">c.py</a></td>
+              </tr>
+              <tr>
+                <td>Fin2</td>
+                <td><a href="#">d.c</a></td>
+              </tr>
+            </table>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+    </div>
     
-    <form class="form-container" action="/source?problem_name={{data_problem['problem_name']}}" method="POST" enctype = "multipart/form-data">
-        <label for="source"><b>Add source: </b></label>
-        <input type="file" name="file" required>
-        <input type="submit" >
-    </form>
-        <br>
-    <form class="form-container" enctype = "multipart/form-data">
-        <label for="contestFile"><b>Add from zip: </b></label>
-        <input type="file" name="contestFile" required>
-        <input type="submit" name="fileSubmit" value="Submit">
-    </form>
-    <br>
-    {% if data_problem['source']|length > 1 %}
-    <h2>Metrics</h2>
-    <p>Bellow are some metrics you must enter to run the test. Description of the metric can be found at document.</p>
-    <form class="form-container" action="/similarity?problem_name={{data_problem['problem_name']}}" method="POST">
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Add File</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body">
+            <form action="">
+                <div class="form-group row">
+                    <div class="col-sm-3">
+                        <label for="">Add from zip</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="file" name="contestFile">
+                    </div>
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+                    </div>						
+                    </div>		
+            </form>
+            <form action="">
+                <div class="form-group row">
+                    <div class="col-sm-3">
+                        <label for="">Add file:</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="file" name="contestFile">
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="">Name:</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="text" name="" id="">
+                    </div>
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+                    </div>						
+                    </div>		
+            </form>
+          </div>
+        </div>	
+      </div>
+      <div class="col-sm-6">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">Run contest</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
 
-        <div class="row">
-            <div class="col-25">
-                <input type="checkbox" id="countCheckBox">
-                <label for="countOperator"><b>CountOperator: </b></label>        
-            </div>
-            <div class="col-75">
-                <input type="number" id="countOperator" name="count_operator" min="1" max="100" disabled>        
-            </div>
-        </div>
+                
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                    <input class="custom-control-input" type="checkbox" id="countCheckBox">
+                                    <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                    <input type="number" class="form-control" id="countOperator" name="countOperator" min="1" max="100" disabled>        
+                            </div>
+                        </div>
+                    </div>	
+                </div>
 
-        <div class="row">
-            <div class="col-25">
-                <input type="checkbox" id="setCheckBox">
-                <label for="setOperator"><b>SetOperator: </b></label>        
-            </div>
-            <div class="col-75">
-                <input type="number" id="setOperator" name="set_operator" min="1" max="100" disabled>
-            </div>
-        </div>
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="setCheckBox">
+                                <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="setOperator" name="setOperator" min="1" max="100" disabled> 
+                            </div>
+                        </div>
+                    </div>	
+                </div>
 
-        <div class="row">
-            <div class="col-25">
-                <input type="checkbox" id="hashCheckBox">
-                <label for="hashOperator"><b>HashOperator: </b></label>        
-            </div>
-            <div class="col-75">
-                <input type="number" id="hashOperator" name="hash_operator" min="1" max="100" disabled>
-            </div>
-        </div>
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="hashCheckBox">
+                                <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>        	
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="hashOperator" name="hashOperator" min="1" max="100" disabled>	
+                            </div>
+                        </div>
+                    </div>	
+                </div>
 
-        <div class="row">
-            <button type="submit">Search</button>
-        </div>
-    </form>
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="tokenCheckBox">
+                                <label for="tokenCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="tokenBasedMetric" name="tokenBasedMetric" min="1" max="100" disabled>
+                            </div>
+                        </div>
+                    </div>	
+                </div>
+        
+                <div class="row">
+                    <input type="submit" class="btn btn-primary" name="run" value="Run">
+                </div>
+        
+            </div>
+        </div>	
+    </div>
+    </div>
 
     <script type="text/javascript">
         document.getElementById('countCheckBox').onchange = function() {
@@ -89,7 +170,5 @@
             document.getElementById('tokenBasedMetric').disabled = !this.checked;
         };
     </script>
-    {%endif%}
-
 </body>
 </html>
