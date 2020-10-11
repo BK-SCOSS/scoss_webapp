@@ -43,6 +43,9 @@ class Scoss():
         self.__similarity_matrix = dict()
         self.__alignment_matrix = dict()
 
+    def get_language(self):
+        return self.__lang
+
     def set_metric_threshold(self, metric_name, threshold: float):
         if metric_name not in self.__thresholds:
             raise ValueError(f'metric_name:{metric_name} is not in metric_list')
@@ -81,7 +84,7 @@ class Scoss():
     def add_file(self, file, mask=None):
         if mask is None:
             mask = file
-        if mask in self.__sources.keys() or mask in self.__pending_pool:
+        if mask in self.__sources.keys() or mask in self.__pending_pool.keys():
             raise ValueError(f'mask:{mask} is already exist')
         src = Source.from_file(file, lang=self.__lang)
         src.name = mask
@@ -138,8 +141,9 @@ class Scoss():
         """
         self.__state = ScossState.RUNNING
 
-        # if self.__metric_list is None:
-        #     self.__metric_list = MetricList(all_metrics)
+        if self.__metric_list.get_number_of_metrics() == 0:
+            self.__metric_list = MetricList(all_metrics)
+            
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
             scores = self.check_similarity(src)

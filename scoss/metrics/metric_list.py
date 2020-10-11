@@ -24,6 +24,9 @@ class MetricList():
             ret.append(metric.get_name())
         return ret
 
+    def get_number_of_metrics(self):
+        return len(self.metric_list)
+
     def add_metric(self, metric, exist_ok=False):
         if isinstance(metric, Metric):
             for metric in self.metric_list:
