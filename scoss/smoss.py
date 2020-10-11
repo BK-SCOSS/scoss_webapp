@@ -17,6 +17,8 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment
 from sctokenizer import Source
 
+from scoss.utils import check_language
+
 try:
     from urllib.request import urlopen
 except ImportError:
@@ -60,14 +62,12 @@ class SMoss():
 
     def __init__(self, lang, userid=43511):
         
-        SMoss.__id = 1
+        SMoss.__id += 1
         self.id = SMoss.__id
 
         self.__userid = userid
-        if lang == 'cpp':
-            lang = 'cc'
 
-        self.__lang = lang
+        self.__lang = check_language(lang)
         self.__state = SMossState.INIT
         self.__threshold = 0
         self.__sources = OrderedDict()

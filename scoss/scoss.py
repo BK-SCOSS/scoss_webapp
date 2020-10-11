@@ -25,10 +25,10 @@ class Scoss():
             lang:
             used_metrics:
         """
-        Scoss.__id= 1
+        Scoss.__id += 1
         self.id = Scoss.__id
 
-        self.__lang = lang
+        self.__lang = check_language(lang)
         self.__state = ScossState.INIT
         self.__thresholds = OrderedDict()
        
