@@ -42,12 +42,13 @@ class Scoss():
 
         self.__similarity_matrix = dict()
         self.__alignment_matrix = dict()
+    def get_lang(self):
+        return self.__lang
 
     def set_metric_threshold(self, metric_name, threshold: float):
         if metric_name not in self.__thresholds:
             raise ValueError(f'metric_name:{metric_name} is not in metric_list')
         self.__thresholds[metric_name] = threshold
-
     def add_metric(self, metric, threshold: float=0.0, exist_ok=False):
         if self.__state != ScossState.INIT:
             raise ValueError('Cannot add metric after running')
@@ -178,7 +179,18 @@ class Scoss():
             matches.sort(reverse=True, key=lambda match:  match['scores'][by])
             return matches
 
-       
+    def get_aligment_matrix(self):
+        match_dict = {}
+        for name, score_dict in self.__alignment_matrix.items():
+            for other_name, scores in score_dict.items():
+                key = hash(name) ^ hash(other_name)
+                match = {}
+                match['source1'] = name
+                match['source2'] = other_name
+                match['scores'] = scores
+                match_dict[key] = match
+        matches_alignment = list(match_dict.values())
+        return matches_alignment
     def get_matches(self, or_thresholds=False, and_thresholds=False):
         """get_similarity_scores.
 
@@ -247,7 +259,7 @@ class Scoss():
         name_file = 'result_' +str(int(time.time())) +'.csv'
         df_data.to_csv(os.path.join(filepath, name_file))
 
-    def save_as_html(self, output_dir=None, or_thresholds=False, and_thresholds=True):
+    def save_as_html(self, output_dir='./', or_thresholds=False, and_thresholds=True):
         """save_as_html.
             use self.__alignment_matrix to align 2 source, 
 
@@ -298,7 +310,7 @@ class Scoss():
                 for new_match in matches_alignment:
                     if new_match['source1'] == match['source1'] and \
                         new_match['source2'] == match['source2'] :
-                        print(new_match)
+                        # print(new_match)
                         for metric, score in new_match['scores'].items():
                             data1 = self.__sources[dic['source1']].source_str
                             data2 = self.__sources[dic['source2']].source_str

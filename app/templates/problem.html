@@ -22,7 +22,7 @@
 				{%for content in data%}
                 <tr>
 					<td>{{loop.index}}</td>
-					<td><a href="source">{{content['problem_name']}}</a></td>
+					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
                 </tr>
 				{%endfor%}
             </table>

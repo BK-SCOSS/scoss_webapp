@@ -20,7 +20,7 @@ class SMossState(enum.Enum):
 class SMoss():
     __id = 0
 
-    def __init__(self, lang, userid=12345):
+    def __init__(self, lang, userid=43511):
         
         SMoss.__id = 1
         self.id = SMoss.__id
@@ -35,7 +35,9 @@ class SMoss():
 
         self.__matches = []
         self.__similarity_matrix = dict()
-
+        self.__matches_file = dict()
+    def get_lang(self):
+        return self.__lang
     def set_threshold(self, threshold: float):
         self.__threshold = threshold
     
@@ -79,6 +81,11 @@ class SMoss():
         if self.__state == SMossState.INIT:
             self.run()
         return self.__similarity_matrix
+
+    def get_matches_file(self):
+        if self.__state == SMossState.INIT:
+            self.run()
+        return self.__matches_file
     
     def save_matches_to_csv(self, filepath):
         if self.__state == SMossState.INIT:
@@ -99,8 +106,6 @@ class SMoss():
         html = urlopen(url).read().decode()
         soup = BeautifulSoup(html, features="lxml")
         tds = soup.find_all('td')
-        # print(tds[0].contents[0].attrs['href'])
-        # print(tds[0].contents[0].contents[0])
         i = 0
         self.__matches = []
         while i < len(tds):
@@ -120,10 +125,30 @@ class SMoss():
             a_match['link'] = tds[0].contents[0].attrs['href']
             self.__matches.append(a_match)
 
-            #Construct similarity_matrix
+            # Construct similarity_matrix
             self.__similarity_matrix[src1] = {src2:a_score}
             self.__similarity_matrix[src2] = {src1:a_score}
-            
+
+            # # Construct matches_file
+            base_url = os.path.dirname(a_match['link'])
+            summary_html = self.url_content_to_str(a_match['link'])
+            soup = BeautifulSoup(summary_html, 'lxml')
+            html_strs = []
+            for more_url in soup.find_all('frame'):
+                html_str = self.url_content_to_str(base_url + '/' + more_url.get('src'))
+                soup = BeautifulSoup(html_str, 'lxml')
+                for a in soup.findAll('a'):
+                    del a['href']
+                html_strs.append(str(soup))
+            with open('./scoss/assets/smoss_comparison.html', mode='r') as f:
+                big_html_string = f.read()
+            big_html_string = big_html_string.replace('<<<top>>>', html_strs[0])
+            big_html_string = big_html_string.replace('<<<src1>>>', html_strs[1])
+            big_html_string = big_html_string.replace('<<<src2>>>', html_strs[2])
+            self.__matches_file[src1] = {src2:big_html_string}
+            self.__matches_file[src2] = {src1:big_html_string}
+            # with open(os.path.join('./tests/smoss_result/', 'big_all_html.html'), 'w') as file:
+            #     file.write(big_html_string)
             i += 3
 
     def run(self):
@@ -132,27 +157,31 @@ class SMoss():
             for mask, file in self.__pending_pool.items():
                 m.addFile(file, mask)
             url = m.send()
+            if url == '':
+                raise ValueError("MOSS Server returned empty url. Please check userid.")
             self.parse_html_table(url)
             self.__state = SMossState.CLOSE
         else:
             raise ValueError("Can only execute run function once.")
 
+    def url_content_to_str(self, url):
+        html_str = urlopen(url).read().decode()
+        return html_str
+
     def process_url(self, url, file_name, path):
         def save_html(url, file_name):
-            html_str = urlopen(url).read().decode()
+            html_str = self.url_content_to_str(url)
             with open(os.path.join(path, file_name), 'w') as file:
                 file.write(html_str)
 
         save_html(url, file_name)
-        response = urlopen(url)
-        html = response.read()
+        html = self.url_content_to_str(url)
         soup = BeautifulSoup(html, 'lxml')
         base_url = os.path.dirname(url)
-        # print('base_url = ', base_url)
         for more_url in soup.find_all('frame'):
-            file_name = more_url.get('src')    
+            file_name = more_url.get('src')   
             save_html(base_url + '/' + file_name, file_name)
-
+            
     def save_as_html(self, output_dir=None):
         if self.__state == SMossState.INIT:
             self.run()
@@ -183,7 +212,7 @@ class SMoss():
             page = Environment().from_string(HTML1).render(heads=heads, links=links)
             with open(os.path.join(output_dir, 'summary.html'), 'w') as file:
                 file.write(page)
-
+    
     def set_metric_threshold(self, metric_name, threshold: float):
         raise ValueError("smoss doesn't support this function. Use set_threshold() instead.")
 

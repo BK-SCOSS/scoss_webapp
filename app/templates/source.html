@@ -7,30 +7,27 @@
             <h3 class="card-title">Sources</h3>
           </div>
           <!-- /.card-header -->
+          {%if data|length > 0%}
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
               <tr>
                 <th style="width: 4em;">#</th>
                 <th>Name</th>
               </tr>
+              {%for da in data%}
               <tr>
-                <td>Mid1</td>
-                <td><a href="#">a.cpp</a></td>
+                <td>{{loop.index}}</td>
+                {%if da['mask'] == ''%}
+                <td><a href="#">{{da['file']}}</a></td>
+                {%else%}
+                <td><a href="#">{{da['mask']}}</a></td>
+                {%endif%}
               </tr>
-              <tr>
-                <td>Fin1</td>
-                <td><a href="#">b.java</a></td>
-              </tr>
-              <tr>
-                <td>Mid2</td>
-                <td><a href="#">c.py</a></td>
-              </tr>
-              <tr>
-                <td>Fin2</td>
-                <td><a href="#">d.c</a></td>
-              </tr>
+              {%endfor%}
+            
             </table>
           </div>
+          {%endif%}
           <!-- /.card-body -->
         </div>
       </div>
@@ -57,22 +54,22 @@
                     </div>						
                     </div>		
             </form>
-            <form action="">
+            <form action="/add_file?problem_name={{problem_name}}&contest_name={{contest_name}}" enctype="multipart/form-data" method="POST">
                 <div class="form-group row">
                     <div class="col-sm-3">
                         <label for="">Add file:</label>
                     </div>
                     <div class="col-sm-7">
-                        <input type="file" name="contestFile">
+                        <input type="file" name="file">
                     </div>
                     <div class="col-sm-3">
                         <label for="">Name:</label>
                     </div>
                     <div class="col-sm-7">
-                        <input type="text" name="" id="">
+                        <input type="text" name="mask" id="">
                     </div>
                     <div class="col-sm-2">
-                        <input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+                        <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">						
                     </div>						
                     </div>		
             </form>
@@ -87,7 +84,7 @@
             <!-- /.card-header -->
             <div class="card-body">
 
-                
+            <form action="/run?problem_name={{problem_name}}&contest_name={{contest_name}}" method="POST">
                 <div class="form-group">
                     <div class="custom-control custom-checkbox">
                         <div class="row">
@@ -96,7 +93,7 @@
                                     <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
                             </div>
                             <div class="col-sm-8">
-                                    <input type="number" class="form-control" id="countOperator" name="countOperator" min="1" max="100" disabled>        
+                                    <input type="number" class="form-control" id="countOperator" name="count_operator" min="1" max="100" disabled>        
                             </div>
                         </div>
                     </div>	
@@ -110,7 +107,7 @@
                                 <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>        
                             </div>
                             <div class="col-sm-8">
-                                <input type="number" class="form-control" id="setOperator" name="setOperator" min="1" max="100" disabled> 
+                                <input type="number" class="form-control" id="setOperator" name="set_operator" min="1" max="100" disabled> 
                             </div>
                         </div>
                     </div>	
@@ -124,7 +121,7 @@
                                 <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>        	
                             </div>
                             <div class="col-sm-8">
-                                <input type="number" class="form-control" id="hashOperator" name="hashOperator" min="1" max="100" disabled>	
+                                <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="1" max="100" disabled>	
                             </div>
                         </div>
                     </div>	
@@ -134,11 +131,11 @@
                     <div class="custom-control custom-checkbox">
                         <div class="row">
                             <div class="col-sm-4">
-                                <input class="custom-control-input" type="checkbox" id="tokenCheckBox">
-                                <label for="tokenCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+                                <input class="custom-control-input" type="checkbox" id="smossCheckBox">
+                                <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
                             </div>
                             <div class="col-sm-8">
-                                <input type="number" class="form-control" id="tokenBasedMetric" name="tokenBasedMetric" min="1" max="100" disabled>
+                                <input type="number" class="form-control" id="smossMetric" name="smoss_metric" min="1" max="100" disabled>
                             </div>
                         </div>
                     </div>	
@@ -147,7 +144,7 @@
                 <div class="row">
                     <input type="submit" class="btn btn-primary" name="run" value="Run">
                 </div>
-        
+            </form>
             </div>
         </div>	
     </div>
@@ -166,8 +163,8 @@
             document.getElementById('hashOperator').disabled = !this.checked;
         };
 
-        document.getElementById('tokenCheckBox').onchange = function() {
-            document.getElementById('tokenBasedMetric').disabled = !this.checked;
+        document.getElementById('smossCheckBox').onchange = function() {
+            document.getElementById('smossMetric').disabled = !this.checked;
         };
     </script>
 </body>

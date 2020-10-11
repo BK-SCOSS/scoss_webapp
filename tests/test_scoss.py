@@ -57,7 +57,8 @@ def test_scoss_save_html():
     sc.add_file('./tests/data/b.cpp', mask='Vien')
     sc.add_file('./tests/data/c.cpp', mask='Ngoc')
     sc.run()
-    sc.save_as_html('./tests/result/', and_thresholds=True)
+    # print(sc.get_aligment_matrix())
+    # sc.save_as_html('./tests/result/', and_thresholds=True)
 
 
 if __name__ == '__main__':

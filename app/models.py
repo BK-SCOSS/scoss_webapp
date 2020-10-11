@@ -14,7 +14,10 @@ class Contest(db.Document):
 class Problem(db.Document):
     problem_name = db.StringField()
     contest_name = db.StringField()
-    # sources = db.DictField()
-    # metrics = db.ListField()
-    # similarity_matrix = db.ListField()
-    # aligment_matrix = db.ListField()
+    sources = db.ListField()
+    metrics = db.ListField()
+    similarity_matrix = db.ListField()
+    aligment_matrix = db.ListField()
+    similarity_matrix_smoss = db.ListField()
+    aligment_matrix_smoss = db.ListField()
+
