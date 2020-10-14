@@ -99,7 +99,18 @@ def cal_smoss(contest_name, problem_name, sources, metrics):
 	url = URL + '/api/update_matrix_smoss'
 	requests.put(url=url, json=doc_matrix)
 
-
+def convert_matrix(aligment_matrix):
+	match_dict = {}
+	for name, score_dict in aligment_matrix.items():
+		for other_name, scores in score_dict.items():
+			key = hash(name) ^ hash(other_name)
+			match = {}
+			match['source1'] = name
+			match['source2'] = other_name
+			match['scores'] = scores
+			match_dict[key] = match
+	matches_alignment = list(match_dict.values())
+	return matches_alignment
 
 
 @problems.route('/problem', methods=['GET', 'POST'])
