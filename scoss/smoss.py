@@ -216,7 +216,8 @@ class SMoss():
         i = 0
         self.__matches = []
         while i < len(tds):
-            score = int(tds[0].contents[0].contents[0][-4:-2])/100
+            score = min(int(tds[0].contents[0].contents[0][-4:-2])/100, \
+                        int(tds[1].contents[0].contents[0][-4:-2])/100)
             if score < self.__threshold:
                 i += 3
                 continue

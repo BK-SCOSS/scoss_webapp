@@ -13,12 +13,12 @@ def test_smoss():
     sm.set_threshold(0.5)
     sm.run()
     # sm.run()
-    print(sm.get_lang())
-    print(sm.get_matches())
-    print(sm.get_similarity_matrix())
+    # print(sm.get_lang())
+    # print(sm.get_matches())
+    # print(sm.get_similarity_matrix())
     sm.save_as_html('./tests/smoss_result/')
-    sm.save_matches_to_csv('./tests/smoss_result/')
-    # print(sm.get_matches_file()['Ngoc']['Vien'])
+    # sm.save_matches_to_csv('./tests/smoss_result/')
+    print(sm.get_matches_file()['Ngoc']['Vien'])
     
 
 
