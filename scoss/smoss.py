@@ -349,7 +349,6 @@ class SMoss():
                 dic['source1'] = match['source1']
                 dic['source2'] = match['source2']
                 dic['scores'] = {}
-
                 name_file = 'comparison_' + str(index_file) +'.html'
                 index_file += 1
                 metric = 'moss_score'

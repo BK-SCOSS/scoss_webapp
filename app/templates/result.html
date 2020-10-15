@@ -1,0 +1,33 @@
+{% include "header.html" %}
+    
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Result</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body table-responsive p-0">
+            <table id="usersTable" class="table table-hover table-bordered">
+                <tr>
+                    {%for head in heads%}
+                    <th>{{head}} <i class="fa fa-sort"></i></th>
+                    {%endfor%}
+                </tr>
+                {%for link in links%}
+                <tr class="item">
+                <td>{{link['source1']}}</a></td>
+                <td>{{link['source2']}}</a></td>
+                {%for metric in link['scores'] %}
+                <td><a href=""  target="_blank" >{{link['scores'][metric]}}</a></td>
+                {%endfor%}
+                </tr>
+                {%endfor%}
+            </table>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+    </div>
+    
+{% include "footer.html" %}
