@@ -1,0 +1,64 @@
+{% include "header.html" %}
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          {%if info == 'wrong'%}
+          <div class="alert alert-danger" role="alert">
+            The contest name may already exist.
+          </div>
+          {%endif%}
+          <div class="card-header">
+            <h3 class="card-title">Contest</h3>
+          </div>
+
+          <!-- /.card-header -->
+          {% if data|length > 0 %}
+          <div class="card-body table-responsive p-0">
+            <table class="table table-hover table-bordered">
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Author</th>
+              </tr>
+              {%for context in data%}
+              <tr>
+                <td>{{loop.index}}</td>
+                <td><a href="/problem?contest_name={{context['contest_name']}}">{{context['contest_name']}}</a></td>
+                <td>{{context['contest_author']}}</td>
+              </tr>
+              {%endfor%}
+            </table>
+          </div>
+          {%endif%}
+        </div>
+      </div>
+    </div>
+
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="card card-info">
+				<div class="card-header">
+					<h3 class="card-title">Create contest</h3>
+				</div>
+				<!-- /.card-header -->
+				<div class="card-body">
+					<form action="/contest" class="form-horizontal" method="POST">
+						<div class="form-group row">
+              <div class="col-sm-3">
+								<label for="cname"><b>Contest name: </b></label>
+							</div>
+							<div class="col-sm-7">
+								<input type="text" placeholder="Enter contest name" name="contest_name" required>						
+							</div>
+							<div class="col-sm-2">
+								<input type="submit" class="btn btn-primary" value="Create">
+							</div>
+						</div>		
+					</form>
+				</div>
+			</div>	
+		</div>
+	</div>
+
+  {% include "footer.html" %}

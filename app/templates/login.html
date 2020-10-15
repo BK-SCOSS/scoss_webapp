@@ -1,0 +1,80 @@
+<html>
+<head>
+    <title>SCOSS</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta http-equiv='x-ua-compatible' content='ie=edge'>
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'adminlte.min.css') }}">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <script src="https://kit.fontawesome.com/3089485309.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+  </head>
+  
+  <body>
+    <div class="wrapper">
+    <div class="login-box">
+      <div class="login-logo">
+        <a href="../../index2.html"><b>SCOSS</b></a>
+      </div>
+      {%if info == 'wrong_pass'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong password please try again.
+      </div>
+      {%endif%}
+      {%if info == 'wrong_user'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong account information password please try again.
+      </div>
+      {%endif%}
+
+      
+      <!-- /.login-logo -->
+      <div class="card">
+        <div class="card-body login-card-body">
+          <p class="login-box-msg">Sign in to start your session</p>
+
+          <form action="/login" method="POST">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" name="username" placeholder='Username' required>
+              <div class="input-group-append">
+                <div class="input-group-text">
+                  <span class="fas fa-user"></span>
+                </div>
+              </div>
+            </div>
+            <div class="input-group mb-3">
+              <input type="password" class="form-control" name="password" placeholder='Password' required>
+              <div class="input-group-append">
+                <div class="input-group-text">
+                  <span class="fas fa-lock"></span>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-8">
+                <div class="icheck-primary">
+                  <input type="checkbox" id="remember">
+                  <label for="remember">
+                    Remember Me
+                  </label>
+                </div>
+              </div>
+              <!-- /.col -->
+              <div class="col-4">
+                <button type="submit" class="btn btn-primary btn-block btn-flat" name="login">Sign In</button>
+              </div>
+              <!-- /.col -->
+            </div>
+          </form>
+        </div>
+        <!-- /.login-card-body -->
+      </div>
+    </div>
+    </div>
+  </body>
+</html>

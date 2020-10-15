@@ -1,0 +1,62 @@
+{% include "header.html" %}
+    
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+			{%if info == 'wrong'%}
+			<div class="alert alert-danger" role="alert">
+			  The problem name may already exist.
+			</div>
+			{%endif%}
+          <div class="card-header">
+            <h3 class="card-title">Problem</h3>
+          </div>
+		  <!-- /.card-header -->
+		  {%if data|length > 0%}
+          <div class="card-body table-responsive p-0">
+            <table class="table table-hover table-bordered">
+                <tr>
+					<th style="width: 4em;">#</th>
+					<th>Name</th>
+				</tr>
+				{%for content in data%}
+                <tr>
+					<td>{{loop.index}}</td>
+					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
+                </tr>
+				{%endfor%}
+            </table>
+		  </div>
+		  {%endif%}
+          <!-- /.card-body -->
+        </div>
+      </div>
+    </div>
+   
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="card card-info">
+					<div class="card-header">
+						<h3 class="card-title">Create problem</h3>
+					</div>
+					<!-- /.card-header -->
+					<div class="card-body">
+						<form action="/problem?contest_name={{contest_name}}" method="POST" class="form-horizontal">
+							<div class="form-group row">
+								<div class="col-sm-3">
+									<label for="problem"><b>Add problem: </b></label>
+								</div>
+								<div class="col-sm-7">
+									<input type="text" class="form-control" name="problem_name" placeholder="Enter problem">
+								</div>
+								<div class="col-sm-2">
+									<input type="submit" class="btn btn-primary" value="Submit">
+								</div>
+							</div>		
+						</form>
+					</div>
+				</div>	
+			</div>
+		</div>
+
+{% include "footer.html" %}
