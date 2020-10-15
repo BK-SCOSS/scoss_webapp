@@ -15,7 +15,6 @@ from config import URL
 contests = Blueprint('contest_page', __name__)
 
 
-
 @contests.route('/contest', methods=['GET', 'POST'])
 def contest():
 	if 'logged_in' in session:
