@@ -21,12 +21,24 @@
       <div class="login-logo">
         <a href="../../index2.html"><b>SCOSS</b></a>
       </div>
+      {%if info == 'wrong_pass'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong password please try again.
+      </div>
+      {%endif%}
+      {%if info == 'wrong_user'%}
+      <div class="alert alert-danger" role="alert">
+        Wrong account information password please try again.
+      </div>
+      {%endif%}
+
+      
       <!-- /.login-logo -->
       <div class="card">
         <div class="card-body login-card-body">
           <p class="login-box-msg">Sign in to start your session</p>
 
-          <form action="login.php" method="post">
+          <form action="/login" method="POST">
             <div class="input-group mb-3">
               <input type="text" class="form-control" name="username" placeholder='Username' required>
               <div class="input-group-append">

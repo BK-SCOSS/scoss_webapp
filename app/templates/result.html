@@ -8,66 +8,21 @@
           </div>
           <!-- /.card-header -->
           <div class="card-body table-responsive p-0">
-            <table class="table table-hover table-bordered">
+            <table id="usersTable" class="table table-hover table-bordered">
                 <tr>
-            
-                    <th>Source1</th>
-                    
-                    <th>Source2</th>
-                    
-                    <th>CountOperator</th>
-                    
-                    <th>SetOperator</th>
-        
-                    <th>HashOperator</th>
-        
-                    <th>TokenBasedMetric</th>
-        
-                    <th>Average</th>
+                    {%for head in heads%}
+                    <th>{{head}} <i class="fa fa-sort"></i></th>
+                    {%endfor%}
                 </tr>
-                <tr>
-                
-                <td>Vien</a></td>
-                <td>Thai</a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-                
-                <td></td>
+                {%for link in links%}
+                <tr class="item">
+                <td>{{link['source1']}}</a></td>
+                <td>{{link['source2']}}</a></td>
+                {%for metric in link['scores'] %}
+                <td><a href=""  target="_blank" >{{link['scores'][metric]}}</a></td>
+                {%endfor%}
                 </tr>
-                
-                <td>Ngoc</a></td>
-                <td>Thai</a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(108, 0, 0)">42.42%</span></a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-                
-                <td></td>
-                </tr>
-                
-                <td>Ngoc</a></td>
-                <td>Vien</a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
-                
-                <td><a href="#"  target="_blank" ><span style="color: rgb(255, 0, 0)">100.00%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-        
-                <td><a href="#"  target="_blank" ><span style="color: rgb(154, 0, 0)">60.42%</span></a></td>
-                
-                <td></td>
-                </tr>
+                {%endfor%}
             </table>
           </div>
           <!-- /.card-body -->

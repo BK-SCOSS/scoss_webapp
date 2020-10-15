@@ -3,13 +3,20 @@
     <div class="row">
       <div class="col-12">
         <div class="card">
+          {%if info == 'wrong'%}
+          <div class="alert alert-danger" role="alert">
+            The contest name may already exist.
+          </div>
+          {%endif%}
           <div class="card-header">
             <h3 class="card-title">Contest</h3>
             <div class="card-tools">
               <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-contest">Create</a>
             </div>
           </div>
+
           <!-- /.card-header -->
+          {% if data|length > 0 %}
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
               <tr>
@@ -17,29 +24,16 @@
                 <th>Name</th>
                 <th>Author</th>
               </tr>
+              {%for context in data%}
               <tr>
-                <td>Mid1</td>
-                <td><a href="problem">Midterm 2019</a></td>
-                <td>Maria Anders</td>
+                <td>{{loop.index}}</td>
+                <td><a href="/problem?contest_name={{context['contest_name']}}">{{context['contest_name']}}</a></td>
+                <td>{{context['contest_author']}}</td>
               </tr>
-              <tr>
-                <td>Fin1</td>
-                <td><a href="#">Finalterm 2019</a></td>
-                <td>Mexico</td>
-              </tr>
-              <tr>
-                <td>Mid2</td>
-                <td><a href="#">Midterm 2020</a></td>
-                <td>Austria</td>
-              </tr>
-              <tr>
-                <td>Fin2</td>
-                <td><a href="#">Finalterm 2020</a></td>
-                <td>UK</td>
-              </tr>
+              {%endfor%}
             </table>
           </div>
-          <!-- /.card-body -->
+          {%endif%}
         </div>
       </div>
     </div>
@@ -54,18 +48,23 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="form-group row">
-            <label for="username" class="col-sm-2 control-label">Contest</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" id="username" placeholder="username">
-              <input type="hidden" name="author" value="">
-              <input type="hidden" name="time" value="">
-            </div>
-          </div>
+          <form action="/contest" class="form-horizontal" method="POST">
+						<div class="form-group row">
+              <div class="col-sm-3">
+								<label for="cname"><b>Contest name: </b></label>
+							</div>
+							<div class="col-sm-7">
+								<input type="text" placeholder="Enter contest name" name="contest_name" required>						
+							</div>
+							<div class="col-sm-2">
+								<input type="submit" class="btn btn-primary" value="Create">
+							</div>
+						</div>		
+					</form>
         </div>
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-primary" value="Create">Save changes</button>
         </div>
       </div>
       <!-- /.modal-content -->

@@ -3,6 +3,11 @@
     <div class="row">
       <div class="col-12">
         <div class="card">
+			{%if info == 'wrong'%}
+			<div class="alert alert-danger" role="alert">
+			  The problem name may already exist.
+			</div>
+			{%endif%}
           <div class="card-header">
 			<h3 class="card-title">Contest A - List problem</h3>
 			<div class="card-tools">
@@ -18,35 +23,31 @@
 				</form>
 			</div>
           </div>
-          <!-- /.card-header -->
+		  <!-- /.card-header -->
+		  {%if data|length > 0%}
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
                 <tr>
 					<th style="width: 4em;">#</th>
 					<th>Name</th>
-                </tr>
-                <tr>
-					<td>Mid1</td>
-					<td><a href="source">Problem A</a></td>
-                </tr>
-                <tr>
-					<td>Fin1</td>
-					<td><a href="#">Problem B</a></td>
-                </tr>
-                <tr>
-					<td>Mid2</td>
-					<td><a href="#">Problem C</a></td>
-                </tr>
+				</tr>
+				{%for content in data%}
                 <tr>
 					<td>Fin2</td>
 					<td><a href="#">Problem D</a></td>
 				</tr>
 				<tr>
+					<td>{{loop.index}}</td>
+					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
+                </tr>
+				{%endfor%}
+				<tr>
 					<td><a href="#" id="create-problem" onclick="createProblem()">Add new problem</a></td>
 					<td id="problem-name"></td>
-                </tr>
+				</tr>
             </table>
-          </div>
+		  </div>
+		  {%endif%}
           <!-- /.card-body -->
         </div>
       </div>
@@ -146,7 +147,7 @@
 			const col2 = document.createElement('div')
 
 			form.method = "POST"
-			form.action = ""
+			form.action = "/problem?contest_name={{contest_name}}"
 			form.className = "form-horizontal"
 
 			row.className = "form-group row"
@@ -154,7 +155,7 @@
 			col2.className = "col-sm-2"
 
 			input.className = "form-control"
-			input.name = "problem"
+			input.name = "problem_name"
 
 			submit.type = 'submit'
 			submit.className = 'btn btn-primary'

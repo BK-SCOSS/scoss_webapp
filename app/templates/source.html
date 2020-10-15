@@ -7,30 +7,27 @@
             <h3 class="card-title">Sources</h3>
           </div>
           <!-- /.card-header -->
+          {%if data|length > 0%}
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
               <tr>
                 <th style="width: 4em;">#</th>
                 <th>Name</th>
               </tr>
+              {%for da in data%}
               <tr>
-                <td>Mid1</td>
-                <td><a href="#">a.cpp</a></td>
+                <td>{{loop.index}}</td>
+                {%if da['mask'] == ''%}
+                <td><a href="#">{{da['file']}}</a></td>
+                {%else%}
+                <td><a href="#">{{da['mask']}}</a></td>
+                {%endif%}
               </tr>
-              <tr>
-                <td>Fin1</td>
-                <td><a href="#">b.java</a></td>
-              </tr>
-              <tr>
-                <td>Mid2</td>
-                <td><a href="#">c.py</a></td>
-              </tr>
-              <tr>
-                <td>Fin2</td>
-                <td><a href="#">d.c</a></td>
-              </tr>
+              {%endfor%}
+            
             </table>
           </div>
+          {%endif%}
           <!-- /.card-body -->
         </div>
       </div>
@@ -40,29 +37,135 @@
       <div class="col-sm-6">
         <div class="card card-info">
           <div class="card-header">
-            <h3 class="card-title">Add source</h3>
+            <h3 class="card-title">Add File</h3>
           </div>
           <!-- /.card-header -->
           <div class="card-body">
-            
-            <form action="" class="form-horizontal">
-              <div class="form-group row">
-                <div class="col-sm-3">
-                  <label for="cname"><b>Add <source>: </b></label>
-                </div>
-                <div class="col-sm-7">
-                  <input type="text" placeholder="Enter contest name" name="cname" required>						
-                  <input type="hidden" name="author" value="">
-                  <input type="hidden" name="time" value="">
-                </div>
-                <div class="col-sm-2">
-                  <input type="submit" class="btn btn-primary" name="submit" value="Create">
-                </div>
-              </div>		
+            <form action="">
+                <div class="form-group row">
+                    <div class="col-sm-3">
+                        <label for="">Add from zip</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="file" name="contestFile">
+                    </div>
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+                    </div>						
+                    </div>		
+            </form>
+            <form action="/add_file?problem_name={{problem_name}}&contest_name={{contest_name}}" enctype="multipart/form-data" method="POST">
+                <div class="form-group row">
+                    <div class="col-sm-3">
+                        <label for="">Add file:</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="file" name="file">
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="">Name:</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="text" name="mask" id="">
+                    </div>
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">						
+                    </div>						
+                    </div>		
             </form>
           </div>
         </div>	
       </div>
+      <div class="col-sm-6">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">Run contest</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+
+            <form action="/run?problem_name={{problem_name}}&contest_name={{contest_name}}" method="POST">
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                    <input class="custom-control-input" type="checkbox" id="countCheckBox">
+                                    <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                    <input type="number" class="form-control" id="countOperator" name="count_operator" min="1" max="100" disabled>        
+                            </div>
+                        </div>
+                    </div>	
+                </div>
+
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="setCheckBox">
+                                <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="setOperator" name="set_operator" min="1" max="100" disabled> 
+                            </div>
+                        </div>
+                    </div>	
+                </div>
+
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="hashCheckBox">
+                                <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>        	
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="1" max="100" disabled>	
+                            </div>
+                        </div>
+                    </div>	
+                </div>
+
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="custom-control-input" type="checkbox" id="smossCheckBox">
+                                <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+                            </div>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" id="smossMetric" name="smoss_metric" min="1" max="100" disabled>
+                            </div>
+                        </div>
+                    </div>	
+                </div>
+        
+                <div class="row">
+                    <input type="submit" class="btn btn-primary" name="run" value="Run">
+                </div>
+            </form>
+            </div>
+        </div>	
+    </div>
     </div>
 
-{% include "footer.html" %}
+    <script type="text/javascript">
+        document.getElementById('countCheckBox').onchange = function() {
+            document.getElementById('countOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('setCheckBox').onchange = function() {
+            document.getElementById('setOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('hashCheckBox').onchange = function() {
+            document.getElementById('hashOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('smossCheckBox').onchange = function() {
+            document.getElementById('smossMetric').disabled = !this.checked;
+        };
+    </script>
+</body>
+</html>
