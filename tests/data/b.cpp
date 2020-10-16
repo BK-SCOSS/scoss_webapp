@@ -11,3 +11,4 @@ void main()
     printf("Tong la: %d\n", s);
     getch();
 }
+

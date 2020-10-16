@@ -315,17 +315,16 @@ class Scoss():
                 for new_match in matches_alignment:
                     if new_match['source1'] == match['source1'] and \
                         new_match['source2'] == match['source2'] :
-                        # print(new_match)
-                        for metric, score in new_match['scores'].items():
+                        for metric, alignment in new_match['scores'].items():
                             data1 = self.__sources[dic['source1']].source_str
                             data2 = self.__sources[dic['source2']].source_str
                 
                             data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1.split('\n')]
                             data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2.split('\n')]
+
                             html1 = ''
                             html2 = ''
-                            # print(data1)
-                            for line in score:
+                            for line in alignment:
                                
                                 if line[0] == -1 :
                                 
@@ -351,9 +350,9 @@ class Scoss():
                                         temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                                     else:
-                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-2] + '</pre>'
+                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                         html1 += temp1
-                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-2] + '</pre>'
+                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                             name_file = 'comparison_' + str(index_file) +'.html'
                             index_file += 1
