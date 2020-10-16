@@ -2,14 +2,17 @@ from __future__ import absolute_import
 
 from scoss.metrics import MetricList, Metric, all_metrics
 from scoss.metrics.token_based_metric import *
+from scoss.utils import check_language
 from sctokenizer import Source
 from jinja2 import Environment
 from collections import OrderedDict
+
 import pandas as pd
 import os
 import glob
 import enum
 import time
+
 class ScossState(enum.Enum):
     INIT = 0 
     RUNNING = 1 
@@ -25,10 +28,10 @@ class Scoss():
             lang:
             used_metrics:
         """
-        Scoss.__id= 1
+        Scoss.__id += 1
         self.id = Scoss.__id
 
-        self.__lang = lang
+        self.__lang = check_language(lang)
         self.__state = ScossState.INIT
         self.__thresholds = OrderedDict()
        
@@ -42,7 +45,8 @@ class Scoss():
 
         self.__similarity_matrix = dict()
         self.__alignment_matrix = dict()
-    def get_lang(self):
+
+    def get_language(self):
         return self.__lang
 
     def set_metric_threshold(self, metric_name, threshold: float):
@@ -82,7 +86,7 @@ class Scoss():
     def add_file(self, file, mask=None):
         if mask is None:
             mask = file
-        if mask in self.__sources.keys() or mask in self.__pending_pool:
+        if mask in self.__sources.keys() or mask in self.__pending_pool.keys():
             raise ValueError(f'mask:{mask} is already exist')
         src = Source.from_file(file, lang=self.__lang)
         src.name = mask
@@ -139,8 +143,9 @@ class Scoss():
         """
         self.__state = ScossState.RUNNING
 
-        # if self.__metric_list is None:
-        #     self.__metric_list = MetricList(all_metrics)
+        if self.__metric_list.get_number_of_metrics() == 0:
+            self.__metric_list = MetricList(all_metrics)
+            
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
             scores = self.check_similarity(src)
@@ -310,17 +315,16 @@ class Scoss():
                 for new_match in matches_alignment:
                     if new_match['source1'] == match['source1'] and \
                         new_match['source2'] == match['source2'] :
-                        # print(new_match)
-                        for metric, score in new_match['scores'].items():
+                        for metric, alignment in new_match['scores'].items():
                             data1 = self.__sources[dic['source1']].source_str
                             data2 = self.__sources[dic['source2']].source_str
                 
                             data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1.split('\n')]
                             data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2.split('\n')]
+
                             html1 = ''
                             html2 = ''
-                            # print(data1)
-                            for line in score:
+                            for line in alignment:
                                
                                 if line[0] == -1 :
                                 
@@ -346,9 +350,9 @@ class Scoss():
                                         temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                                     else:
-                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-2] + '</pre>'
+                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                         html1 += temp1
-                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-2] + '</pre>'
+                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                             name_file = 'comparison_' + str(index_file) +'.html'
                             index_file += 1

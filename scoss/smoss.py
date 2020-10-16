@@ -1,12 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+    code-similarity.smoss
+    ~~~~~~~~~~~~~~~~~~~~~
+
+    the implement base on mosspy: https://github.com/soachishti/moss.py
+"""
+
 import os
 import glob
 import enum
-import mosspy 
 import time
 import pandas as pd
+import socket
 from collections import OrderedDict
 from bs4 import BeautifulSoup
 from jinja2 import Environment
+from sctokenizer import Source
+
+from scoss.utils import check_language
+
 try:
     from urllib.request import urlopen
 except ImportError:
@@ -19,48 +31,143 @@ class SMossState(enum.Enum):
 
 class SMoss():
     __id = 0
+    server = 'moss.stanford.edu'
+    port = 7690
+    languages = (
+            "c",
+            "cc",
+            "java",
+            "ml",
+            "pascal",
+            "ada",
+            "lisp",
+            "scheme",
+            "haskell",
+            "fortran",
+            "ascii",
+            "vhdl",
+            "verilog",
+            "perl",
+            "matlab",
+            "python",
+            "mips",
+            "prolog",
+            "spice",
+            "vb",
+            "csharp",
+            "modula2",
+            "a8086",
+            "javascript",
+            "plsql")
 
     def __init__(self, lang, userid=43511):
         
-        SMoss.__id = 1
+        SMoss.__id += 1
         self.id = SMoss.__id
 
         self.__userid = userid
-        if lang == 'cpp':
-            lang = 'cc'
-        self.__lang = lang
+
+        self.__lang = check_language(lang)
         self.__state = SMossState.INIT
         self.__threshold = 0
-        self.__pending_pool = OrderedDict()
+        self.__sources = OrderedDict()
 
         self.__matches = []
         self.__similarity_matrix = dict()
         self.__matches_file = dict()
-    def get_lang(self):
+
+        self.__options = {
+                    "l": "c",
+                    "m": 10,
+                    "d": 0,
+                    "x": 0,
+                    "c": "",
+                    "n": 250
+                }
+
+        if self.__lang in self.languages:
+            self.__options["l"] = self.__lang
+
+        self.__base_files = OrderedDict()
+
+    def get_language(self):
         return self.__lang
+
+    def get_options(self):
+        return self.__options
+
+    def set_ignore_limit(self, limit):
+        self.__options['m'] = limit
+
+    def set_comment_string(self, comment):
+        self.__options['c'] = comment
+
+    def set_number_of_matching_files(self, n):
+        if n > 1:
+            self.__options['n'] = n
+
+    def set_directory_mode(self, mode):
+        self.__options['d'] = mode
+
+    def set_experimental_server(self, opt):
+        self.__options['x'] = opt
+
     def set_threshold(self, threshold: float):
         self.__threshold = threshold
-    
-    def add_file(self, file, mask=None):
-        if self.__state != SMossState.CLOSE:
-            if mask is None:
-                mask = file
-            if mask in self.__pending_pool.keys():
-                raise ValueError(f'mask:{mask} is already exist')
-            self.__pending_pool[mask] = file
-        else:
+
+    def add_base_file(self, file, mask=None):
+        if self.__state != SMossState.INIT:
             raise ValueError('Cannot add file after running')
+        if mask is None:
+            mask = file
+        if os.path.isfile(file) and os.path.getsize(file) > 0:
+            src = Source.from_file(file, lang=self.__lang, name=mask)
+            self.__base_files[mask] = src
+        else:
+            raise Exception("addBaseFile({}) => File not found or is empty.".format(file))
+    
+    def add_base_source_str(self, source_str, mask):
+        if self.__state != SMossState.INIT:
+            raise ValueError('Cannot add file after running')
+        if mask in self.__sources.keys():
+            raise ValueError(f'mask:{mask} is already exist')
+        src = Source.from_str(source_str, lang=self.__lang)
+        self.__sources[mask] = src
+
+    def add_file(self, file, mask=None):
+        if self.__state != SMossState.INIT:
+            raise ValueError('Cannot add file after running')
+        if mask is None:
+            mask = file
+        if mask in self.__sources.keys():
+            raise ValueError(f'mask:{mask} is already exist')
+        src = Source.from_file(file, lang=self.__lang, name=mask)
+        self.__sources[mask] = src
 
     def update_file(self, file, mask=None):
-        if self.__state != SMossState.CLOSE:
-            if mask is None:
-                mask = file
-            self.__pending_pool[mask] = file
-        else:
-            raise ValueError('Cannot update file after running')
+        if self.__state != SMossState.INIT:
+            raise ValueError('Cannot add file after running')
+        if mask is None:
+            mask = file
+        src = Source.from_file(file, lang=self.__lang, name=mask)
+        self.__sources[mask] = src
+
+    def add_source_str(self, source_str, mask):
+        if self.__state != SMossState.INIT:
+            raise ValueError('Cannot add file after running')
+        if mask in self.__sources.keys():
+            raise ValueError(f'mask:{mask} is already exist')
+        src = Source.from_str(source_str, lang=self.__lang)
+        self.__sources[mask] = src
+
+    def update_source_str(self, source_str, mask):
+        if self.__state != SMossState.INIT:
+            raise ValueError('Cannot add file after running')
+        src = Source.from_str(source_str, lang=self.__lang)
+        self.__sources[mask] = src
 
     def add_file_by_wildcard(self, dirpath, recursive=True):
-        if self.__state != SMossState.CLOSE:
+        if self.__state == SMossState.INIT:
             for file in glob.glob(dirpath, recursive=recursive):
                 self.add_file(file)
         else:
@@ -151,12 +258,56 @@ class SMoss():
             #     file.write(big_html_string)
             i += 3
 
+    def upload_file(self, s, src, mask, file_id, on_send):
+        bin_str = src.source_str.encode() 
+        size = len(bin_str)
+        message = "file {0} {1} {2} {3}\n".format(
+            file_id,
+            self.__options['l'],
+            size,
+            mask
+        )
+        s.send(message.encode())
+        s.send(bin_str)
+        on_send(src)
+
+    def send(self, on_send=lambda src: None):
+        s = socket.socket()
+        s.connect((self.server, self.port))
+
+        s.send("moss {}\n".format(self.__userid).encode())
+        s.send("directory {}\n".format(self.__options['d']).encode())
+        s.send("X {}\n".format(self.__options['x']).encode())
+        s.send("maxmatches {}\n".format(self.__options['m']).encode())
+        s.send("show {}\n".format(self.__options['n']).encode())
+        s.send("language {}\n".format(self.__options['l']).encode())
+
+        recv = s.recv(1024)
+
+        if recv == "no":
+            s.send(b"end\n")
+            s.close()
+            raise Exception("send() => Language not accepted by server")
+
+        for mask, src in self.__base_files.items():
+            self.upload_file(s, src, mask, 0, on_send)
+
+        index = 1
+        for mask, src in self.__sources.items():
+            self.upload_file(s, src, mask, index, on_send)
+            index += 1
+
+        s.send("query 0 {}\n".format(self.__options['c']).encode())
+
+        response = s.recv(1024)
+
+        s.send(b"end\n")
+        s.close()
+        return response.decode().replace("\n","")
+
     def run(self):
         if self.__state != SMossState.CLOSE:
-            m = mosspy.Moss(self.__userid, self.__lang)
-            for mask, file in self.__pending_pool.items():
-                m.addFile(file, mask)
-            url = m.send()
+            url = self.send()
             if url == '':
                 raise ValueError("MOSS Server returned empty url. Please check userid.")
             self.parse_html_table(url)
@@ -219,14 +370,3 @@ class SMoss():
     def add_metric(self, metric, threshold: float=0.0, exist_ok=False):
         raise ValueError("smoss doesn't support this function.")
 
-    def add_source_str(self, source_str, mask):
-        raise ValueError("smoss doesn't support this function.")
-
-    def update_source_str(self, source_str, mask):
-        raise ValueError("smoss doesn't support this function.")
-
-    def check_similarity(self, src):
-        raise ValueError("smoss doesn't support this function.")
-
-    def align_source(self, src):
-        raise ValueError("smoss doesn't support this function.")
