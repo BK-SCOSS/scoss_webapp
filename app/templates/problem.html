@@ -24,13 +24,14 @@
 			</div>
           </div>
 		  <!-- /.card-header -->
-		  {%if data|length > 0%}
+		  
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
                 <tr>
 					<th style="width: 4em;">#</th>
 					<th>Name</th>
 				</tr>
+				{%if data|length > 0%}
 				{%for content in data%}
                 <tr>
 					<td>Fin2</td>
@@ -41,85 +42,86 @@
 					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
                 </tr>
 				{%endfor%}
+				{%endif%}
 				<tr>
-					<td><a href="#" id="create-problem" onclick="createProblem()">Add new problem</a></td>
-					<td id="problem-name"></td>
+					<td>#</td>
+					<td id="problem-name"><a href="#" id="create-problem" onclick="createProblem()">Add new problem</a></td>
 				</tr>
             </table>
 		  </div>
-		  {%endif%}
           <!-- /.card-body -->
         </div>
       </div>
     </div>
    
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="card card-info">
-					<div class="card-header">
-						<h3 class="card-title">Run contest</h3>
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="card card-info">
+				<div class="card-header">
+					<h3 class="card-title">Run contest</h3>
+				</div>
+				<!-- /.card-header -->
+				<form class="form-horizontal">
+					<div class="card-body">
+						<div class="row">
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="countCheckBox">
+										<label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="countOperator" name="countOperator" min="1" max="100" value="0" disabled>        
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-2"></div>
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="setCheckBox">
+										<label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="setOperator" name="setOperator" min="1" max="100" value="0" disabled> 
+									</div>
+								</div>
+							</div>		
+						</div>
+
+						<div class="row">
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="hashCheckBox">
+										<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="hashOperator" name="hashOperator" min="1" max="100" value="0" disabled>	
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-2"></div>
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="tokenCheckBox">
+										<label for="tokenCheckBox" class="custom-control-label"><b>TokenBasedMetric: </b></label>        
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="tokenBasedMetric" name="tokenBasedMetric" min="1" max="100" value="0" disabled>
+									</div>
+								</div>
+							</div>		
+						</div>
 					</div>
-					<!-- /.card-header -->
-					<form class="form-horizontal">
-						<div class="card-body">
-							<div class="row">
-								<div class="col-sm-5">
-									<div class="form-group row">
-										<div class="custom-control custom-checkbox col-sm-6">
-											<input class="custom-control-input" type="checkbox" id="countCheckBox">
-											<label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
-										</div>
-										<div class="col-sm-6">
-											<input type="number" class="form-control" id="countOperator" name="countOperator" min="1" max="100" value="0" disabled>        
-										</div>
-									</div>
-								</div>
-								<div class="col-sm-2"></div>
-								<div class="col-sm-5">
-									<div class="form-group row">
-										<div class="custom-control custom-checkbox col-sm-6">
-											<input class="custom-control-input" type="checkbox" id="setCheckBox">
-											<label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
-										</div>
-										<div class="col-sm-6">
-											<input type="number" class="form-control" id="setOperator" name="setOperator" min="1" max="100" value="0" disabled> 
-										</div>
-									</div>
-								</div>		
-							</div>
-	
-							<div class="row">
-								<div class="col-sm-5">
-									<div class="form-group row">
-										<div class="custom-control custom-checkbox col-sm-6">
-											<input class="custom-control-input" type="checkbox" id="hashCheckBox">
-											<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
-										<div class="col-sm-6">
-											<input type="number" class="form-control" id="hashOperator" name="hashOperator" min="1" max="100" value="0" disabled>	
-										</div>
-									</div>
-								</div>
-								<div class="col-sm-2"></div>
-								<div class="col-sm-5">
-									<div class="form-group row">
-										<div class="custom-control custom-checkbox col-sm-6">
-											<input class="custom-control-input" type="checkbox" id="tokenCheckBox">
-											<label for="tokenCheckBox" class="custom-control-label"><b>TokenBasedMetric: </b></label>        
-										</div>
-										<div class="col-sm-6">
-											<input type="number" class="form-control" id="tokenBasedMetric" name="tokenBasedMetric" min="1" max="100" value="0" disabled>
-										</div>
-									</div>
-								</div>		
-							</div>
-						</div>
-						<div class="card-footer">	
-							<input type="submit" class="btn btn-primary" name="run" value="Run">
-						</div>
-					</form>
-				</div>	
-			</div>
+					<div class="card-footer">	
+						<input type="submit" class="btn btn-primary" name="run" value="Run">
+						<input type="button" class="btn btn-default" name="result" value="Result">
+					</div>
+				</form>
+			</div>	
 		</div>
+	</div>
 
     <script type="text/javascript">
         document.getElementById('countCheckBox').onchange = function() {
@@ -169,6 +171,9 @@
 			row.appendChild(col2)
 
 			form.appendChild(row)
+
+			link = document.getElementById('create-problem').remove()
+			
 			document.getElementById('problem-name').appendChild(form)
 		}
     </script>

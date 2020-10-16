@@ -21,24 +21,25 @@ def contest():
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
-				contest_author = session['username']
+				contest_author = session['user_id']
 				info = request.args.get('info')
-				params = {'contest_author': contest_author}
-				url = URL + '/api/contest'
+				role = session['role']
+				params = {'contest_author': contest_author, 'role': role}
+				url = URL + '/api/contests'
 				data = requests.get(url=url, params=params)
-				print(data.json())
-				return render_template('contest.html', data=data.json()['data'], info=info)
+				# print(data.json())
+				return render_template('contest.html', data=data.json()['data'], info=info, role=role)
 			else: 
 				print(request.form)
 				contest_name = request.form['contest_name']
-				data_form = {'contest_name': contest_name, 'contest_author': session['username']}
-				url = URL + '/api/contest'
+				data_form = {'contest_name': contest_name, 'contest_author': session['user_id']}
+				url = URL + '/api/contests/add'
 				req = requests.post(url=url,data=data_form)
 				if 'contest_name' in req.json().keys():
-					return redirect(url_for('contest'))
+					return redirect(url_for('contest_page.contest'))
 				else:
-					return redirect(url_for('contest', info='wrong'))
+					return redirect(url_for('contest_page.contest', info='wrong'))
 		else:
-			return redirect(url_for('login'))
+			return redirect(url_for('login.login_page'))
 	else: 
-		return redirect(url_for('login'))
+		return redirect(url_for('login.login_page'))

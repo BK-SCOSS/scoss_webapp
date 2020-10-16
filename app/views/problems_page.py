@@ -123,7 +123,7 @@ def problem():
 				params = {'contest_name': contest_name}
 				url = URL + '/api/problem'
 				req = requests.get(url=url, params=params)
-				return render_template('problem.html', contest_name=contest_name,info=info, data=req.json()['problems'])
+				return render_template('problem.html')
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
 				contest_name = request.args.get('contest_name')

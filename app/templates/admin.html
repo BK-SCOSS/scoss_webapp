@@ -17,27 +17,15 @@
               <th>Username</th>
               <th class="text-center" style="width: 150px;"></th>
             </tr>
+            {% for user in data %}
             <tr>
-              <td>1</td>
-              <td><a>Bùi Hồng Ngọc</a></td>
+              <td>{{loop.index}}</td>
+              <td><a>{{ user['username'] }}</a></td>
               <td class="text-center py-0 align-middle">
-                <a href="#" class="btn btn-danger"><i class="fas fa-trash"></i></a>
+                <a href="#" class="btn btn-danger btn-delete" user_id="{{user['user_id']}}"><i class="fas fa-trash"></i></a>
               </td>
             </tr>
-            <tr>
-              <td>2</td>
-              <td><a>Trần Văn Viên</a></td>
-              <td class="text-center py-0 align-middle">
-                <a href="#" class="btn btn-danger"><i class="fas fa-trash"></i></a>
-              </td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td><a>Đỗ Đức Thái</a></td>
-              <td class="text-center py-0 align-middle">
-                <a href="#" class="btn btn-danger"><i class="fas fa-trash"></i></a>
-              </td>
-            </tr>
+            {% endfor %}
           </table>
         </div>
         <!-- /.card-body -->

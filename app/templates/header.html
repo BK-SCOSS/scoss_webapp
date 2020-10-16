@@ -42,30 +42,38 @@
           <a href="api" class="nav-link">APIS</a>
         </li>
         <!-- Chỉ admin mới thấy -->
+        {% if session['role'] == 0 %}
         <li class="nav-item d-none d-sm-inline-block">
           <a href="admin" class="nav-link">Admin</a>
         </li>
+        {% endif %}
       </ul>
 
       <!-- Right navbar links -->
       <ul class="navbar-nav ml-auto">
+        {% if session['logged_in'] != True %}
         <li class="nav-item">
           <a class="nav-link" href="/login">Login</a>
         </li>
+        {% endif %}
+        {% if session['logged_in'] == True %}
         <li class="nav-item dropdown">
           <a id="dropdownSubMenu1" class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
             <i class="far fa-user"></i>
           </a>
           <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
+            <p class="dropdown-header">Hello {{ session['username'] }}</p>
+            <div class="dropdown-divider"></div>
             <li><a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-default">Update password </a></li>
             <li><a href="/logout" class="dropdown-item">Logout</a></li>
           </ul>
         </li>
+        {% endif %}
       </ul>
     </div>
   </nav>
   <!-- /.navbar -->
-
+  {% if session['logged_in'] == True %}
   <div class="modal fade" id="modal-default" style="display: none;" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -98,7 +106,7 @@
     </div>
     <!-- /.modal-dialog -->
   </div>
-
+  {% endif %}
   <div class="content-wrapper">
     <div class="content-header">
     </div>

@@ -23,12 +23,24 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Author</th>
+                <th>Status</th>
+                {% if session['role'] == 0 %}
+                <th></th>
+                {% endif %}
               </tr>
               {%for context in data%}
               <tr>
                 <td>{{loop.index}}</td>
                 <td><a href="/problem?contest_name={{context['contest_name']}}">{{context['contest_name']}}</a></td>
-                <td>{{context['contest_author']}}</td>
+                <td>{{context['contest_author']}}{{role}}</td>
+                <td class="project-state">
+                  <span class="badge badge-success">{{context['contest_status']}}</span>
+                </td>
+                {% if session['role'] == 0 %}
+                <td class="text-center py-0 align-middle">
+                  <a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i class="fas fa-trash"></i></a>
+                </td>
+                {% endif %}
               </tr>
               {%endfor%}
             </table>
@@ -48,7 +60,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <form action="/contest" class="form-horizontal" method="POST">
+          <form action="/contest" class="form-horizontal" method="POST" id="create-contest-form">
 						<div class="form-group row">
               <div class="col-sm-3">
 								<label for="cname"><b>Contest name: </b></label>
@@ -56,15 +68,12 @@
 							<div class="col-sm-7">
 								<input type="text" placeholder="Enter contest name" name="contest_name" required>						
 							</div>
-							<div class="col-sm-2">
-								<input type="submit" class="btn btn-primary" value="Create">
-							</div>
 						</div>		
 					</form>
         </div>
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" value="Create">Save changes</button>
+          <button type="submit" class="btn btn-primary" value="Create" form="create-contest-form">Create</button>
         </div>
       </div>
       <!-- /.modal-content -->
@@ -72,4 +81,41 @@
     <!-- /.modal-dialog -->
   </div>
 
-  {% include "footer.html" %}
+
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+  <!-- Bootstrap 4 -->
+  <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+  <!-- AdminLTE App -->
+  <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+
+  <script>
+    $(document).ready(function() {
+      $.ajaxSetup({
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      });
+
+      $(document).on("click",".btn-delete",function(){
+        contest_id = $(this).attr('contest_id');
+        if(confirm("Bạn chắc chắn muốn xóa chứ?")){
+          $.ajax({
+            type: "DELETE",
+            contentType: 'application/json',
+            url: "/api/contests/" + contest_id,
+            success: function (data) {
+              console.log('success')
+              alert(data['info'])
+              location.reload()
+            },
+            error: function (data) {
+              console.log('Error:', data['info']);
+            }
+          });
+        }
+      });
+    })
+  </script>
+
+</body></html>
