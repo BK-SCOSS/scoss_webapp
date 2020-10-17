@@ -24,5 +24,3 @@ int main()
     int a = 123;
     std::cout << endl;
 }
-
-

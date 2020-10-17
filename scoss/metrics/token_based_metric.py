@@ -31,9 +31,10 @@ class TokenBasedMetric(Metric):
         return 1.0
 
     def compact_line(self, tokens):
-        lines = [[] for _ in range(tokens[-1].line + 1)]
+        lines = [[] for _ in range(tokens[-1].line)]
         for token in tokens:
-            lines[token.line].append(token)
+            lines[token.line-1].append(token)
+
         return lines
 
     def is_equal_tokens(self, tokens1, tokens2):
@@ -59,9 +60,9 @@ class TokenBasedMetric(Metric):
         diff_matrix = [[0]*(m+1) for _ in range(n+1)]
         d = [[0]*(m+1) for _ in range(n+1)]
 
-        for i in range(1, n):
-            for j in range(1, m):
-                diff_matrix[i][j] = self.line_diff(lines1[i], lines2[j])
+        for i in range(1, n+1):
+            for j in range(1, m+1):
+                diff_matrix[i][j] = self.line_diff(lines1[i-1], lines2[j-1])
 
         for i in range(n+1):
             d[i][0] = i
@@ -74,15 +75,15 @@ class TokenBasedMetric(Metric):
                               d[i-1][j-1] + 1 - diff_matrix[i][j])
 
         diff = []
-        i, j = n, m 
+        i, j = n, m
         while i != 0 or j != 0:
-            if d[i][j] == d[i-1][j-1] + 1 - diff_matrix[i][j]:
+            if i > 0 and j > 0 and d[i][j] == d[i-1][j-1] + 1 - diff_matrix[i][j]:
                 diff.append( (i, j, diff_matrix[i][j]) )
                 i, j = i-1, j-1
-            elif d[i][j] == d[i-1][j] + 1:
+            elif i > 0 and d[i][j] == d[i-1][j] + 1:
                 diff.append( (i, -1, -1) )
                 i, j = i-1, j
-            elif d[i][j] == d[i][j-1] + 1:
+            elif j > 0 and d[i][j] == d[i][j-1] + 1:
                 diff.append( (-1, j, -1) )
                 i, j = i, j-1
 

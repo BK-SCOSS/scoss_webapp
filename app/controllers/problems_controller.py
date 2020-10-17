@@ -6,93 +6,152 @@ import os
 from werkzeug.utils import secure_filename
 import shutil
 from models.models import *
-
+from zipfile import ZipFile
+from controllers.task_queue import tq
 problems_controller = Blueprint('problems_controller', __name__)
 
-@problems_controller.route('/api/problem', methods = ['GET', 'POST', 'PUT', 'DELETE'])
-def problem():
-    if request.method == 'GET':
-        contest_name = request.args.get('contest_name')
-        req = Problem.objects(contest_name=contest_name)
+@problems_controller.route('/api/contests/<contest_id>/problems/add', methods = ['POST'])
+def add_problem(contest_id):
+    try:
+        problem_id = str(int(time.time()) * 1000)
+        problem_name = request.json['problem_name']
+        problem_status = 'init'
+        req = Contest.objects.get(contest_id=contest_id)
+        contest_id = contest_id
+        user_id = req.user_id
+        data_problem = Problem.objects(user_id=user_id, contest_id=contest_id, problem_name=problem_name)
+        if len(data_problem) > 0:
+            return jsonify({'error': "The problem name may already exist"}), 400
+        Problem(problem_id=problem_id, problem_name=problem_name, problem_status=problem_status, contest_id=contest_id, user_id=user_id).save()
+        return jsonify({'problem_id': problem_id}), 200
+    except Exception:
+        return jsonify({'error': "Can't add problem"}), 400
+
+@problems_controller.route('/api/contests/<contest_id>/problems', methods = ['GET'])
+def problems(contest_id):
+    try:
+        data_problems = Problem.objects(contest_id=contest_id)
         res = []
-        for data in req:
-            temp = data.to_mongo()
+        for data_problem in data_problems:
+            temp = data_problem.to_mongo()
             del temp['_id']
             res.append(temp)
-        return jsonify({'problems': res}), 200
-    if request.method == 'POST':
-        try:
-            problem_name =request.form['problem_name']
-            contest_name = request.form['contest_name']
-            data = Problem.objects(problem_name=problem_name)
-            if len(data) > 0:
-                for da in data:
-                    if da.problem_name == problem_name and da.contest_name == contest_name:
-                        return jsonify({'info': 'The problem name may already exist'}),400
-            Problem(problem_name=problem_name, contest_name=contest_name).save()
-            return jsonify({'problem_name': problem_name}), 200
-        except Exception:
-            return jsonify({'info': 'The problem name may already exist'}),400
-    if request.method == 'PUT':
-        # print(request.json)
-        problem_name =request.json['problem_name']
-        contest_name = request.json['contest_name']
-        sources = request.json['sources']
-        metrics = request.json['metrics']
-        Problem.objects(problem_name=problem_name, contest_name=contest_name).update(sources=sources, metrics=metrics)
-        return jsonify({'problem_name':problem_name}), 200
-    if request.method == 'DELETE':
-        problem_name= request.form['problem_name']
-        Problem.objects(problem_name=problem_name).delete()
-        info = 'Delete problem' + str(problem_name)
-        return jsonify({'info': info})
+    except Exception:
+        return jsonify({'error': "Can't get problems!"}), 400
+    return jsonify({'contest_id': contest_id,'problems': res}),200
 
-@problems_controller.route('/api/problem_name', methods = ['GET'])
-def problem_name():
-    if request.method == 'GET':
-        problem_name = request.args.get('problem_name')
-        contest_name = request.args.get('contest_name')
-        data = Problem.objects.get(contest_name=contest_name, problem_name=problem_name)
-        res = []
-        temp = data.to_mongo()
-        del temp['_id']
-        res.append(temp)
-        return jsonify({'problem': res}), 200
+@problems_controller.route('/api/problems/<problem_id>', methods = ['GET'])
+def get_problem(problem_id):
+    try:
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        data_doc = {
+            'problem_id': data_problem.problem_id,
+            'problem_name': data_problem.problem_name,
+            'contest_id': data_problem.contest_id,
+            'user_id': data_problem.user_id,
+            'sources': data_problem.sources,
+            'metrics': data_problem.metrics
+        }
+    except Exception:
+        return jsonify({'error': "Can't get problem!"}), 400
+    return jsonify(data_doc),200
 
-@problems_controller.route('/api/problem_metric', methods = ['PUT'])
-def problem_metric():
-    problem_name =request.json['problem_name']
-    contest_name = request.json['contest_name']
+@problems_controller.route('/api/problems/<problem_id>', methods = ['DELETE'])
+def delete_problem(problem_id):
+    try:
+        Problem(problem_id=problem_id).delete()
+        info = 'Delete problem_id' + str(problem_id)
+    except Exception:
+        return jsonify({'error': "Can't delete problem!"}), 400
+    return jsonify({'info':info})
+
+@problems_controller.route('/api/problems/<problem_id>/status', methods = ['PUT'])
+def updata_status(problem_id):
+    try:
+        problem_status = request.json['problem_status']
+        Problem.objects(problem_id=problem_id).update(problem_status=problem_status)
+    except Exception:
+        return jsonify({'error': "Can't update problem_status!"}), 400
+    return jsonify({'problem_id':problem_id}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/status', methods = ['GET'])
+def get_status(problem_id):
+    try:
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        data_doc = {
+            'problem_id': data_problem.problem_id,
+            'problem_name': data_problem.problem_name,
+            'problem_status': data_problem.problem_status
+        }
+    except Exception:
+        return jsonify({'error': "Can't get problem_status!"}), 400
+    return jsonify(data_doc),200
+
+    
+@problems_controller.route('/api/problems/<problem_id>/from_zip', methods = ['POST'])
+def add_zip(problem_id):
+    """
+    folder:
+    ----file1.cpp
+    ----file2.cpp
+    ----file3.cpp
+    """
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        sources = data_problem.sources
+        with ZipFile(request.files['file'], 'r') as zf:
+            zfile = zf.namelist()
+            for file in zfile:
+                data_doc = {
+                    "pathfile": file,
+                    "lang": file.split('.')[-1],
+                    'mask': '',
+                    'source_str': zf.read(file).decode('utf-8')
+                }
+                sources.append(data_doc)
+        Problem.objects(problem_id=problem_id).update(sources=sources)
+    except Exception:
+        return jsonify({"error":"Can't add from zip in problems"}),400
+    return jsonify({'problem_id': problem_id}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/sources/add', methods = ['POST'])
+def add_source(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        sources = data_problem.sources
+        mask = request.form['mask']
+        file = request.files['files']
+        data_doc = {
+            "pathfile": file.filename,
+            "lang": file.filename.split('.')[-1],
+            'mask': '',
+            'source_str': file.read()
+        }
+        sources.append(data_doc)
+        Problem.objects(problem_id=problem_id).update(sources=sources)
+    except Exception:
+        return jsonify({"error":"Can't add file in problems"}),400
+    return jsonify({'problem_id': problem_id}), 200
+
+@problems_controller.route('/api/contests/<contest_id>/problems/<problem_id>/results/scoss', methods = ['PUT'])
+def update_result_scoss(problem_id):
+    try: 
+        similarity_list = request.json['similarity_list']
+        alignment_list = request.json['alignment_list']
+       
+    except Exception:
+        return jsonify({"error":"Can't run problem"}),400
+    return jsonify({'problem_id': problem_id}), 200
+@problems_controller.route('/api/problems/<problem_id>/run', methods = ['POST'])
+def run_source(problem_id):
+    # try: 
+    data_problem = Problem.objects.get(problem_id=problem_id)
     metrics = request.json['metrics']
-    Problem.objects(problem_name=problem_name, contest_name=contest_name).update(metrics=metrics)
-    return jsonify({'problem_name':problem_name}), 200
-
-@problems_controller.route('/api/update_matrix', methods = ['PUT'])
-def update_matrix():
-    problem_name =request.json['problem_name']
-    contest_name = request.json['contest_name']
-    similarity_matrix = request.json['similarity_matrix']
-    aligment_matrix = request.json['aligment_matrix']
-    Problem.objects(problem_name=problem_name, contest_name=contest_name).update(similarity_matrix=similarity_matrix, aligment_matrix=aligment_matrix)
-    return jsonify({'problem_name':problem_name}), 200
-
-@problems_controller.route('/api/update_matrix_smoss', methods = ['PUT'])
-def update_matrix_smoss():
-    problem_name =request.json['problem_name']
-    contest_name = request.json['contest_name']
-    similarity_matrix_smoss = request.json['similarity_matrix_smoss']
-    aligment_matrix_smoss = request.json['aligment_matrix_smoss']
-    Problem.objects(problem_name=problem_name, contest_name=contest_name).update(similarity_matrix_smoss=similarity_matrix_smoss, aligment_matrix_smoss=aligment_matrix_smoss)
-    return jsonify({'problem_name':problem_name}), 200
-
-@problems_controller.route('/api/get_problem')
-def get_problem():
-    contest_name = request.args.get('contest_name')
-    problem_name = request.args.get('problem_name')
-    req = Problem.objects(contest_name=contest_name, problem_name=problem_name)
-    res = []
-    for data in req:
-        temp = data.to_mongo()
-        del temp['_id']
-        res.append(temp)
-    return jsonify(res[0]), 200
+    Problem.objects(problem_id=problem_id).update(metrics=metrics)
+    if len(data_problem) > 0:
+        if data_problem.problem_status in ['init', 'checked']:
+            tq.enqueue_nowait(problem_id)
+    tq.join()
+    # except Exception:
+    #     return jsonify({"error":"Can't run problem"}),400
+    return jsonify({'problem_id': problem_id}), 200
