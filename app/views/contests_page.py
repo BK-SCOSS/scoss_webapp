@@ -39,6 +39,6 @@ def contest():
 				else:
 					return redirect(url_for('contest', info='wrong'))
 		else:
-			return redirect(url_for('login'))
+			return redirect(url_for('login_page.login_page'))
 	else: 
-		return redirect(url_for('login'))
+		return redirect(url_for('login_page.login_page'))

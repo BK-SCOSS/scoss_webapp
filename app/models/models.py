@@ -4,7 +4,7 @@ db = MongoEngine()
 
 class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
-    username = db.StringField()
+    username = db.StringField(required=True, unique=True)
     password = db.StringField()
     role = db.IntField()
 

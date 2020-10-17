@@ -25,11 +25,12 @@ def login_page():
 		params = {'username': username}
 		url = URL + '/api/user'
 		req = requests.get(url=url, params=params)
+		print( check_password_hash(req.json()['password'], password))
 		if 'password' in req.json().keys():
-			if check_password_hash( req.json()['password'], password):
+			if check_password_hash(req.json()['password'], password):
 				session['username'] = username
 				session['logged_in'] = True
-				return redirect(url_for('index'))
+				return redirect(url_for('home_page.index'))
 			else:
 				return render_template('login.html', info='wrong_pass')
 		return render_template('login.html', info='wrong_user')

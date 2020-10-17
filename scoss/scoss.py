@@ -275,7 +275,6 @@ class Scoss():
             HTML1 = f.read()
         with open('./scoss/assets/comparison.html', mode='r') as f:
             HTML2 = f.read()
-
         matches = self.get_matches(or_thresholds, and_thresholds)
         new_matches = []
         for match in matches:
@@ -332,7 +331,14 @@ class Scoss():
                                     temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                     html1 += temp1
                                 elif line[0] != -1 and line[0] != -1:
-                                    
+                                    print("__________________________")
+                                    print(data1)
+                                    print(len(data1))
+                                    print("__________________________")
+                                    print(data2)
+                                    print(len(data2))
+                                    print("__________________________")
+                                    print(line)
                                     index1 = line[0]
                                     index2 = line[1]
                                     if line[2] >=0.25 and line[2] <0.75:
@@ -346,9 +352,9 @@ class Scoss():
                                         temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                                     else:
-                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-2] + '</pre>'
+                                        temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                         html1 += temp1
-                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-2] + '</pre>'
+                                        temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
                                         html2 += temp2
                             name_file = 'comparison_' + str(index_file) +'.html'
                             index_file += 1
