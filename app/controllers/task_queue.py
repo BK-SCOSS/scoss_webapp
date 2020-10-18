@@ -1,6 +1,8 @@
 from queue import Queue, Full
 from threading import Thread
-
+import threading
+import time
+from .similarity_checker import run_problem
 class TaskQueue():
     def __init__(self, do_work, num_workers=4, queue_size=10000):
         self.__queue = Queue(queue_size)
@@ -47,3 +49,4 @@ class TaskQueue():
         """
         self.__queue.join()
 
+tq = TaskQueue(do_work=run_problem, num_workers=4, queue_size=100000)

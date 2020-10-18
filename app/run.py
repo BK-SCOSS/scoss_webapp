@@ -15,6 +15,8 @@ db.init_app(app)
 from controllers.contests_controller import contests_controller
 from controllers.problems_controller import problems_controller
 from controllers.users_controller import users_controller
+from controllers.task_queue import tq
+
 from views.contests_page import contests
 from views.home_page import home
 from views.admin_page import admin
@@ -32,6 +34,12 @@ app.register_blueprint(login)
 app.register_blueprint(problems)
 app.register_blueprint(tests)
 
+
+
 if __name__ == "__main__":
 	app.debug = True
 	app.run(host='0.0.0.0', port=5005)
+
+    
+
+

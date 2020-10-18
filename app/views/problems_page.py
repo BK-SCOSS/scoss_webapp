@@ -2,7 +2,6 @@ import os
 import sys
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint
-from scoss import smoss
 import requests
 from sctokenizer import Source
 from scoss import Scoss
@@ -15,102 +14,6 @@ from config import URL
 problems = Blueprint('problems_page', __name__)
 
 
-
-def cal_scoss(contest_name, problem_name, sources, metrics):
-	programs = []
-	similarity_matrix = []
-	aligment_matrix = []
-	for source in sources:
-		lang = source['file'].split('.')[-1]
-		check = False
-		for program in programs:
-			if program.get_lang() == lang:
-				check = True
-				if source['mask'] == '':
-					program.add_file(source['file'])
-				else:
-					program.add_file(source['file'], mask=source['mask'])
-		if not check:
-			sc = Scoss(lang=lang)
-			for metric in all_metrics:
-				for met in metrics:
-					if metric.get_name() == met['name']:
-						sc.add_metric(met['name'], met['threshold'])
-						print(metric)
-			if source['mask'] == '':
-				sc.add_file(source['file'])
-			else:
-				sc.add_file(source['file'], mask=source['mask'])
-			programs.append(sc)
-	for program in programs: 
-		for matrix in program.get_matches():
-			similarity_matrix.append(matrix)
-		for matrix in program.get_aligment_matrix():
-			aligment_matrix.append(matrix)
-	doc_matrix = {
-		'contest_name': contest_name,
-		'problem_name': problem_name,
-		'similarity_matrix': similarity_matrix,
-		'aligment_matrix': aligment_matrix
-	} 
-	url = URL + '/api/update_matrix'
-	requests.put(url=url, json=doc_matrix)
-
-def cal_smoss(contest_name, problem_name, sources, metrics):
-	programs = []
-	similarity_matrix = []
-	aligment_matrix = []
-	for source in sources:
-		lang = source['file'].split('.')[-1]
-		if str(lang) == 'cpp':
-			lang = 'cc'
-		check = False
-		for program in programs:
-			if str(program.get_lang()) == lang:
-				check = True
-				if source['mask'] == '':
-					program.add_file(source['file'])
-				else:
-					program.add_file(source['file'], mask=source['mask'])
-		if not check:
-			sm = smoss.SMoss(lang=lang)
-			for met in metrics:
-				if met['name'] == 'smoss_metric':
-					print(metrics)
-					sm.set_threshold(met['threshold'])
-			if source['mask'] == '':
-				sm.add_file(source['file'])
-			else:
-				sm.add_file(source['file'], mask=source['mask'])
-			programs.append(sm)
-	for program in programs: 
-		program.run()
-		for matrix in program.get_matches():
-			print(matrix)
-			similarity_matrix.append(matrix)
-		for matrix in convert_matrix(program.get_matches_file()):
-			aligment_matrix.append(matrix)
-	doc_matrix = {
-		'contest_name': contest_name,
-		'problem_name': problem_name,
-		'similarity_matrix_smoss': similarity_matrix,
-		'aligment_matrix_smoss': aligment_matrix
-	} 
-	url = URL + '/api/update_matrix_smoss'
-	requests.put(url=url, json=doc_matrix)
-
-def convert_matrix(aligment_matrix):
-	match_dict = {}
-	for name, score_dict in aligment_matrix.items():
-		for other_name, scores in score_dict.items():
-			key = hash(name) ^ hash(other_name)
-			match = {}
-			match['source1'] = name
-			match['source2'] = other_name
-			match['scores'] = scores
-			match_dict[key] = match
-	matches_alignment = list(match_dict.values())
-	return matches_alignment
 
 
 @problems.route('/problem', methods=['GET', 'POST'])

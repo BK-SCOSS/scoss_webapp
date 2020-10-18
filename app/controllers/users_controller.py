@@ -4,6 +4,7 @@ import json
 import time
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 import shutil
 from models.models import *
 
@@ -11,51 +12,63 @@ users_controller = Blueprint('users_controller', __name__)
 
 
 @users_controller.route('/api/users', methods=['GET'])
-def list_user():
-    if request.method == "GET":
-        list_user = User.objects()
+def user():
+    try:
+        data_users = User.objects()
         res = []
-        for user in list_user:
-            temp = user.to_mongo()
+        for data_user in data_users:
+            temp = data_user.to_mongo()
             del temp['_id']
             res.append(temp)
-        return jsonify({'data': res, 'message': 'Get information succesfully!'}),200
+    except Exception:
+        return jsonify({'error': "Can't get infomation account!"}), 400
+    return jsonify({'users': res})
 
 @users_controller.route('/api/users/add', methods=['POST'])
-def create_user():
+def add_user():
+    # create account
     try:
         user_id = str(int(time.time()) * 1000)
-        username = request.form['username']
-        password = request.form['password']
-        role = request.form['role'] #0- admin , 1-user
+        username = request.json['username']
+        password = request.json['password']
+        role = request.json['role'] #0- admin , 1-user
+        password = generate_password_hash(password)
         User(user_id=user_id, username=username, password=password, role=role).save()
     except Exception:
-        return jsonify({'message': "The account name may already exist"}), 400
-    return jsonify({'message': 'Create user successfully!'})
+        return jsonify({'error': "The account name may already exist"}), 400
+    return jsonify({'user_id': user_id})
 
-@users_controller.route('/api/users/<string:username>', methods=['GET'])
-def get_user_id(username):
-    try:
-        data_user = User.objects.get(username=username)
-        password = data_user.password
-        user_id =data_user.user_id
-        role = data_user.role # 0-root 1-user
-        # return  jsonify({'info': "Account information is not correct"}), 400
-        return jsonify({'user_id': user_id, 'username': username, 'password': password, 'role': role}), 200
-    except Exception:
-        return jsonify({'message': 'Cannot get information'}), 400
-
-@users_controller.route('/api/users/<string:user_id>', methods=['GET'])
+@users_controller.route('/api/users/<user_id>', methods=['GET'])
 def get_user(user_id):
     try:
-        data_user = User.objects.get(user_id=user_id)
+        data_user = User.objects.get(user_id=str(user_id))
+        user_id = data_user.user_id
         username = data_user.username
         password = data_user.password
         role = data_user.role # 0-root 1-user
-        # return  jsonify({'info': "Account information is not correct"}), 400
-        return jsonify({'user_id': user_id, 'username': username, 'password': password, 'role': role}), 200
     except Exception:
-        return jsonify({'message': 'Cannot get information'}), 400
+        return jsonify({'error': "Can't get infomation account!"}), 400
+    return jsonify({'user_id': user_id, 'username': username, 'password': password, 'role': role})
+
+@users_controller.route('/api/users/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    try:
+        password = generate_password_hash(request.json['password'])
+        User.objects(user_id=str(user_id)).update(password=password)
+        info = 'Update infomation for user_id:' + user_id
+    except Exception:
+        return jsonify({'error': "Can't update infomation account!"}), 400
+    return jsonify({'info': info})
+
+@users_controller.route('/api/users/<user_id>', methods=['DELETE'])
+def delete_user(user_id):  
+    try:
+        User.objects(user_id=user_id).delete()
+        info = 'Delete user_id:' + user_id
+    except Exception:
+        return jsonify({'error': "Can't delete"}), 400
+    return jsonify({'info': info}),200
+    
 
 
 @users_controller.route('/api/users/<string:user_id>', methods=['PUT'])
