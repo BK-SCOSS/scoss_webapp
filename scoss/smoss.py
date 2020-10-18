@@ -60,7 +60,7 @@ class SMoss():
             "javascript",
             "plsql")
 
-    def __init__(self, lang, userid=43511):
+    def __init__(self, lang, userid=47845):
         
         SMoss.__id += 1
         self.id = SMoss.__id
@@ -178,6 +178,8 @@ class SMoss():
             self.run()
         matches = []
         for match in self.__matches:
+            if match['scores']['moss_score'] < self.__threshold:
+                continue
             copied_match = match.copy()
             if 'link' in copied_match:
                 del copied_match['link']
@@ -198,7 +200,7 @@ class SMoss():
         if self.__state == SMossState.INIT:
             self.run()
         new_matches = []
-        for match in self.__matches:
+        for match in self.get_matches():
             dic = {}
             dic['source1'] = match['source1']
             dic['source2'] = match['source2']
@@ -216,11 +218,11 @@ class SMoss():
         i = 0
         self.__matches = []
         while i < len(tds):
-            score = min(int(tds[0].contents[0].contents[0][-4:-2])/100, \
-                        int(tds[1].contents[0].contents[0][-4:-2])/100)
-            if score < self.__threshold:
-                i += 3
-                continue
+            score = min(int(tds[i].contents[0].contents[0].split('(')[-1].split('%')[0])/100, \
+                        int(tds[i+1].contents[0].contents[0].split('(')[-1].split('%')[0])/100)
+            # if score < self.__threshold:
+            #     i += 3
+            #     continue
             a_score = {'moss_score': score}
             src1 = tds[i].contents[0].contents[0].split()[0]
             src2 = tds[i+1].contents[0].contents[0].split()[0]
@@ -230,12 +232,19 @@ class SMoss():
             a_match['source1'] = src1
             a_match['source2'] = src2
             a_match['scores'] = a_score
-            a_match['link'] = tds[0].contents[0].attrs['href']
+            a_match['link'] = tds[i].contents[0].attrs['href']
             self.__matches.append(a_match)
 
             # Construct similarity_matrix
-            self.__similarity_matrix[src1] = {src2:a_score}
-            self.__similarity_matrix[src2] = {src1:a_score}
+            if src1 in self.__similarity_matrix:
+                self.__similarity_matrix[src1][src2] = a_score
+            else:
+                self.__similarity_matrix[src1] = {src2:a_score}
+
+            if src2 in self.__similarity_matrix:
+                self.__similarity_matrix[src2][src1] = a_score
+            else:
+                self.__similarity_matrix[src2] = {src1:a_score}
 
             # # Construct matches_file
             base_url = os.path.dirname(a_match['link'])
@@ -250,11 +259,18 @@ class SMoss():
                 html_strs.append(str(soup))
             with open('./scoss/assets/smoss_comparison.html', mode='r') as f:
                 big_html_string = f.read()
-            big_html_string = big_html_string.replace('<<<top>>>', html_strs[0])
-            big_html_string = big_html_string.replace('<<<src1>>>', html_strs[1])
-            big_html_string = big_html_string.replace('<<<src2>>>', html_strs[2])
-            self.__matches_file[src1] = {src2:big_html_string}
-            self.__matches_file[src2] = {src1:big_html_string}
+            big_html_string = big_html_string.replace('<<<top>>>', html_strs[0])\
+                                            .replace('<<<src1>>>', html_strs[1])\
+                                            .replace('<<<src2>>>', html_strs[2])
+            if src1 in self.__matches_file:
+                self.__matches_file[src1][src2] = big_html_string
+            else:
+                self.__matches_file[src1] = {src2:big_html_string}
+
+            if src2 in self.__matches_file:
+                self.__matches_file[src2][src1] = big_html_string
+            else:
+                self.__matches_file[src2] = {src1:big_html_string}
             # with open(os.path.join('./tests/smoss_result/', 'big_all_html.html'), 'w') as file:
             #     file.write(big_html_string)
             i += 3
@@ -341,18 +357,21 @@ class SMoss():
         with open('./scoss/assets/summary.html', mode='r') as f:
             HTML1 = f.read()
 
-        if len(self.__matches) != 0:
-            heads = [x for x in self.__matches[0].keys() if x != 'link']
+        matches = self.__matches
+        if len(matches) != 0:
+            heads = [x for x in matches[0].keys() if x != 'link']
             links = []
             index_file = 0
-            for match in self.__matches:
+            for match in matches:
+                metric = 'moss_score'
+                if match['scores'][metric] < self.__threshold:
+                    continue
                 dic = {}
                 dic['source1'] = match['source1']
                 dic['source2'] = match['source2']
                 dic['scores'] = {}
                 name_file = 'comparison_' + str(index_file) +'.html'
                 index_file += 1
-                metric = 'moss_score'
                 C = int(match['scores'][metric]*255)
                 R = C
                 G = 0
@@ -371,3 +390,5 @@ class SMoss():
     def add_metric(self, metric, threshold: float=0.0, exist_ok=False):
         raise ValueError("smoss doesn't support this function.")
 
+    def get_threshold(self):
+        return self.__threshold
