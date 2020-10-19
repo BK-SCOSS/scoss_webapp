@@ -102,13 +102,14 @@ def add_zip(problem_id):
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             for file in zfile:
-                data_doc = {
-                    "pathfile": file,
-                    "lang": file.split('.')[-1],
-                    'mask': '',
-                    'source_str': zf.read(file).decode('utf-8')
-                }
-                sources.append(data_doc)
+                if len(file.split('/')) > 1 and file.split('/')[-1] != '':
+                    data_doc = {
+                        "pathfile": file.split('/')[-1],
+                        "lang": file.split('.')[-1],
+                        'mask': '',
+                        'source_str': zf.read(file).decode('utf-8')
+                    }
+                    sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)
     except Exception:
         return jsonify({"error":"Can't add from zip in problems"}),400
@@ -133,25 +134,106 @@ def add_source(problem_id):
         return jsonify({"error":"Can't add file in problems"}),400
     return jsonify({'problem_id': problem_id}), 200
 
-@problems_controller.route('/api/contests/<contest_id>/problems/<problem_id>/results/scoss', methods = ['PUT'])
+@problems_controller.route('/api/problems/<problem_id>/results', methods = ['GET'])
+def get_results(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        similarity_list = data_problem.similarity_list
+        similarity_smoss_list = data_problem.similarity_smoss_list
+        metrics = data_problem.metrics
+        metric_list = []
+        res = {}
+        for metric in metrics:
+            metric_list.append(metric['name'])
+        if 'moss_score' in metric_list:
+            if len(metric_list) == 1:
+                res['smoss'] = similarity_smoss_list
+            else: 
+                for simi in similarity_list:             
+                    key = hash(simi['source1'])^hash(simi['source2'])
+                    temp_list = simi 
+                    temp_list['scores']['moss_score'] =  0
+                    res[key] = temp_list
+                for simi_smoss in similarity_smoss_list:        
+                    key = hash(simi_smoss['source1'])^hash(simi_smoss['source2'])
+                    if key in res.keys():
+                        temp_list = simi_smoss
+                        for metric in metric_list:
+                            temp_list['scores'][metric] =  0
+                        temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
+                        res[key] = temp_list
+                for simi in similarity_list:
+                    for simi_smoss in similarity_smoss_list:
+                        if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\
+                            or (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2']):
+                            key = hash(simi['source1'])^hash(simi['source2'])
+                            temp_list = simi 
+                            temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
+                            res[key] = temp_list
+        else:
+            res['scoss'] = similarity_list
+        for key in res:
+            total = 0
+            num_of_score = 0
+            for score in res[key]['scores']:
+                total += res[key]['scores'][score]
+                num_of_score +=1
+            if num_of_score != 0:
+                res[key]['scores']['mean'] = total/num_of_score
+    except Exception:
+        return jsonify({"error":"Can't get results"}),400
+    return jsonify({'problem_id': problem_id, 'results': list(res.values())}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['GET'])
+def get_result_scoss(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        similarity_list = data_problem.similarity_list
+        alignment_list = data_problem.alignment_list
+    except Exception:
+        return jsonify({"error":"Can't get scoss matrix"}),400
+    return jsonify({'problem_id': problem_id, 'similarity_list': similarity_list, "alignment_list":alignment_list}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/results/smoss', methods = ['GET'])
+def get_result_smoss(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        similarity_smoss_list = data_problem.similarity_smoss_list
+        alignment_smoss_list = data_problem.alignment_smoss_list
+    except Exception:
+        return jsonify({"error":"Can't get smoss matrix"}),400
+    return jsonify({'problem_id': problem_id, 'similarity_smoss_list': similarity_smoss_list, "alignment_smoss_list":alignment_smoss_list}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['PUT'])
 def update_result_scoss(problem_id):
     try: 
         similarity_list = request.json['similarity_list']
         alignment_list = request.json['alignment_list']
-       
+        Problem.objects(problem_id=problem_id).update(similarity_list=similarity_list, alignment_list=alignment_list)
+    except Exception:
+        return jsonify({"error":"Can't update scoss matrix"}),400
+    return jsonify({'problem_id': problem_id}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/results/smoss', methods = ['PUT'])
+def update_result_smoss(problem_id):
+    try: 
+        similarity_smoss_list = request.json['similarity_smoss_list']
+        alignment_smoss_list = request.json['alignment_smoss_list']
+        Problem.objects(problem_id=problem_id).update(similarity_smoss_list=similarity_smoss_list, alignment_smoss_list=alignment_smoss_list)
+    except Exception:
+        return jsonify({"error":"Can't update smoss"}),400
+    return jsonify({'problem_id': problem_id}), 200
+
+@problems_controller.route('/api/problems/<problem_id>/run', methods = ['POST'])
+def run_source(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        metrics = request.json['metrics']
+        Problem.objects(problem_id=problem_id).update(metrics=metrics)
+        if len(data_problem) > 0:
+            if data_problem.problem_status in ['init', 'checked']:
+                tq.enqueue_nowait(problem_id)
     except Exception:
         return jsonify({"error":"Can't run problem"}),400
     return jsonify({'problem_id': problem_id}), 200
-@problems_controller.route('/api/problems/<problem_id>/run', methods = ['POST'])
-def run_source(problem_id):
-    # try: 
-    data_problem = Problem.objects.get(problem_id=problem_id)
-    metrics = request.json['metrics']
-    Problem.objects(problem_id=problem_id).update(metrics=metrics)
-    if len(data_problem) > 0:
-        if data_problem.problem_status in ['init', 'checked']:
-            tq.enqueue_nowait(problem_id)
-    tq.join()
-    # except Exception:
-    #     return jsonify({"error":"Can't run problem"}),400
-    return jsonify({'problem_id': problem_id}), 200
+

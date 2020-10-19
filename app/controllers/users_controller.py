@@ -69,22 +69,3 @@ def delete_user(user_id):
         return jsonify({'error': "Can't delete"}), 400
     return jsonify({'info': info}),200
     
-
-
-@users_controller.route('/api/users/<string:user_id>', methods=['PUT'])
-def update_user(user_id):
-    try:
-        password = request.form['password']
-        data_user = User.objects(user_id=user_id).update(password=password)
-        return jsonify({'message': 'Update succesfully!'}),200
-    except Exception:
-        return jsonify({'info': "Can't update infomation"}), 400
-
-@users_controller.route('/api/users/<string:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    try:
-        User.objects(user_id=user_id).delete()
-        message = 'Delete user_id:' + user_id + 'successfully!'
-    except Exception:
-        return jsonify({'message': "Can't delete"}), 400
-    return jsonify({'message': message}),200

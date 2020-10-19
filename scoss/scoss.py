@@ -70,7 +70,6 @@ class Scoss():
         src = Source.from_str(source_str, lang=self.__lang)
         src.name = mask
         self.__pending_pool[mask] = src 
-
         if self.__state == ScossState.RUNNING:
             self.run()
 
@@ -335,14 +334,6 @@ class Scoss():
                                     temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
                                     html1 += temp1
                                 elif line[0] != -1 and line[0] != -1:
-                                    print("__________________________")
-                                    print(data1)
-                                    print(len(data1))
-                                    print("__________________________")
-                                    print(data2)
-                                    print(len(data2))
-                                    print("__________________________")
-                                    print(line)
                                     index1 = line[0]
                                     index2 = line[1]
                                     if line[2] >=0.25 and line[2] <0.75:
