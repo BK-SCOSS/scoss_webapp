@@ -24,6 +24,15 @@ def user():
         return jsonify({'error': "Can't get infomation account!"}), 400
     return jsonify({'users': res})
 
+@users_controller.route('/api/users/username', methods=['GET'])
+def username():
+    try:
+        username = request.args.get('username')
+        data_users = User.objects.get(username=username)
+    except Exception:
+        return jsonify({'error': "Can't get infomation account!"}), 400
+    return jsonify({'user_id':data_users.user_id, 'username': data_users.username, 'password': data_users.password, 'role':data_users.role})
+
 @users_controller.route('/api/users/add', methods=['POST'])
 def add_user():
     # create account
