@@ -5,7 +5,10 @@ import time
 import os
 from werkzeug.utils import secure_filename
 import shutil
+from zipfile import ZipFile
 from models.models import *
+from config import URL
+import requests
 
 contests_controller = Blueprint('contests_controller', __name__)
 
@@ -71,28 +74,106 @@ def delete_contest(contest_id):
     except Exception:
         return jsonify({'error': "Can't delete contest!"}), 400
     return jsonify({'info':info})
+@contests_controller.route('/api/contests/<contest_id>/status', methods=['PUT'])
+def update_status(contest_id):
+    try:
+        contest_status = request.json['contest_status']
+        Contest.objects(contest_id=contest_id).update(contest_status=contest_status)
+    except Exception:
+        return jsonify({'error': "Can't update contest_status!"}), 400
+    return jsonify({'contest_id':contest_id}), 200
 
-    # if request.method == 'POST':
-    #     try:
-    #         contest_name = request.form['contest_name']
-    #         contest_author = request.form['contest_author']
-    #         data = Contest.objects(contest_name=contest_name)
-    #         if len(data) >0:
-    #             for da in data:
-    #                 if da.contest_name == contest_name and da.contest_author == contest_author:
-    #                     return jsonify({'info': 'The contest name may already exist'}),400
-    #         Contest(contest_name=contest_name, contest_author=contest_author).save()
-    #         return jsonify({'contest_name': contest_name}),200
-    #     except Exception:
-    #         return jsonify({'info': 'The contest name may already exist'}),400
+@contests_controller.route('/api/contests/<contest_id>/status', methods=['GET'])
+def get_status(contest_id):
+    try:
+        data_contest = Contest.objects.get(contest_id=contest_id)
+        data_doc = {
+            'contest_id': data_contest.contest_id,
+            'contest_name': data_contest.contest_name,
+            'contest_status': data_contest.contest_status
+        }
+    except Exception:
+        return jsonify({'error': "Can't get contest_status!"}), 400
+    return jsonify(data_doc),200
 
-    # if request.method == 'PUT':
-    #     contest_name = request.form['contest_name']
-    #     contest_author = request.form['contest_author']
-    #     Contest.objects(contest_name=contest_name).update(contest_author=contest_author)
-    #     return jsonify({'socss_id': contest_name}),200
-    # if request.method == 'DELETE':
-    #     contest_name = request.form['contest_name']
-    #     Contest.objects(contest_name=contest_name).delete()
-    #     info = 'Delete' + str(contest_name)
-    #     return jsonify({'info': info}), 200
+@contests_controller.route('/api/contests/<contest_id>/from_zip', methods = ['POST'])
+def add_zip(contest_id):
+    """
+    folder:
+    ----folder:
+        ----file1.cpp
+        ----file2.cpp
+        ----file3.cpp
+    """
+    try: 
+        contest_list = {}
+        with ZipFile(request.files['file'], 'r') as zf:
+            zfile = zf.namelist()
+            for file in zfile:
+                if len(file.split('/')) > 2 and file.split('/')[-1] != '':
+                    if file.split('/')[1] in contest_list:
+                        data_doc = {
+                            "pathfile": file.split('/')[-1],
+                            "lang": file.split('.')[-1],
+                            'mask': '',
+                            'source_str': zf.read(file).decode('utf-8')
+                        }
+                        contest_list[file.split('/')[1]].append(data_doc)
+                    else:
+                        contest_list[file.split('/')[1]] = []
+                        data_doc = {
+                            "pathfile": file.split('/')[-1],
+                            "lang": file.split('.')[-1],
+                            'mask': '',
+                            'source_str': zf.read(file).decode('utf-8')
+                        }
+                        contest_list[file.split('/')[1]].append(data_doc)
+        url_contest = URL + '/api/contests/'+contest_id+'/problems/add'
+        for problem_key, problem_value in contest_list.items():
+            req = requests.post(url=url_contest, json={'problem_name': problem_key})
+            if 'problem_id' in req.json().keys():
+                problem_id = req.json()['problem_id']
+                data_problem = Problem.objects.get(problem_id=problem_id)
+                sources = data_problem.sources
+                for source in problem_value:
+                    sources.append(source)
+                Problem.objects(problem_id=problem_id).update(sources=sources)
+            else:
+                return jsonify({'error': "The problem name may already exist"}), 400
+    except Exception:
+        return jsonify({"error":"Can't add from zip in contest"}),400
+    return jsonify({'contest_id': contest_id}), 200
+
+@contests_controller.route('/api/contests/<contest_id>/run', methods = ['POST'])
+def run_contest(contest_id):
+    try:
+        url_contest = URL + '/api/contests/' + str(contest_id)
+        metrics = request.json
+        data_problems = requests.get(url=url_contest)
+        doc_status = {
+            "contest_status": "waiting"
+        }
+        url_status = URL + '/api/contests/'+str(contest_id)+'/status'
+        requests.put(url=url_status, json=doc_status)
+        for problem in data_problems.json()['problems']:
+            problem_id = problem['problem_id']
+            url_run = URL + '/api/problems/'+problem_id+'/run'
+            requests.post(url=url_run, json=metrics)
+        return jsonify({'contest_id': contest_id}), 200
+    except Exception:
+        return jsonify({"error":"Can't run contest"}),400
+
+@contests_controller.route('/api/contests/<contest_id>/results', methods = ['GET'])
+def get_result(contest_id):
+    try:
+        url_contest = URL + '/api/contests/' + str(contest_id)
+        data_problems = requests.get(url=url_contest)
+        contest_res = []
+        for problem in data_problems.json()['problems']:
+            problem_id = problem['problem_id']
+            url_res = URL + '/api/problems/'+problem_id+'/results'
+            res = requests.get(url=url_res)
+            contest_res.append(res.json())
+        return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
+    except Exception:
+        return jsonify({"error":"Can't get result's contest"}),400
