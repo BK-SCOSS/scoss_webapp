@@ -29,12 +29,30 @@ def add_contest(user_id):
 @contests_controller.route('/api/users/<user_id>/contests', methods=['GET'])
 def get_contest_user(user_id):
     try:
-        data_contests = Contest.objects(user_id=user_id)
+        data_contests = Contest.objects()
         res = []
-        for data_contest in data_contests:
-            temp = data_contest.to_mongo()
-            del temp['_id']
-            res.append(temp)
+        data_user = User.objects.get(user_id=user_id)
+        role = data_user.role
+        if str(role) == '0':
+            for data_contest in data_contests:
+                temp = data_contest.to_mongo()
+                data_user = User.objects.get(user_id=user_id)
+                temp['username'] = data_user.username
+                del temp['_id']
+                res.append(temp)
+        else:
+            for data_contest in data_contests:
+                temp = data_contest.to_mongo()
+                if temp['user_id'] == user_id:
+                    data_user = User.objects.get(user_id=user_id)
+                    temp['username'] = data_user.username
+                    del temp['_id']
+                    res.append(temp)
+                elif temp['contest_status'] == "checked":
+                    data_user = User.objects.get(user_id=temp['user_id'])
+                    temp['username'] = data_user.username
+                    del temp['_id']
+                    res.append(temp)
     except Exception:
         return jsonify({'error': "Can't get contests!"}), 400
     return jsonify({'contests': res})
@@ -46,12 +64,13 @@ def contest():
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
+            data_user = User.objects.get(user_id=temp['user_id'])
+            temp['username'] = data_user.username
             del temp['_id']
             res.append(temp)
     except Exception:
         return jsonify({'error': "Can't get contests!"}), 400
     return jsonify({'contests': res})
-
 
 @contests_controller.route('/api/contests/<contest_id>', methods=['GET'])
 def get_contest(contest_id):
