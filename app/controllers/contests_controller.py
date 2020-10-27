@@ -89,10 +89,11 @@ def get_contest(contest_id):
 def delete_contest(contest_id):
     try:
         Contest.objects(contest_id=str(contest_id)).delete()
-        info = 'Delete contest_id' + str(contest_id)
+        info = 'Delete contest_id ' + str(contest_id)
     except Exception:
         return jsonify({'error': "Can't delete contest!"}), 400
     return jsonify({'info':info})
+
 @contests_controller.route('/api/contests/<contest_id>/status', methods=['PUT'])
 def update_status(contest_id):
     try:
@@ -169,11 +170,6 @@ def run_contest(contest_id):
         url_contest = URL + '/api/contests/' + str(contest_id)
         metrics = request.json
         data_problems = requests.get(url=url_contest)
-        doc_status = {
-            "contest_status": "waiting"
-        }
-        url_status = URL + '/api/contests/'+str(contest_id)+'/status'
-        requests.put(url=url_status, json=doc_status)
         for problem in data_problems.json()['problems']:
             problem_id = problem['problem_id']
             url_run = URL + '/api/problems/'+problem_id+'/run'
@@ -196,3 +192,38 @@ def get_result(contest_id):
         return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
     except Exception:
         return jsonify({"error":"Can't get result's contest"}),400
+
+@contests_controller.route('/api/contests/check_status', methods = ['GET'])
+def check_status():
+    try:
+        data_contest = Contest.objects()
+        for contests in data_contest:
+            print(contests.contest_id)
+            data_problems = Problem.objects(contest_id=contests.contest_id)
+            status = 'init'
+            res = []
+            for data_problem in data_problems:
+                temp = data_problem.to_mongo()
+                res.append(temp['problem_status'])
+            
+            if 'init' in res:
+                status = 'init'
+            elif 'waiting' in res:
+                status = 'wating'
+            if len(res) > 0:
+                checked = True
+                for sta in res:
+                    if sta != 'checked':
+                        checked = False
+                    if checked == True:
+                        status = 'checked'
+            doc_status = {
+                "contest_status": status
+            }
+            print(1)
+            url_status = URL + '/api/contests/{}/status'.format(contests.contest_id)
+            print(doc_status)
+            requests.put(url=url_status, json=doc_status)
+        return jsonify({'info': 'status update was successful'}), 200
+    except Exception:
+        return jsonify({"error":"Can't update status contest"}),400

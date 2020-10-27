@@ -8,6 +8,8 @@ import shutil
 from models.models import *
 from zipfile import ZipFile
 from controllers.task_queue import tq
+from config import URL
+import requests
 problems_controller = Blueprint('problems_controller', __name__)
 
 @problems_controller.route('/api/contests/<contest_id>/problems/add', methods = ['POST'])
@@ -59,8 +61,8 @@ def get_problem(problem_id):
 @problems_controller.route('/api/problems/<problem_id>', methods = ['DELETE'])
 def delete_problem(problem_id):
     try:
-        Problem(problem_id=problem_id).delete()
-        info = 'Delete problem_id' + str(problem_id)
+        Problem.objects(problem_id=str(problem_id)).delete()
+        info = 'Delete problem_id ' + str(problem_id)
     except Exception:
         return jsonify({'error': "Can't delete problem!"}), 400
     return jsonify({'info':info})
@@ -125,7 +127,7 @@ def add_source(problem_id):
         data_doc = {
             "pathfile": file.filename,
             "lang": file.filename.split('.')[-1],
-            'mask': '',
+            'mask': mask,
             'source_str': file.read()
         }
         sources.append(data_doc)
@@ -231,8 +233,15 @@ def run_source(problem_id):
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
         if len(data_problem) > 0:
-            if data_problem.problem_status in ['init', 'checked']:
+            if data_problem.problem_status in ['init', 'reopen', 'checked']:
                 tq.enqueue_nowait(problem_id)
+                url_status = URL + '/api/problems/' + str(problem_id) + '/status'
+                doc_status = {
+                    "problem_status": "waiting"
+                }
+                requests.put(url=url_status, json=doc_status)
+            else:
+                return jsonify({"error":"invalid status"}),400
     except Exception:
         return jsonify({"error":"Can't run problem"}),400
     return jsonify({'problem_id': problem_id}), 200

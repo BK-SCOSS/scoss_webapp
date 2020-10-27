@@ -23,11 +23,12 @@ def login_page():
 		username = request.form['username']
 		password = request.form['password']
 		params = {'username': username}
-		url = URL + '/api/user'
+		url = URL + '/api/users/username'
 		req = requests.get(url=url, params=params)
 		print( check_password_hash(req.json()['password'], password))
 		if 'password' in req.json().keys():
 			if check_password_hash(req.json()['password'], password):
+				session['user_id'] = req.json()['user_id']
 				session['username'] = username
 				session['role'] = req.json()['role']
 				session['logged_in'] = True

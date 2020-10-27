@@ -5,7 +5,7 @@
         <div class="card">
           {%if info == 'wrong'%}
           <div class="alert alert-danger" role="alert">
-            The contest name may already exist.
+            {{ error }}
           </div>
           {%endif%}
           <div class="card-header">
@@ -31,8 +31,8 @@
               {%for context in data%}
               <tr>
                 <td>{{loop.index}}</td>
-                <td><a href="/problem?contest_name={{context['contest_name']}}">{{context['contest_name']}}</a></td>
-                <td>{{context['contest_author']}}{{role}}</td>
+                <td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a></td>
+                <td>{{context['contest_author']}}</td>
                 <td class="project-state">
                   <span class="badge badge-success">{{context['contest_status']}}</span>
                 </td>
@@ -110,7 +110,7 @@
               location.reload()
             },
             error: function (data) {
-              console.log('Error:', data['info']);
+              console.log('Error:', data['error']);
             }
           });
         }

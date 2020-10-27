@@ -26,25 +26,21 @@
                         <th style="width: 4em;">#</th>
                         <th>Name</th>
                     </tr>
+                    {%if data|length > 0%}
+                    {%for da in data%}
                     <tr>
-                        <td>Mid1</td>
-                        <td><a href="source">Source A</a></td>
+                    <td>{{loop.index}}</td>
+                    {%if da['mask'] == ''%}
+                    <td><a href="#">{{da['pathfile']}}</a></td>
+                    {%else%}
+                    <td><a href="#">{{da['mask']}}</a></td>
+                    {%endif%}
                     </tr>
+                    {%endfor%}
+                    {%endif%}
                     <tr>
-                        <td>Fin1</td>
-                        <td><a href="#">Source B</a></td>
-                    </tr>
-                    <tr>
-                        <td>Mid2</td>
-                        <td><a href="#">Source C</a></td>
-                    </tr>
-                    <tr>
-                        <td>Fin2</td>
-                        <td><a href="#">Source D</a></td>
-                    </tr>
-                    <tr>
-                        <td style="width: 15em;"><button href="#" id="create-problem" onclick="createProblem()">Add new problem</button></td>
-                        <td id="problem-name"></td>
+                        <td>#</td>
+                        <td id="source-name" colspan="2"><a href="#" id="create-source" onclick="createSource()"><b>Add new source</b></a></td>
                     </tr>
                 </table>
             </div>
@@ -138,16 +134,17 @@
         document.getElementById('tokenBasedMetric').disabled = !this.checked;
     };
 
-    function createProblem() {
+    function createSource() {
         const form = document.createElement('form')
         const input = document.createElement('input')
+        const file = document.createElement('input')
         const submit = document.createElement('input')
         const row = document.createElement('div')
         const col10 = document.createElement('div')
         const col2 = document.createElement('div')
 
         form.method = "POST"
-        form.action = "/problem?contest_name={{contest_name}}"
+        form.action = "/source?contest_name={{contest_name}}"
         form.className = "form-horizontal"
 
         row.className = "form-group row"
@@ -155,22 +152,31 @@
         col2.className = "col-sm-2"
 
         input.className = "form-control"
-        input.name = "problem_name"
+        input.name = "sourceName"
+        input.style = "width: 50%;"
+        input.placeholder = "Enter file name"
+
+        file.name = "sourceFile"
+        file.type = "file"
 
         submit.type = 'submit'
         submit.className = 'btn btn-primary'
+        submit.style = "float: right;"
         submit.name = 'submit'
         submit.value = 'Submit'
 
         col10.appendChild(input)
+        col10.append(file)
         col2.appendChild(submit)
 
         row.appendChild(col10)
         row.appendChild(col2)
 
         form.appendChild(row)
-        document.getElementById('problem-name').appendChild(form)
-        document.getElementById('create-problem').disabled = true
+
+        link = document.getElementById('create-source').remove()
+        
+        document.getElementById('source-name').appendChild(form)
     }
 </script>
 

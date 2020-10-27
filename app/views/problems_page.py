@@ -16,195 +16,186 @@ problems = Blueprint('problems_page', __name__)
 
 
 
-@problems.route('/problem', methods=['GET', 'POST'])
-def problem():
+@problems.route('/contests/<contest_id>/problems', methods=['GET', 'POST'])
+def problem(contest_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
-				info = request.args.get('info')
-				contest_name = request.args.get('contest_name')
-				params = {'contest_name': contest_name}
-				url = URL + '/api/problem'
-				req = requests.get(url=url, params=params)
-				return render_template('problem.html')
+				url = URL + '/api/contests/' + contest_id
+				req = requests.get(url=url)
+				if 'contest_id' in req.json().keys():
+					if len(req.json()['problems']) > 0:
+						author = req.json()['problems'][0]['user_id']
+						return render_template('problem.html', data=req.json()['problems'], contest_id=contest_id, author=author)	
+					else:
+						return render_template('problem.html', contest_id=contest_id)
+				else:
+					return render_template('problem.html', contest_id=contest_id, error=req.json()['error'])
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
-				contest_name = request.args.get('contest_name')
-				data = {'problem_name': problem_name, 'contest_name':contest_name}
-				url = URL + '/api/problem'
-				req = requests.post(url=url, data=data)
-				if 'problem_name' in req.json().keys():
-					return redirect(url_for('problem', contest_name=contest_name))
+				data = {'problem_name': problem_name}
+				url = URL + '/api/contests/' + contest_id +'/problems/add'
+				req = requests.post(url=url, json=data)
+				if 'problem_id' in req.json().keys():
+					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
 				else:
-					return redirect(url_for('problem',contest_name=contest_name, info='wrong'))
+					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
 	return redirect(url_for('login'))
 
-@problems.route('/source')
-def source():
+@problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
+def source(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
-				problem_name = request.args.get('problem_name')
-				contest_name = request.args.get('contest_name')
-				params = {'problem_name': problem_name, 'contest_name':contest_name}
-				url = URL + '/api/problem_name'
-				req = requests.get(url=url, params=params)
-				if 'problem' in req.json().keys():
-					return render_template('source.html', problem_name=problem_name, contest_name=contest_name,\
-						 data=req.json()['problem'][0]['sources'])
+				url = URL + '/api/problems/' + problem_id
+				req = requests.get(url=url)
+				if 'problem_id' in req.json().keys():
+					return render_template('source.html', data=req.json()['sources'], 
+						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'])
+			else:
+				source_name = request.form['source_name']
+				data_form = {'source_name': source_name}
+				url = URL + '/api/problems/' + problem_id + '/sources/add'
+				req = requests.post(url=url,json=data_form)
+				if 'contest_id' in req.json().keys():
+					return redirect(url_for('contest_page.contest'))
+				else:
+					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
 	return redirect(url_for('login'))
 
-@problems.route('/add_file', methods=['POST'])
-def add_file():
+@problems.route('/problems/<problem_id>/add_file', methods=['POST'])
+def add_file(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'POST':
-				problem_name = request.args.get('problem_name')
-				contest_name = request.args.get('contest_name')
-				params = {'problem_name': problem_name, 'contest_name':contest_name}
-				url = URL + '/api/problem_name'
-				req = requests.get(url=url, params=params)
-				sources = []
-				metrics = []
-				if 'problem' in req.json().keys():
-					sources = req.json()['problem'][0]['sources']
-					metrics = req.json()['problem'][0]['metrics']
-				files = request.files['file']
 				mask = request.form['mask']
-				path = os.path.join(problems.config['UPLOAD_FOLDER'], session['username'])
-				if not os.path.exists(path): 
-					os.mkdir(path)
-				path = os.path.join(path, contest_name)
-				if not os.path.exists(path): 
-					os.mkdir(path)
-				path = os.path.join(path, problem_name)
-				if not os.path.exists(path): 
-					os.mkdir(path)
-				path = os.path.join(path, files.filename)
-				source_str = files.read().decode('utf-8')
-				print(path)
-				with open(path, 'w+') as f:
-					f.write(source_str)
-				check = False
-				for source in sources:
-					if source['file'] == path:
-						check = True
-						source['mask'] = mask
-				if not check:
-					doc_source = {
-						'file': path,
-						'mask': mask,
+				sourceFile = request.files['file'].read()
+				data_form ={'mask': mask}
+				url = URL + '/api/problems/{}/sources/add'.format(problem_id)
+				req = requests.post(url=url, data=data_form, files={'files': sourceFile})
+				if 'problem_id' in req.json().keys():
+					return redirect(url_for('problems_page.source', problem_id=problem_id))
+				else:
+					return redirect(url_for('problems_page.source', problem_id=problem_id))
+	return redirect(url_for('login_page.login_page'))
+
+@problems.route('/problems/<problem_id>/run', methods=['POST'])
+def run(problem_id):
+	if 'logged_in' in session:
+		if session['logged_in'] == True:
+			if request.method == 'POST':
+				list_operator = request.form
+				send_data = []
+				for op in list_operator:
+					temp = {
+						'name': op,
+						'threshold': float(int(list_operator[op])/100)
 					}
-					sources.append(doc_source)
-				data  = {
-					'contest_name': contest_name,
-					'problem_name': problem_name,
-					'sources': sources,
-					'metrics': metrics
-				}
-				url = URL + '/api/problem'
-				req = requests.put(url=url, json=data)
-				return redirect(url_for('source', contest_name=contest_name, problem_name=problem_name))
+					send_data.append(temp)
+				data_form = {'metrics': send_data}
+				url = URL + '/api/problems/{}/run'.format(problem_id)
+				req = requests.post(url=url, json=data_form)
+				if 'problem_id' in req.json().keys():	
+					return redirect(url_for('problems_page.result', problem_id=problem_id))
+						# return render_template('result.html', links=result.json()['results'])
+					# else:
+					# 	return redirect(url_for('problems_page.source', problem_id=problem_id, error=result.json()['error']))
+				else:
+					return redirect(url_for('problems_page.source', problem_id=problem_id, error=req.json()['error']))
+	# else:
+	# 	return redirect(url_for('login_page.logout'))
+
+@problems.route('/problems/<problem_id>/result')
+def result(problem_id):
+	if 'logged_in' in session:
+		if session['logged_in'] == True:
+			if request.method == 'GET':
+				url = URL + '/api/problems/{}/results'.format(problem_id)
+				result = requests.get(url=url)
+				data = result.json()
+				tdata = [item for sublist in data['results'] for item in sublist]
+				print(tdata)
+				if len(tdata) > 0:
+					heads = []
+					heads.append('source1')
+					heads.append('source2')
+					for metric in tdata[0]['scores']:
+						heads.append(metric)
+
+					url = URL + '/api/problems/' + problem_id
+					req = requests.get(url=url)
+					if 'problem_id' in req.json().keys():
+						return render_template('source.html', data=req.json()['sources'],
+							problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'],
+							heads=heads, links=tdata)
+				else:
+					return render_template('result.html', error="No source in database")
+				if len(data['similarity_matrix']) > 0:
+					links = []
+					for matrix in data['similarity_matrix']:
+						dic = {}
+						dic['source1'] = matrix['source1']
+						dic['source2'] = matrix['source2']
+						dic['scores'] = {}
+						for metric, score in matrix['scores'].items():			
+							C = int(score)*255
+							R = C
+							G = 0
+							B = 0
+							span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
+							dic['scores'][metric] = span
+						if len(data['similarity_matrix_smoss']) > 0:
+							for data_smoss in data['similarity_matrix_smoss']:
+								if data_smoss['source1'] == matrix['source1'] and data_smoss['source2'] == matrix['source2']:
+									C = int(data_smoss['scores']['moss_score'])*255
+									R = C
+									G = 0
+									B = 0
+									span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
+									dic['scores']['smoss_metric'] = span
+								elif data_smoss['source1'] == matrix['source2'] and data_smoss['source2'] == matrix['source1']:
+									C = int(data_smoss['scores']['moss_score'])*255
+									R = C
+									G = 0
+									B = 0
+									span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
+									dic['scores']['smoss_metric'] = span
+						links.append(dic)
+				else:
+					links = []
+					for matrix in data['similarity_matrix_smoss']:
+						dic = {}
+						dic['source1'] = matrix['source1']
+						dic['source2'] = matrix['source2']
+						dic['scores'] = {}
+						for metric, score in matrix['scores'].items():			
+							C = int(score)*255
+							R = C
+							G = 0
+							B = 0
+							span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
+							dic['scores']['smoss_metric'] = span
+						links.append(dic)
 	return redirect(url_for('login'))
-@problems.route('/run', methods=['POST'])
-def run():
+
+@problems.route('/problems/<problem_id>/from_zip', methods=['POST'])
+def add_zip_file(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
-			metrics = []
-			for metric in all_metrics:
-				if metric.name in request.form.keys():
-					metric = {
-						'name': metric.name,
-						'threshold': int(request.form[metric.name])/100
-					}
-					metrics.append(metric)
-			if 'smoss_metric' in request.form.keys():
-				metric = {
-						'name': 'smoss_metric',
-						'threshold': int(request.form['smoss_metric'])/100
-					}
-				metrics.append(metric)
-			problem_name = request.args.get('problem_name')
-			contest_name = request.args.get('contest_name')
-			url = URL + '/api/problem_metric'
-			doc_metric = {
-				'contest_name': contest_name,
-				'problem_name': problem_name,
-				'metrics': metrics
-			}
-			req = requests.put(url=url, json=doc_metric)
-			params = {'problem_name': problem_name, 'contest_name':contest_name}
-			url = URL + '/api/problem_name'
-			req = requests.get(url=url, params=params)
-			sources = []
-			metrics = []
-			if 'problem' in req.json().keys():
-				sources = req.json()['problem'][0]['sources']
-				metrics = req.json()['problem'][0]['metrics']
-			if len(metrics) > 0:
-				cal_scoss(contest_name, problem_name, sources, metrics)
-				cal_smoss(contest_name, problem_name, sources, metrics)
-				
-		return redirect(url_for('res', contest_name=contest_name, problem_name=problem_name))
-@problems.route('/res')
-def res():
-	contest_name = request.args.get('contest_name')
-	problem_name = request.args.get('problem_name')
-	params = {'contest_name': contest_name, 'problem_name':problem_name}
-	url = URL + '/api/get_problem'
-	req = requests.get(url=url, params=params)
-	data = req.json()
-	heads = []
-	heads.append('source1')
-	heads.append('source2')
-	for metric in data['metrics']:
-		heads.append(metric['name'])
-	if len(data['similarity_matrix']) > 0:
-		links = []
-		for matrix in data['similarity_matrix']:
-			dic = {}
-			dic['source1'] = matrix['source1']
-			dic['source2'] = matrix['source2']
-			dic['scores'] = {}
-			for metric, score in matrix['scores'].items():			
-				C = int(score)*255
-				R = C
-				G = 0
-				B = 0
-				span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
-				dic['scores'][metric] = span
-			if len(data['similarity_matrix_smoss']) > 0:
-				for data_smoss in data['similarity_matrix_smoss']:
-					if data_smoss['source1'] == matrix['source1'] and data_smoss['source2'] == matrix['source2']:
-						C = int(data_smoss['scores']['moss_score'])*255
-						R = C
-						G = 0
-						B = 0
-						span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
-						dic['scores']['smoss_metric'] = span
-					elif data_smoss['source1'] == matrix['source2'] and data_smoss['source2'] == matrix['source1']:
-						C = int(data_smoss['scores']['moss_score'])*255
-						R = C
-						G = 0
-						B = 0
-						span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
-						dic['scores']['smoss_metric'] = span
-			links.append(dic)
-	else:
-		links = []
-		for matrix in data['similarity_matrix_smoss']:
-			dic = {}
-			dic['source1'] = matrix['source1']
-			dic['source2'] = matrix['source2']
-			dic['scores'] = {}
-			for metric, score in matrix['scores'].items():			
-				C = int(score)*255
-				R = C
-				G = 0
-				B = 0
-				span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
-				dic['scores']['smoss_metric'] = span
-			links.append(dic)
+			if request.method == 'POST':
+				if request.files:
+					zip_file = request.files['file'].read()					
+					url = URL + '/api/problems/{}/from_zip'.format(problem_id)
+					req = requests.post(url=url, files={'file': zip_file})
+					return redirect(url_for('problems_page.source', problem_id= problem_id))
+				return redirect(url_for('problems_page.source', problem_id= problem_id))
+	return redirect(url_for('login'))
+
+
+@problems.route('/problems/<problem_id>/all', methods=['GET'])
+def summary(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
-			return render_template('result.html', contest_name=contest_name, problem_name=problem_name, heads=heads, links=links)
+			if request.method == 'GET':
+				return render_template('all.html')
+	return redirect(url_for('login_page.login_page'))

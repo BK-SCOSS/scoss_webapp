@@ -94,9 +94,9 @@ def run_problem(problem_id):
 	url_scoss = URL + '/api/problems/' + str(problem_id) + '/results/scoss'
 	url_smoss = URL + '/api/problems/' + str(problem_id) + '/results/smoss'
 	req_status = requests.get(url=url_status)
-	if req_status.json()['problem_status'] == 'init' or req_status.json()['problem_status'] == 'reopen':
+	if req_status.json()['problem_status'] == 'waiting':
 		doc_status = {
-			"problem_status": "waiting"
+			"problem_status": "running"
 		}
 		requests.put(url=url_status, json=doc_status)
 		similarity_list, alignment_list = cal_scoss(data_problem['sources'], data_problem['metrics'])

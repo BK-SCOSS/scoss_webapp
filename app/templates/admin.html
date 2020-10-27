@@ -43,16 +43,18 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="form-group row">
-            <label for="uername" class="col-sm-2 control-label">Username</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" id="username" placeholder="Username">
+          <form action="/admin" method="POST" id="create-user">
+            <div class="form-group row">
+              <label for="username" class="col-sm-2 control-label">Username</label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+              </div>
             </div>
-          </div>
+          </form>
         </div>
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="submit" class="btn btn-primary" form="create-user">Create</button>
         </div>
       </div>
       <!-- /.modal-content -->
@@ -60,4 +62,40 @@
     <!-- /.modal-dialog -->
 </div>
 
-{% include "footer.html" %}
+<!-- jQuery -->
+<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+<!-- Bootstrap 4 -->
+<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+<!-- AdminLTE App -->
+<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+
+<script>
+  $(document).ready(function() {
+	$.ajaxSetup({
+	  headers: {
+		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+	  }
+	});
+
+	$(document).on("click",".btn-delete",function(){
+	  user_id = $(this).attr('user_id');
+	  if(confirm("Bạn chắc chắn muốn xóa chứ?")){
+		$.ajax({
+		  type: "DELETE",
+		  contentType: 'application/json',
+		  url: "/api/users/" + user_id,
+		  success: function (data) {
+        console.log('success')
+        alert(data['info'])
+        location.reload()
+		  },
+		  error: function (data) {
+  			console.log('Error:', data['error']);
+		  }
+		});
+	  }
+	});
+  })
+</script>
+
+</body></html>
