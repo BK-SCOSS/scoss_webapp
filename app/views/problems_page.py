@@ -130,52 +130,52 @@ def result(problem_id):
 							heads=heads, links=tdata)
 				else:
 					return render_template('result.html', error="No source in database")
-				if len(data['similarity_matrix']) > 0:
-					links = []
-					for matrix in data['similarity_matrix']:
-						dic = {}
-						dic['source1'] = matrix['source1']
-						dic['source2'] = matrix['source2']
-						dic['scores'] = {}
-						for metric, score in matrix['scores'].items():			
-							C = int(score)*255
-							R = C
-							G = 0
-							B = 0
-							span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
-							dic['scores'][metric] = span
-						if len(data['similarity_matrix_smoss']) > 0:
-							for data_smoss in data['similarity_matrix_smoss']:
-								if data_smoss['source1'] == matrix['source1'] and data_smoss['source2'] == matrix['source2']:
-									C = int(data_smoss['scores']['moss_score'])*255
-									R = C
-									G = 0
-									B = 0
-									span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
-									dic['scores']['smoss_metric'] = span
-								elif data_smoss['source1'] == matrix['source2'] and data_smoss['source2'] == matrix['source1']:
-									C = int(data_smoss['scores']['moss_score'])*255
-									R = C
-									G = 0
-									B = 0
-									span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
-									dic['scores']['smoss_metric'] = span
-						links.append(dic)
-				else:
-					links = []
-					for matrix in data['similarity_matrix_smoss']:
-						dic = {}
-						dic['source1'] = matrix['source1']
-						dic['source2'] = matrix['source2']
-						dic['scores'] = {}
-						for metric, score in matrix['scores'].items():			
-							C = int(score)*255
-							R = C
-							G = 0
-							B = 0
-							span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
-							dic['scores']['smoss_metric'] = span
-						links.append(dic)
+				# if len(data['similarity_matrix']) > 0:
+				# 	links = []
+				# 	for matrix in data['similarity_matrix']:
+				# 		dic = {}
+				# 		dic['source1'] = matrix['source1']
+				# 		dic['source2'] = matrix['source2']
+				# 		dic['scores'] = {}
+				# 		for metric, score in matrix['scores'].items():			
+				# 			C = int(score)*255
+				# 			R = C
+				# 			G = 0
+				# 			B = 0
+				# 			span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
+				# 			dic['scores'][metric] = span
+				# 		if len(data['similarity_matrix_smoss']) > 0:
+				# 			for data_smoss in data['similarity_matrix_smoss']:
+				# 				if data_smoss['source1'] == matrix['source1'] and data_smoss['source2'] == matrix['source2']:
+				# 					C = int(data_smoss['scores']['moss_score'])*255
+				# 					R = C
+				# 					G = 0
+				# 					B = 0
+				# 					span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
+				# 					dic['scores']['smoss_metric'] = span
+				# 				elif data_smoss['source1'] == matrix['source2'] and data_smoss['source2'] == matrix['source1']:
+				# 					C = int(data_smoss['scores']['moss_score'])*255
+				# 					R = C
+				# 					G = 0
+				# 					B = 0
+				# 					span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(data_smoss['scores']['moss_score']*100, '.2f')) +'%</span>'
+				# 					dic['scores']['smoss_metric'] = span
+				# 		links.append(dic)
+				# else:
+				# 	links = []
+				# 	for matrix in data['similarity_matrix_smoss']:
+				# 		dic = {}
+				# 		dic['source1'] = matrix['source1']
+				# 		dic['source2'] = matrix['source2']
+				# 		dic['scores'] = {}
+				# 		for metric, score in matrix['scores'].items():			
+				# 			C = int(score)*255
+				# 			R = C
+				# 			G = 0
+				# 			B = 0
+				# 			span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score*100, '.2f')) +'%</span>'
+				# 			dic['scores']['smoss_metric'] = span
+				# 		links.append(dic)
 	return redirect(url_for('login'))
 
 @problems.route('/problems/<problem_id>/from_zip', methods=['POST'])

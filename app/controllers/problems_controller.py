@@ -177,11 +177,12 @@ def get_results(problem_id):
         for key in res:
             total = 0
             num_of_score = 0
-            for score in res[key]['scores']:
-                total += res[key]['scores'][score]
-                num_of_score +=1
-            if num_of_score != 0:
-                res[key]['scores']['mean'] = total/num_of_score
+            for i in range(len(res[key])):
+                for score in res[key][i]['scores']:
+                    total += res[key][i]['scores'][score]
+                    num_of_score += 1
+                if num_of_score != 0:
+                    res[key][i]['scores']['mean'] = total/num_of_score
     except Exception:
         return jsonify({"error":"Can't get results"}),400
     return jsonify({'problem_id': problem_id, 'results': list(res.values())}), 200
