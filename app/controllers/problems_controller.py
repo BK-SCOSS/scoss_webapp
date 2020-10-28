@@ -13,7 +13,14 @@ problems_controller = Blueprint('problems_controller', __name__)
 @problems_controller.route('/api/contests/<contest_id>/problems/add', methods = ['POST'])
 def add_problem(contest_id):
     try:
-        problem_id = str(int(time.time()) * 1000)
+        if len(Counter.objects) == 0:
+            problem_id = 0
+            Counter(name='count', count_user=0, count_problem=0, count_contest=0).save()
+        else:
+            problem_id = Counter.objects.get(name='count').count_problem + 1
+            Counter.objects(name='count').update(count_problem=problem_id)
+            problem_id += 1
+        problem_id = str(problem_id)
         problem_name = request.json['problem_name']
         problem_status = 'init'
         req = Contest.objects.get(contest_id=contest_id)
@@ -24,8 +31,8 @@ def add_problem(contest_id):
             return jsonify({'error': "The problem name may already exist"}), 400
         Problem(problem_id=problem_id, problem_name=problem_name, problem_status=problem_status, contest_id=contest_id, user_id=user_id).save()
         return jsonify({'problem_id': problem_id}), 200
-    except Exception:
-        return jsonify({'error': "Can't add problem"}), 400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
 
 @problems_controller.route('/api/contests/<contest_id>/problems', methods = ['GET'])
 def problems(contest_id):
@@ -36,8 +43,8 @@ def problems(contest_id):
             temp = data_problem.to_mongo()
             del temp['_id']
             res.append(temp)
-    except Exception:
-        return jsonify({'error': "Can't get problems!"}), 400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'contest_id': contest_id,'problems': res}),200
 
 @problems_controller.route('/api/problems/<problem_id>', methods = ['GET'])
@@ -52,17 +59,17 @@ def get_problem(problem_id):
             'sources': data_problem.sources,
             'metrics': data_problem.metrics
         }
-    except Exception:
-        return jsonify({'error': "Can't get problem!"}), 400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify(data_doc),200
 
 @problems_controller.route('/api/problems/<problem_id>', methods = ['DELETE'])
 def delete_problem(problem_id):
     try:
-        Problem(problem_id=problem_id).delete()
-        info = 'Delete problem_id' + str(problem_id)
-    except Exception:
-        return jsonify({'error': "Can't delete problem!"}), 400
+        Problem.objects(problem_id=problem_id).delete()
+        info = 'Delete problem_id ' + str(problem_id)
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'info':info})
 
 @problems_controller.route('/api/problems/<problem_id>/status', methods = ['PUT'])
@@ -70,8 +77,8 @@ def updata_status(problem_id):
     try:
         problem_status = request.json['problem_status']
         Problem.objects(problem_id=problem_id).update(problem_status=problem_status)
-    except Exception:
-        return jsonify({'error': "Can't update problem_status!"}), 400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id':problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/status', methods = ['GET'])
@@ -83,8 +90,8 @@ def get_status(problem_id):
             'problem_name': data_problem.problem_name,
             'problem_status': data_problem.problem_status
         }
-    except Exception:
-        return jsonify({'error': "Can't get problem_status!"}), 400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify(data_doc),200
 
     
@@ -111,8 +118,8 @@ def add_zip(problem_id):
                     }
                     sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)
-    except Exception:
-        return jsonify({"error":"Can't add from zip in problems"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/sources/add', methods = ['POST'])
@@ -130,8 +137,8 @@ def add_source(problem_id):
         }
         sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)
-    except Exception:
-        return jsonify({"error":"Can't add file in problems"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results', methods = ['GET'])
@@ -143,6 +150,8 @@ def get_results(problem_id):
         metrics = data_problem.metrics
         metric_list = []
         res = {}
+        if len(metric_list) == 0: 
+            return jsonify({'problem_id': problem_id, 'results': []}), 200
         for metric in metrics:
             metric_list.append(metric['name'])
         if 'moss_score' in metric_list:
@@ -180,8 +189,8 @@ def get_results(problem_id):
                 num_of_score +=1
             if num_of_score != 0:
                 res[key]['scores']['mean'] = total/num_of_score
-    except Exception:
-        return jsonify({"error":"Can't get results"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id, 'results': list(res.values())}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['GET'])
@@ -190,8 +199,8 @@ def get_result_scoss(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         similarity_list = data_problem.similarity_list
         alignment_list = data_problem.alignment_list
-    except Exception:
-        return jsonify({"error":"Can't get scoss matrix"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id, 'similarity_list': similarity_list, "alignment_list":alignment_list}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/smoss', methods = ['GET'])
@@ -200,8 +209,8 @@ def get_result_smoss(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         similarity_smoss_list = data_problem.similarity_smoss_list
         alignment_smoss_list = data_problem.alignment_smoss_list
-    except Exception:
-        return jsonify({"error":"Can't get smoss matrix"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id, 'similarity_smoss_list': similarity_smoss_list, "alignment_smoss_list":alignment_smoss_list}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['PUT'])
@@ -210,8 +219,8 @@ def update_result_scoss(problem_id):
         similarity_list = request.json['similarity_list']
         alignment_list = request.json['alignment_list']
         Problem.objects(problem_id=problem_id).update(similarity_list=similarity_list, alignment_list=alignment_list)
-    except Exception:
-        return jsonify({"error":"Can't update scoss matrix"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/smoss', methods = ['PUT'])
@@ -220,8 +229,8 @@ def update_result_smoss(problem_id):
         similarity_smoss_list = request.json['similarity_smoss_list']
         alignment_smoss_list = request.json['alignment_smoss_list']
         Problem.objects(problem_id=problem_id).update(similarity_smoss_list=similarity_smoss_list, alignment_smoss_list=alignment_smoss_list)
-    except Exception:
-        return jsonify({"error":"Can't update smoss"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/run', methods = ['POST'])
@@ -233,7 +242,7 @@ def run_source(problem_id):
         if len(data_problem) > 0:
             if data_problem.problem_status in ['init', 'checked']:
                 tq.enqueue_nowait(problem_id)
-    except Exception:
-        return jsonify({"error":"Can't run problem"}),400
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 

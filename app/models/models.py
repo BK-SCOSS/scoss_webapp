@@ -27,3 +27,9 @@ class Problem(db.Document):
     contest_id = db.StringField()
     user_id = db.StringField()
 
+class Counter(db.Document):
+    name = db.StringField()
+    count_user = db.IntField()
+    count_problem = db.IntField()
+    count_contest = db.IntField()
+
