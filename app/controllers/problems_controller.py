@@ -143,58 +143,58 @@ def add_source(problem_id):
 
 @problems_controller.route('/api/problems/<problem_id>/results', methods = ['GET'])
 def get_results(problem_id):
-    # try: 
-    data_problem = Problem.objects.get(problem_id=problem_id)
-    similarity_list = data_problem.similarity_list
-    similarity_smoss_list = data_problem.similarity_smoss_list
-    metrics = data_problem.metrics
-    metric_list = []
-    res = {}
-    for metric in metrics:
-        metric_list.append(metric['name'])
-    if 'moss_score' in metric_list:
-        if len(metric_list) == 1:
-            res['smoss'] = similarity_smoss_list
-        else: 
-            for simi in similarity_list:             
-                key = hash(simi['source1'])^hash(simi['source2'])
-                temp_list = simi 
-                temp_list['scores']['moss_score'] =  0
-                res[key] = temp_list
-            for simi_smoss in similarity_smoss_list:        
-                key = hash(simi_smoss['source1'])^hash(simi_smoss['source2'])
-                if key in res.keys():
-                    temp_list = simi_smoss
-                    for metric in metric_list:
-                        temp_list['scores'][metric] =  0
-                    temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        similarity_list = data_problem.similarity_list
+        similarity_smoss_list = data_problem.similarity_smoss_list
+        metrics = data_problem.metrics
+        metric_list = []
+        res = {}
+        for metric in metrics:
+            metric_list.append(metric['name'])
+        if 'moss_score' in metric_list:
+            if len(metric_list) == 1:
+                res['smoss'] = similarity_smoss_list
+            else: 
+                for simi in similarity_list:             
+                    key = hash(simi['source1'])^hash(simi['source2'])
+                    temp_list = simi 
+                    temp_list['scores']['moss_score'] =  0
                     res[key] = temp_list
-            for simi in similarity_list:
-                for simi_smoss in similarity_smoss_list:
-                    if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\
-                        or (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2']):
-                        key = hash(simi['source1'])^hash(simi['source2'])
-                        temp_list = simi 
+                for simi_smoss in similarity_smoss_list:        
+                    key = hash(simi_smoss['source1'])^hash(simi_smoss['source2'])
+                    if key in res.keys():
+                        temp_list = simi_smoss
+                        for metric in metric_list:
+                            temp_list['scores'][metric] =  0
                         temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
                         res[key] = temp_list
-    else:
-        res['scoss'] = similarity_list
-    check_zero = 0
-    for key in res:
-        total = 0
-        num_of_score = 0
-        if len(res[key]) == 0:
-            check_zero+=1
-            continue
-        for score in res[key]['scores']:
-            total += res[key]['scores'][score]
-            num_of_score +=1
-        if num_of_score != 0:
-            res[key]['scores']['mean'] = total/num_of_score
-    if(len(res.keys()) == check_zero):
-        return jsonify({'problem_id': problem_id, 'results': []}), 200
-    # except Exception as e:
-    #     return jsonify({"error":"Exception: {}".format(e)}),400
+                for simi in similarity_list:
+                    for simi_smoss in similarity_smoss_list:
+                        if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\
+                            or (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2']):
+                            key = hash(simi['source1'])^hash(simi['source2'])
+                            temp_list = simi 
+                            temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
+                            res[key] = temp_list
+        else:
+            res['scoss'] = similarity_list
+        check_zero = 0
+        for key in res:
+            total = 0
+            num_of_score = 0
+            if len(res[key]) == 0:
+                check_zero+=1
+                continue
+            for score in res[key]['scores']:
+                total += res[key]['scores'][score]
+                num_of_score +=1
+            if num_of_score != 0:
+                res[key]['scores']['mean'] = total/num_of_score
+        if(len(res.keys()) == check_zero):
+            return jsonify({'problem_id': problem_id, 'results': []}), 200
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id, 'results': list(res.values())}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['GET'])
