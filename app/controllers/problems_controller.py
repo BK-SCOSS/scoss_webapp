@@ -135,7 +135,7 @@ def add_source(problem_id):
             "pathfile": file.filename,
             "lang": file.filename.split('.')[-1],
             'mask': mask,
-            'source_str': file.read()
+            'source_str': file.read().decode('UTF-8')
         }
         sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)
@@ -183,6 +183,7 @@ def get_results(problem_id):
         res['scoss'] = similarity_list
     check_zero = 0
     for key in res:
+        print(key, res[key])
         total = 0
         num_of_score = 0
         if len(res[key]) == 0:
@@ -193,6 +194,7 @@ def get_results(problem_id):
             num_of_score +=1
         if num_of_score != 0:
             res[key]['scores']['mean'] = total/num_of_score
+    print(len(res.keys()) ,check_zero)
     if(len(res.keys()) == check_zero):
         return jsonify({'problem_id': problem_id, 'results': []}), 200
     # except Exception as e:

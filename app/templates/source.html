@@ -4,7 +4,7 @@
     <div class="col-12">
     <div class="card">
         <div class="card-header">
-        <h3 class="card-title">{{problem_name}} - List source - {{error}}</h3>
+        <h3 class="card-title"><b>{{problem_name}}</b> - List source</h3>
         <div class="card-tools">
             <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data>
                 <div class="form-group row">
@@ -56,7 +56,7 @@
             <h3 class="card-title">Run problem</h3>
         </div>
         <!-- /.card-header -->
-        <form class="form-horizontal" action="/problems/{{problem_id}}/run" method="POST">
+        <form class="form-horizontal" action="/problems/{{problem_id}}/run" method="POST" id="problem-run">
             <div class="card-body">
                 <div class="row">
                     <div class="col-sm-5">
@@ -139,7 +139,7 @@
                   <td>{{link['source1']}}</a></td>
                   <td>{{link['source2']}}</a></td>
                   {%for metric in link['scores'] %}
-                  <td><a href=""  target="_blank" >{{link['scores'][metric]}}</a></td>
+                  <td><a href="/problems/summary" target="_blank" >{{link['scores'][metric]}}</a></td>
                   {%endfor%}
                   </tr>
                   {%endfor%}
@@ -221,11 +221,11 @@
 <!-- Bootstrap 4 -->
 <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
 <!-- SweetAlert -->
-<script src="{{ url_for('static', filename = 'sweetalert2.min.js') }}"></script>
+<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
 {% if error %}
-<script>
+<script type="text/javascript">
     $(function() {
         const Toast = Swal.mixin({
             toast: true,
@@ -242,6 +242,22 @@
         $("#run").click(function() {
             $(this).disabled
             $(this).html("<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>Running")
+        })
+        $("problem-run"),submit(function(e){
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            var form = $(this);
+            var url = form.attr('action');
+            
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: form.serialize(), // serializes the form's elements.
+                success: function(data)
+                {
+                    alert(data); // show response from the php script.
+                }
+            });
         })
     });
 </script>

@@ -192,6 +192,8 @@
 <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
 <!-- Bootstrap 4 -->
 <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+<!-- SweetAlert -->
+<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
 
@@ -203,23 +205,47 @@
 	  }
 	});
 
+	const Toast = Swal.mixin({
+		toast: true,
+		position: 'top-end',
+		showConfirmButton: false,
+		timer: 5000
+	})
+
 	$(document).on("click",".btn-delete",function(){
 	  problem_id = $(this).attr('problem_id');
-	  if(confirm("Bạn chắc chắn muốn xóa chứ?")){
-		$.ajax({
-		  type: "DELETE",
-		  contentType: 'application/json',
-		  url: "/api/problems/" + problem_id,
-		  success: function (data) {
-			console.log('success')
-			alert(data['info'])
-			location.reload()
-		  },
-		  error: function (data) {
-			console.log('Error:', data['error']);
-		  }
-		});
-	  }
+	  Swal.fire({
+		title: 'Are you sure?',
+		text: "You won't be able to revert this!",
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, delete it!'
+		}).then((result) => {
+			if (result.isConfirmed) {
+				$.ajax({
+					type: "DELETE",
+					contentType: 'application/json',
+					url: "/api/problems/" + problem_id,
+					success: function (data) {
+						Toast.fire({
+							type: 'success',
+							title: data['info']
+						})
+						setTimeout(function(){
+							location.reload(true);
+						}, 3000);
+					},
+					error: function (data) {
+						Toast.fire({
+							type: 'error',
+							title: data['error']
+						})
+					}
+				});
+			}
+		})
 	});
   })
 </script>

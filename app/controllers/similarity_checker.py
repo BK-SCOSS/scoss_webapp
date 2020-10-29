@@ -113,7 +113,7 @@ def run_problem(problem_id):
 				"similarity_smoss_list": similarity_smoss_list,
 				"alignment_smoss_list": alignment_smoss_list
 			}
-			requests.put(url=url_scoss, json=doc_scoss)
+			requests.put(url=url_smoss, json=doc_scoss)
 		doc_status = {
 			"problem_status": "checked"
 		}
