@@ -56,7 +56,7 @@
             <h3 class="card-title">Run problem</h3>
         </div>
         <!-- /.card-header -->
-        <form class="form-horizontal" action="/problems/{{problem_id}}/run" method="POST" id="problem-run">
+        <form class="form-horizontal" method="POST" id="problem-run">
             <div class="card-body">
                 <div class="row">
                     <div class="col-sm-5">
@@ -66,7 +66,7 @@
                                 <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
                             </div>
                             <div class="col-sm-6">
-                                <input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="0" disabled>        
+                                <input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="50" disabled>        
                             </div>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                                 <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
                             </div>
                             <div class="col-sm-6">
-                                <input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="0" disabled> 
+                                <input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="50" disabled> 
                             </div>
                         </div>
                     </div>		
@@ -91,7 +91,7 @@
                                 <input class="custom-control-input" type="checkbox" id="hashCheckBox">
                                 <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
                             <div class="col-sm-6">
-                                <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="0" disabled>	
+                                <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                                 <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
                             </div>
                             <div class="col-sm-6">
-                                <input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="0" disabled>
+                                <input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="50" disabled>
                             </div>
                         </div>
                     </div>		
@@ -224,9 +224,14 @@
 <script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
-{% if error %}
-<script type="text/javascript">
+<script>
     $(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -234,32 +239,93 @@
             timer: 3000
         });
 
-        Toast.fire({
-            type: 'error',
-            title: '{{error}}'
-        })
-        
-        $("#run").click(function() {
-            $(this).disabled
-            $(this).html("<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>Running")
-        })
-        $("problem-run"),submit(function(e){
+        function create_result(heads, links) {
+            row = $("<div>", {id: "result", "class": "row"})
+            col = $("<div>", {"class": "col-12"})
+            card = $("<div>", {"class": "card"})
+            card_header = $("<div>", {"class": "card-header"})
+            card_body = $("<div>", {"class": "card-body"})
+            table = $("<table>", {"class": "table table-hover table-bordered"})
+            header = $("<tr>")
+            
+            for (head in heads) {
+                header.append("<th>" + heads[head] + "<i class='fa fa-sort'></i></th>")
+            }
+            table.append(header)
+            for (link of links) {
+                item = $("<tr>", {"class": "item"})
+                item.append("<td>" + link['source1'] + "</a></td>")
+                item.append("<td>" + link['source2'] + "</a></td>")
+                for (metric in link['scores']) {
+                    td = $("<td>")
+                    a = $("<a>", {"href": '', "target": "_blank"})
+                    a.text(link['scores'][metric])
+                    console.log(link['scores'])
+                    td.append(a)
+                    item.append(td)
+                }
+                table.append(item)
+            }
+            card_body.append(table)
+            card_header.append("<h3 class='card-title'>Result</h3>")
+            card.append(card_header)
+            card.append(card_body)
+            col.append(card)
+            row.append(col)
+            $(".content .container").append(row)
+        }
+
+        $("#problem-run").submit(function(e){
             e.preventDefault(); // avoid to execute the actual submit of the form.
 
             var form = $(this);
-            var url = form.attr('action');
-            
+            var list_operator = form.serializeArray()
+            var send_data = []
+            list_operator.forEach(element => {
+                var temp = {
+                    'name': element['name'],
+                    'threshold': element['value']/100
+                }
+                send_data.push(temp)
+            });
+            var data_form = {'metrics': send_data}
+            // console.log(send_data)
+            // console.log(JSON.stringify(data_form))
             $.ajax({
                 type: "POST",
-                url: url,
-                data: form.serialize(), // serializes the form's elements.
+                url: "/api/problems/{{problem_id}}/run",
+                contentType: 'application/json',
+                data: JSON.stringify(data_form),
                 success: function(data)
                 {
-                    alert(data); // show response from the php script.
+                    $.get("/api/problems/{{problem_id}}/results", function(data, status){
+                        var result = JSON.stringify(data)
+                        console.log(data);
+                        console.log("id: " + data['problem_id']);
+                        if (data['results'].length > 0) {
+                            var heads = []
+                            heads.push('source1')
+                            heads.push('source2')
+                            for(metric in data.results[0].scores) {
+                                heads.push(metric)
+                            }
+                            console.log(heads)
+                            console.log(data['results'][0].scores )
+                            create_result(heads, links=data['results'])
+                        } else {
+                            Toast.fire({
+                                type: 'error',
+                                title: 'No result in database'
+                            })
+                        }
+                    });
+                },
+                error: function(data)
+                {
+                    alert(data['error'])
                 }
             });
         })
     });
 </script>
-{% endif %}
 </body></html>

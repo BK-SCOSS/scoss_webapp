@@ -81,60 +81,6 @@ def add_file(problem_id):
 					return redirect(url_for('problems_page.source', problem_id=problem_id))
 	return redirect(url_for('login_page.login_page'))
 
-@problems.route('/problems/<problem_id>/run', methods=['POST'])
-def run(problem_id):
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'POST':
-				list_operator = request.form
-				send_data = []
-				for op in list_operator:
-					temp = {
-						'name': op,
-						'threshold': float(int(list_operator[op])/100)
-					}
-					send_data.append(temp)
-				data_form = {'metrics': send_data}
-				url = URL + '/api/problems/{}/run'.format(problem_id)
-				req = requests.post(url=url, json=data_form)
-				if 'problem_id' in req.json().keys():
-					return redirect(url_for('problems_page.result', problem_id=problem_id))
-						# return render_template('result.html', links=result.json()['results'])
-					# else:
-					# 	return redirect(url_for('problems_page.source', problem_id=problem_id, error=result.json()['error']))
-				else:
-					return redirect(url_for('problems_page.source', problem_id=problem_id, error=req.json()['error']))
-	# else:
-	# 	return redirect(url_for('login_page.logout'))
-
-@problems.route('/problems/<problem_id>/result')
-def result(problem_id):
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'GET':
-				url = URL + '/api/problems/{}/results'.format(problem_id)
-				result = requests.get(url=url)
-				data = result.json()
-				print(data)
-				url_problem = URL + '/api/problems/{}'.format(problem_id)
-				req = requests.get(url=url_problem)
-				if len(data['results']) > 0:
-					heads = []
-					heads.append('source1')
-					heads.append('source2')
-					for metric in data['results'][0]['scores']:
-						heads.append(metric)
-
-					if 'problem_id' in req.json().keys():
-						return render_template('source.html', data=req.json()['sources'],
-							problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'],
-							heads=heads, links=data['results'])
-				else:
-					return render_template('source.html', data=req.json()['sources'],
-					 		problem_name=req.json()['problem_name'], problem_id=problem_id, 
-							error="Threre is no result in database")
-	return redirect(url_for('login_page.login_page'))
-
 @problems.route('/problems/<problem_id>/from_zip', methods=['POST'])
 def add_zip_file(problem_id):
 	if 'logged_in' in session:
@@ -147,20 +93,3 @@ def add_zip_file(problem_id):
 					return redirect(url_for('problems_page.source', problem_id= problem_id))
 				return redirect(url_for('problems_page.source', problem_id= problem_id))
 	return redirect(url_for('login'))
-
-
-@problems.route('/problems/<problem_id>/all', methods=['GET'])
-def all(problem_id):
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'GET':
-				return render_template('all.html')
-	return redirect(url_for('login_page.login_page'))
-
-@problems.route('/problems/summary', methods=['GET'])
-def summary():
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'GET':
-				return render_template('comparison.html')
-	return redirect(url_for('login_page.login_page'))

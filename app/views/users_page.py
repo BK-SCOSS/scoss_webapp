@@ -26,7 +26,7 @@ def admin():
 			else: 
 				username = request.form['username']
 				password = '12345'
-				role = 0
+				role = 1
 				data_form = {'username': username, 'role': role, 'password': password}
 				url = URL + '/api/users/add'
 				req = requests.post(url=url,json=data_form)

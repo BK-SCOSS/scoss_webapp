@@ -20,9 +20,6 @@ def contest():
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
-				check_status_url = URL + '/api/contests/check_status'
-				check_status_req = requests.get(url=check_status_url)
-
 				user_id = session['user_id']
 				role = session['role']
 				if int(role) == 0:

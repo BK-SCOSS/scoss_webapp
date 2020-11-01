@@ -10,7 +10,7 @@ __pycache__/
 
 .vim/*
 *.DS_Store
-
+app/config.py
 # Distribution / packaging
 .Python
 build/

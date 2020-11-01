@@ -16,4 +16,15 @@ tests = Blueprint('tests_page', __name__)
 
 @tests.route('/test')
 def test():
-	return render_template('test.html')
+	if 'logged_in' in session:
+		if session['logged_in'] == True:
+			if request.method == 'GET':
+				req = requests.get(url=url)
+				return render_template('test.html')
+			else:
+				source_name = request.form['source_name']
+				data_form = {'source_name': source_name}
+				url = URL + '/api/problems/' + problem_id + '/sources/add'
+				req = requests.post(url=url,json=data_form)
+				return redirect(url_for('tests_page.test'))
+	return redirect(url_for('login'))
