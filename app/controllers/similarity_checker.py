@@ -45,8 +45,6 @@ def cal_smoss(sources, metrics):
 	alignment_list = []
 	for source in sources:
 		lang = source['lang']
-		if str(lang) == 'cpp':
-			lang = 'cc'
 		check = False
 		for program in programs:
 			if str(program.get_language()) == lang:
