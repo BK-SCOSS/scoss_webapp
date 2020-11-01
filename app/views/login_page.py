@@ -23,12 +23,14 @@ def login_page():
 		username = request.form['username']
 		password = request.form['password']
 		params = {'username': username}
-		url = URL + '/api/user'
+		url = URL + '/api/users/username'
 		req = requests.get(url=url, params=params)
 		print( check_password_hash(req.json()['password'], password))
 		if 'password' in req.json().keys():
 			if check_password_hash(req.json()['password'], password):
+				session['user_id'] = req.json()['user_id']
 				session['username'] = username
+				session['role'] = req.json()['role']
 				session['logged_in'] = True
 				return redirect(url_for('home_page.index'))
 			else:
@@ -47,8 +49,8 @@ def signup():
 		username = request.form['username']
 		password = request.form['password']
 		level = request.form['level']
-		data = {'username': username , 'password': generate_password_hash(password), 'level':level}
-		url = URL +'/api/user'
+		data = {'username': username , 'password': generate_password_hash(password), 'role':level}
+		url = URL +'/api/users/add'
 		req = requests.post(url=url, data=data)
 		if 'user_id' not in req.json().keys():
 			return jsonify({'info': 'False'})

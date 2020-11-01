@@ -9,54 +9,219 @@
 			</div>
 			{%endif%}
           <div class="card-header">
-            <h3 class="card-title">Problem</h3>
+			<h3 class="card-title">Contest A - List problem</h3>
+			<div class="card-tools">
+				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data>
+					<div class="form-group row">
+						<div class="col-sm-9">
+							<input type="file" name="file">
+						</div>
+						<div class="col-sm-3">
+							<input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+						</div>					
+					</div>		
+				</form>
+			</div>
           </div>
 		  <!-- /.card-header -->
-		  {%if data|length > 0%}
+		  
           <div class="card-body table-responsive p-0">
             <table class="table table-hover table-bordered">
                 <tr>
 					<th style="width: 4em;">#</th>
 					<th>Name</th>
+					<th>Status</th>
+					{% if session['role'] == 0 or author == session['user_id'] %}
+					<th></th>
+					{% endif %}
 				</tr>
-				{%for content in data%}
-                <tr>
+				{%if data|length > 0%}
+				{%for problem in data%}
+				<tr>
 					<td>{{loop.index}}</td>
-					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
-                </tr>
+					<td><a href="/problems/{{problem['problem_id']}}/sources">{{problem['problem_name']}}</a></td>
+					<td class="project-state">
+						<span class="badge badge-success">{{problem['problem_status']}}</span>
+					</td>
+					{% if session['role'] == 0 or author == session['user_id'] %}
+					<td class="text-center py-0 align-middle">
+						<a class="btn btn-danger btn-delete" problem_id="{{problem['problem_id']}}"><i class="fas fa-trash"></i></a>
+					</td>
+					{% endif %}
+				</tr>
 				{%endfor%}
+				{%endif%}
+				<tr>
+					<td>#</td>
+					<td id="problem-name" colspan="3"><a href="#" id="create-problem" onclick="createProblem()"><b>Add new problem</b></a></td>
+				</tr>
             </table>
 		  </div>
-		  {%endif%}
           <!-- /.card-body -->
         </div>
       </div>
     </div>
    
-		<div class="row">
-			<div class="col-sm-6">
-				<div class="card card-info">
-					<div class="card-header">
-						<h3 class="card-title">Create problem</h3>
-					</div>
-					<!-- /.card-header -->
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="card card-info">
+				<div class="card-header">
+					<h3 class="card-title">Run contest</h3>
+				</div>
+				<!-- /.card-header -->
+				<form class="form-horizontal" action="/contests/{{contest_id}}/run" method="POST">
 					<div class="card-body">
-						<form action="/problem?contest_name={{contest_name}}" method="POST" class="form-horizontal">
-							<div class="form-group row">
-								<div class="col-sm-3">
-									<label for="problem"><b>Add problem: </b></label>
+						<div class="row">
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="countCheckBox">
+										<label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="0" disabled>        
+									</div>
 								</div>
-								<div class="col-sm-7">
-									<input type="text" class="form-control" name="problem_name" placeholder="Enter problem">
-								</div>
-								<div class="col-sm-2">
-									<input type="submit" class="btn btn-primary" value="Submit">
+							</div>
+							<div class="col-sm-2"></div>
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="setCheckBox">
+										<label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="0" disabled> 
+									</div>
 								</div>
 							</div>		
-						</form>
-					</div>
-				</div>	
-			</div>
-		</div>
+						</div>
 
-{% include "footer.html" %}
+						<div class="row">
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="hashCheckBox">
+										<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="0" disabled>	
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-2"></div>
+							<div class="col-sm-5">
+								<div class="form-group row">
+									<div class="custom-control custom-checkbox col-sm-6">
+										<input class="custom-control-input" type="checkbox" id="smossCheckBox">
+										<label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+									</div>
+									<div class="col-sm-6">
+										<input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="0" disabled>
+									</div>
+								</div>
+							</div>		
+						</div>
+					</div>
+					<div class="card-footer">	
+						<button type="submit" class="btn btn-primary" id="run">
+							Run
+						</button>
+						<input type="button" class="btn btn-default" name="result" value="Result">
+					</div>
+				</form>
+			</div>	
+		</div>
+	</div>
+
+    <script type="text/javascript">
+        document.getElementById('countCheckBox').onchange = function() {
+            document.getElementById('countOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('setCheckBox').onchange = function() {
+            document.getElementById('setOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('hashCheckBox').onchange = function() {
+            document.getElementById('hashOperator').disabled = !this.checked;
+        };
+
+        document.getElementById('smossCheckBox').onchange = function() {
+			document.getElementById('smossMetric').disabled = !this.checked;
+		};
+
+		function createProblem() {
+			const form = document.createElement('form')
+			const input = document.createElement('input')
+			const submit = document.createElement('input')
+			const row = document.createElement('div')
+			const col10 = document.createElement('div')
+			const col2 = document.createElement('div')
+
+			form.method = "POST"
+			form.action = "/contests/" + "{{contest_id}}" + "/problems"
+			form.className = "form-horizontal"
+
+			row.className = "form-group row"
+			col10.className = "col-sm-10"
+			col2.className = "col-sm-2"
+
+			input.className = "form-control"
+			input.name = "problem_name"
+
+			submit.type = 'submit'
+			submit.className = 'btn btn-primary'
+			submit.name = 'submit'
+			submit.value = 'Submit'
+			submit.id = "create-pname-btn"
+
+			col10.appendChild(input)
+			col2.appendChild(submit)
+
+			row.appendChild(col10)
+			row.appendChild(col2)
+
+			form.appendChild(row)
+
+			link = document.getElementById('create-problem').remove()
+			
+			document.getElementById('problem-name').appendChild(form)
+		}
+    </script>
+<!-- jQuery -->
+<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+<!-- Bootstrap 4 -->
+<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+<!-- AdminLTE App -->
+<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+
+<script>
+  $(document).ready(function() {
+	$.ajaxSetup({
+	  headers: {
+		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+	  }
+	});
+
+	$(document).on("click",".btn-delete",function(){
+	  problem_id = $(this).attr('problem_id');
+	  if(confirm("Bạn chắc chắn muốn xóa chứ?")){
+		$.ajax({
+		  type: "DELETE",
+		  contentType: 'application/json',
+		  url: "/api/problems/" + problem_id,
+		  success: function (data) {
+			console.log('success')
+			alert(data['info'])
+			location.reload()
+		  },
+		  error: function (data) {
+			console.log('Error:', data['error']);
+		  }
+		});
+	  }
+	});
+  })
+</script>
+
+</body></html>

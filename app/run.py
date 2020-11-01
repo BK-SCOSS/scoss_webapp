@@ -19,6 +19,7 @@ from controllers.task_queue import tq
 
 from views.contests_page import contests
 from views.home_page import home
+from views.users_page import user
 from views.login_page import login
 from views.problems_page import problems
 from views.tests_page import tests
@@ -28,6 +29,7 @@ app.register_blueprint(problems_controller)
 app.register_blueprint(users_controller)
 app.register_blueprint(contests)
 app.register_blueprint(home)
+app.register_blueprint(user)
 app.register_blueprint(login)
 app.register_blueprint(problems)
 app.register_blueprint(tests)

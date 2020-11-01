@@ -4,7 +4,7 @@ import json
 import time
 import os
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 import shutil
 from models.models import *
 
@@ -69,9 +69,14 @@ def get_user(user_id):
 @users_controller.route('/api/users/<user_id>', methods=['PUT'])
 def update_user(user_id):
     try:
-        password = generate_password_hash(request.json['password'])
-        User.objects(user_id=str(user_id)).update(password=password)
-        info = 'Update infomation for user_id:' + user_id
+        old_password = request.json['old_password']
+        new_password = generate_password_hash(request.json['new_password'])
+        check_password = User.objects.get(user_id=str(user_id)).password
+        if check_password_hash(check_password, old_password):
+            User.objects(user_id=str(user_id)).update(password=new_password)
+            info = 'Update infomation for user_id:' + user_id
+        else:
+            info = "Wrong password!"
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'info': info})
@@ -85,6 +90,3 @@ def delete_user(user_id):
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'info': info}),200
     
-
-
-

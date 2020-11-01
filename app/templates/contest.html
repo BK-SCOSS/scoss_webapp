@@ -5,11 +5,14 @@
         <div class="card">
           {%if info == 'wrong'%}
           <div class="alert alert-danger" role="alert">
-            The contest name may already exist.
+            {{ error }}
           </div>
           {%endif%}
           <div class="card-header">
             <h3 class="card-title">Contest</h3>
+            <div class="card-tools">
+              <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-contest">Create</a>
+            </div>
           </div>
 
           <!-- /.card-header -->
@@ -20,12 +23,24 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Author</th>
+                <th>Status</th>
+                {% if session['role'] == 0 %}
+                <th></th>
+                {% endif %}
               </tr>
               {%for context in data%}
               <tr>
                 <td>{{loop.index}}</td>
-                <td><a href="/problem?contest_name={{context['contest_name']}}">{{context['contest_name']}}</a></td>
+                <td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a></td>
                 <td>{{context['contest_author']}}</td>
+                <td class="project-state">
+                  <span class="badge badge-success">{{context['contest_status']}}</span>
+                </td>
+                {% if session['role'] == 0 %}
+                <td class="text-center py-0 align-middle">
+                  <a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i class="fas fa-trash"></i></a>
+                </td>
+                {% endif %}
               </tr>
               {%endfor%}
             </table>
@@ -35,15 +50,17 @@
       </div>
     </div>
 
-	<div class="row">
-		<div class="col-sm-6">
-			<div class="card card-info">
-				<div class="card-header">
-					<h3 class="card-title">Create contest</h3>
-				</div>
-				<!-- /.card-header -->
-				<div class="card-body">
-					<form action="/contest" class="form-horizontal" method="POST">
+  <div class="modal fade" id="modal-create-contest" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Create contest</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="/contest" class="form-horizontal" method="POST" id="create-contest-form">
 						<div class="form-group row">
               <div class="col-sm-3">
 								<label for="cname"><b>Contest name: </b></label>
@@ -51,14 +68,54 @@
 							<div class="col-sm-7">
 								<input type="text" placeholder="Enter contest name" name="contest_name" required>						
 							</div>
-							<div class="col-sm-2">
-								<input type="submit" class="btn btn-primary" value="Create">
-							</div>
 						</div>		
 					</form>
-				</div>
-			</div>	
-		</div>
-	</div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" value="Create" form="create-contest-form">Create</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
 
-  {% include "footer.html" %}
+
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+  <!-- Bootstrap 4 -->
+  <script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+  <!-- AdminLTE App -->
+  <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+
+  <script>
+    $(document).ready(function() {
+      $.ajaxSetup({
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      });
+
+      $(document).on("click",".btn-delete",function(){
+        contest_id = $(this).attr('contest_id');
+        if(confirm("Bạn chắc chắn muốn xóa chứ?")){
+          $.ajax({
+            type: "DELETE",
+            contentType: 'application/json',
+            url: "/api/contests/" + contest_id,
+            success: function (data) {
+              console.log('success')
+              alert(data['info'])
+              location.reload()
+            },
+            error: function (data) {
+              console.log('Error:', data['error']);
+            }
+          });
+        }
+      });
+    })
+  </script>
+
+</body></html>
