@@ -213,21 +213,22 @@ def check_status():
             for data_problem in data_problems:
                 temp = data_problem.to_mongo()
                 res.append(temp['problem_status'])
-            checked = True
             if 'init' in res:
                 status = 'init'
             elif 'waiting' in res:
                 status = 'wating'
-            for sta in res:
-                if sta != 'checked':
-                    checked = False
-            if checked == True:
-                status = 'checked'
+            if len(res) > 0:
+                checked = True
+                for sta in res:
+                    if sta != 'checked':
+                        checked = False
+                    if checked == True:
+                        status = 'checked'
             doc_status = {
                 "contest_status": status
             }
-            url_status = URL + '/api/contests/'+str(contests.contest_id)+'/status'
+            url_status = URL + '/api/contests/{}/status'.format(contests.contest_id)
             requests.put(url=url_status, json=doc_status)
         return jsonify({'info': 'status update was successful'}), 200
-    except Exception as e:
-        return jsonify({"error":"Exception: {}".format(e)}),400
+    except Exception:
+        return jsonify({"error":"Can't update status contest"}),400

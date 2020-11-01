@@ -156,7 +156,10 @@ def get_results(problem_id):
             metric_list.append(metric['name'])
         if 'moss_score' in metric_list:
             if len(metric_list) == 1:
-                res['smoss'] = similarity_smoss_list
+                for simi in similarity_list:             
+                    key = hash(simi['source1'])^hash(simi['source2'])
+                    temp_list = simi 
+                    res[key] = temp_list
             else: 
                 for simi in similarity_list:             
                     key = hash(simi['source1'])^hash(simi['source2'])
@@ -180,7 +183,10 @@ def get_results(problem_id):
                             temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
                             res[key] = temp_list
         else:
-            res['scoss'] = similarity_list
+            for simi in similarity_list:             
+                key = hash(simi['source1'])^hash(simi['source2'])
+                temp_list = simi 
+                res[key] = temp_list
         check_zero = 0
         for key in res:
             total = 0
