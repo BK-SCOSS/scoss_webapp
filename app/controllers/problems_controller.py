@@ -258,3 +258,11 @@ def run_source(problem_id):
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id}), 200
 
+@problems_controller.route('/api/problems/<problem_id>/sources', methods = ['GET'])
+def get_source(problem_id):
+    try: 
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        sources = data_problem.sources
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'problem_id': problem_id, 'sources': sources}), 200

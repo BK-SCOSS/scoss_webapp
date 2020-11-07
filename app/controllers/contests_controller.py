@@ -206,7 +206,6 @@ def check_status():
     try:
         data_contest = Contest.objects()
         for contests in data_contest:
-            print(contests.contest_id)
             data_problems = Problem.objects(contest_id=contests.contest_id)
             status = 'init'
             res = []

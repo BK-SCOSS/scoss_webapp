@@ -45,8 +45,6 @@ def cal_smoss(sources, metrics):
 	alignment_list = []
 	for source in sources:
 		lang = source['lang']
-		if str(lang) == 'cpp':
-			lang = 'cc'
 		check = False
 		for program in programs:
 			if str(program.get_language()) == lang:
@@ -90,6 +88,7 @@ def run_problem(problem_id):
 	url = "{}/api/problems/{}".format(URL, str(problem_id))
 	req = requests.get(url)
 	data_problem = req.json()
+	print(data_problem)
 	url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
 	url_scoss = "{}/api/problems/{}/results/scoss".format(URL, str(problem_id))
 	url_smoss = "{}/api/problems/{}/results/smoss".format(URL, str(problem_id))
@@ -120,9 +119,9 @@ def run_problem(problem_id):
 						"alignment_smoss_list": alignment_smoss_list
 					}
 					requests.put(url=url_smoss, json=doc_scoss)
-				doc_status = {
-					"problem_status": "checked"
-				}
 				break
-		requests.put(url=url_status, json=doc_status)		
+		doc_status = {
+			"problem_status": "checked"
+		}
+		requests.put(url=url_status, json=doc_status)
 		requests.get(url="{}/api/contests/check_status".format(URL))

@@ -40,8 +40,12 @@ def update_password(user_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'POST':
-				new_pass = request.form['newpassword']
-				data_form = {'password': new_pass}
+				old_pass = request.form['old_password']
+				new_pass = request.form['new_password']
+				data_form = {
+					'old_password': old_pass,
+					'new_password': new_pass
+				}
 				base_url = request.referrer
 				url = URL + '/api/users/{}'.format(user_id)
 				req = requests.put(url=url, json=data_form)

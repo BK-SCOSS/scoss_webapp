@@ -59,26 +59,36 @@ def add_zip_file(contest_id):
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
 	return redirect(url_for('login'))
 
-@contests.route('/contests/<contest_id>/run', methods=['POST'])
-def run(contest_id):
+@contests.route('/contests/<contest_id>/results', methods=['GET'])
+def results(contest_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
-			if request.method == 'POST':
-				check_status_url = URL + '/api/contests/check_status'
-				check_status_req = requests.get(url=check_status_url)
+			if request.method == 'GET':
+				data = requests.get(url = "{}/api/contests/{}/results".format(URL, contest_id))
+				results = data.json()['results']
+				if len(results) > 0:
+					heads = []
+					heads.append('source1')
+					heads.append('source2')
+					for metric in results[0]['results'][0]['scores']:
+						if (metric == 'mean'):
+							continue
+						heads.append(metric)
+					heads.append('mean')
 
-				list_operator = request.form
-				send_data = []
-				for op in list_operator:
-					temp = {
-						'name': op,
-						'threshold': float(int(list_operator[op])/100)
-					}
-					send_data.append(temp)
-				data_form = {'metrics': send_data}
-				url = URL + '/api/contests/{}/run'.format(contest_id)
-				req = requests.post(url=url, json=data_form)
-				if 'contest_id' in req.json().keys():	
-					return redirect(url_for('problems_page.problem', contest_id=contest_id))
-				return redirect(url_for('problems_page.problem', contest_id=contest_id))
+					for problem in results:
+						for prob_res in problem['results']:
+							for metric in prob_res['scores']:
+								score_metric = prob_res['scores'][metric]
+								score_metric = round(score_metric, 4)
+								C = int(score_metric*255)
+								R = C
+								G = 0
+								B = 0
+								span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'								
+								prob_res['scores'][metric] = span
+
+					return render_template('result.html', heads=heads, data=results)
+				else:
+					return render_template('result', error="No result in database!")
 	return redirect(url_for('login'))

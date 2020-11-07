@@ -1,10 +1,12 @@
 {% include "header.html" %}
     
+  {%if data|length > 0%}
+  {%for problem in data %}
     <div class="row">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Result</h3>
+            <h3 class="card-title">{{problem['problem_id']}}</h3>
           </div>
           <!-- /.card-header -->
           <div class="card-body table-responsive p-0">
@@ -14,13 +16,20 @@
                     <th>{{head}} <i class="fa fa-sort"></i></th>
                     {%endfor%}
                 </tr>
-                {%for link in links%}
+                {%for link in problem['results']%}
                 <tr class="item">
                 <td>{{link['source1']}}</a></td>
                 <td>{{link['source2']}}</a></td>
                 {%for metric in link['scores'] %}
-                <td><a href="/problems/summary"  target="_blank" >{{link['scores'][metric]}}</a></td>
+                {% if metric != 'mean' %}
+                <td>
+                  <a href="/problems/{{problem['problem_id']}}/compare?source1={{link['source1']}}&source2={{link['source2']}}&metrics={{metric}}" target="_blank">
+                    {{link['scores'][metric] | safe}}
+                  </a>
+                </td>
+                {%endif%}
                 {%endfor%}
+                <td><a>{{link['scores']['mean'] | safe}}</a></td>
                 </tr>
                 {%endfor%}
             </table>
@@ -29,5 +38,6 @@
         </div>
       </div>
     </div>
-    
+  {%endfor%}
+  {%endif%}
 {% include "footer.html" %}

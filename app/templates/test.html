@@ -7,13 +7,13 @@
             <div class="card-header">
                 <h3 class="card-title">List source</h3>
                 <div class="card-tools">
-                    <form action="" class="form-horizontal">
+                    <form action="/test/from_zip" class="form-horizontal"  method="POST" enctype=multipart/form-data>
                         <div class="form-group row">
                             <div class="col-sm-9">
-                                <input type="file" name="contestFile">
+                                <input type="file" name="zipfile">
                             </div>
                             <div class="col-sm-3">
-                                <input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+                                <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">						
                             </div>					
                         </div>		
                     </form>
@@ -66,7 +66,7 @@
                                     <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
                                 </div>
                                 <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="countOperator" name="countOperator" min="1" max="100" value="0" disabled>        
+                                    <input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="50" disabled>        
                                 </div>
                             </div>
                         </div>
@@ -78,12 +78,12 @@
                                     <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
                                 </div>
                                 <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="setOperator" name="setOperator" min="1" max="100" value="0" disabled> 
+                                    <input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="50" disabled> 
                                 </div>
                             </div>
                         </div>		
                     </div>
-
+    
                     <div class="row">
                         <div class="col-sm-5">
                             <div class="form-group row">
@@ -91,7 +91,7 @@
                                     <input class="custom-control-input" type="checkbox" id="hashCheckBox">
                                     <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
                                 <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="hashOperator" name="hashOperator" min="1" max="100" value="0" disabled>	
+                                    <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
                                 </div>
                             </div>
                         </div>
@@ -99,11 +99,11 @@
                         <div class="col-sm-5">
                             <div class="form-group row">
                                 <div class="custom-control custom-checkbox col-sm-6">
-                                    <input class="custom-control-input" type="checkbox" id="tokenCheckBox">
-                                    <label for="tokenCheckBox" class="custom-control-label"><b>TokenBasedMetric: </b></label>        
+                                    <input class="custom-control-input" type="checkbox" id="smossCheckBox">
+                                    <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
                                 </div>
                                 <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="tokenBasedMetric" name="tokenBasedMetric" min="1" max="100" value="0" disabled>
+                                    <input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="50" disabled>
                                 </div>
                             </div>
                         </div>		
@@ -144,19 +144,20 @@
         const col2 = document.createElement('div')
 
         form.method = "POST"
-        form.action = "/source?contest_name={{contest_name}}"
+        form.action = "/test"
         form.className = "form-horizontal"
+        form.enctype = "multipart/form-data"
 
         row.className = "form-group row"
         col10.className = "col-sm-10"
         col2.className = "col-sm-2"
 
         input.className = "form-control"
-        input.name = "sourceName"
+        input.name = "mask"
         input.style = "width: 50%;"
         input.placeholder = "Enter file name"
 
-        file.name = "sourceFile"
+        file.name = "file"
         file.type = "file"
 
         submit.type = 'submit'
@@ -180,4 +181,136 @@
     }
 </script>
 
-{% include "footer.html" %}
+<!-- jQuery -->
+<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+<!-- Bootstrap 4 -->
+<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+<!-- SweetAlert -->
+<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
+<!-- AdminLTE App -->
+<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+<script>
+    $(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+
+        function create_row_result(score_metric, metrics) {
+            td = $("<td>")
+            C = parseFloat(score_metric)*255
+            R = parseInt(C)
+            G = 0
+            B = 0
+            a = $("<a>", {"href": `/problems/{{problem_id}}/compare?source1=${source1}&source2=${source2}&metrics=${metrics}`, 
+                        "target": "_blank", 
+                        "style": `color:rgb(${R}, ${G}, ${B});`})
+            a.text(score_metric.toFixed(2))
+            td.append(a)
+            item.append(td)
+        }
+
+        function create_result(heads, links) {
+            row = $("<div>", {id: "result", "class": "row"})
+            col = $("<div>", {"class": "col-12"})
+            card = $("<div>", {"class": "card"})
+            card_header = $("<div>", {"class": "card-header"})
+            card_body = $("<div>", {"class": "card-body"})
+            table = $("<table>", {"class": "table table-hover table-bordered"})
+            header = $("<tr>")
+            
+            for (head in heads) {
+                header.append("<th>" + heads[head] + "<i class='fa fa-sort'></i></th>")
+            }
+            table.append(header)
+            for (link of links) {
+                source1 = link['source1']
+                source2 = link['source2']
+                item = $("<tr>", {"class": "item"})
+                item.append("<td>" + source1 + "</a></td>")
+                item.append("<td>" + source2 + "</a></td>")
+                for (metric in link['scores']) {
+                    if (metric == 'mean') {
+                        continue
+                    }
+                    create_row_result(link['scores'][metric], metric)
+                }
+                create_row_result(link['scores']['mean'], 'mean')
+                table.append(item)
+            }
+            card_body.append(table)
+            card_header.append("<h3 class='card-title'>Result</h3>")
+            card.append(card_header)
+            card.append(card_body)
+            col.append(card)
+            row.append(col)
+            $(".content .container").append(row)
+        }
+
+        $("#problem-run").submit(function(e){
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            var form = $(this);
+            var list_operator = form.serializeArray()
+            console.log(list_operator)
+            if (list_operator.length > 0) {
+                var send_data = []
+                list_operator.forEach(element => {
+                    var temp = {
+                        'name': element['name'],
+                        'threshold': element['value']/100
+                    }
+                    send_data.push(temp)
+                });
+                var data_form = {'metrics': send_data}
+                $.ajax({
+                    type: "POST",
+                    url: "/test/run",
+                    contentType: 'application/json',
+                    data: JSON.stringify(data_form),
+                    success: function()
+                    {   
+                        var result = JSON.stringify(data)
+                        if (data['results'].length > 0) {
+                            $("#result").remove()
+                            var heads = []
+                            heads.push('source1')
+                            heads.push('source2')
+                            for(metric in data.results[0].scores) {
+                                if (metric == 'mean') {
+                                    continue
+                                }
+                                heads.push(metric)
+                            }
+                            heads.push('mean')
+                            create_result(heads, links=data['results'])
+                        } else {
+                            Toast.fire({
+                                icon: 'error',
+                                title: 'No result in database'
+                            })
+                        }
+                    },
+                    error: function(data)
+                    {
+                        alert(data['error'])
+                    }
+                });
+            } else {
+                Toast.fire({
+                    icon: 'warning',
+                    title: 'Please select metrics first!'
+                })
+            }
+        })
+    });
+</script>
+</body></html>
