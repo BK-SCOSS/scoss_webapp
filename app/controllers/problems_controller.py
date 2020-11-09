@@ -156,24 +156,24 @@ def get_results(problem_id):
             metric_list.append(metric['name'])
         if 'moss_score' in metric_list:
             if len(metric_list) == 1:
-                for simi in similarity_list:             
+                for simi in similarity_smoss_list:             
                     key = hash(simi['source1'])^hash(simi['source2'])
                     temp_list = simi 
                     res[key] = temp_list
             else: 
                 for simi in similarity_list:             
                     key = hash(simi['source1'])^hash(simi['source2'])
-                    temp_list = simi 
+                    temp_list = simi
                     temp_list['scores']['moss_score'] =  0
                     res[key] = temp_list
-                for simi_smoss in similarity_smoss_list:        
+                for simi_smoss in similarity_smoss_list:      
                     key = hash(simi_smoss['source1'])^hash(simi_smoss['source2'])
                     if key in res.keys():
                         temp_list = simi_smoss
                         for metric in metric_list:
-                            temp_list['scores'][metric] =  0
-                        temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
-                        res[key] = temp_list
+                            if metric not in  res[key]['scores'].keys():
+                                res[key]['scores'][metric] =  0
+                        res[key]['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
                 for simi in similarity_list:
                     for simi_smoss in similarity_smoss_list:
                         if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\

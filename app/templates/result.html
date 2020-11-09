@@ -1,23 +1,28 @@
-{% include "header.html" %}
+{% extends "base.html" %}
+
+{% block title %}SCOSS - Results{% endblock %}
     
+{% block content %}
   {%if data|length > 0%}
-  {%for problem in data %}
     <div class="row">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">{{problem['problem_id']}}</h3>
+            <h3 class="card-title">Results</h3>
           </div>
           <!-- /.card-header -->
           <div class="card-body table-responsive p-0">
             <table id="usersTable" class="table table-hover table-bordered">
                 <tr>
+                    <th>Problem</th>
                     {%for head in heads%}
                     <th>{{head}} <i class="fa fa-sort"></i></th>
                     {%endfor%}
                 </tr>
+                {%for problem in data %}
                 {%for link in problem['results']%}
                 <tr class="item">
+                <td>{{problem['problem_id']}}</td>
                 <td>{{link['source1']}}</a></td>
                 <td>{{link['source2']}}</a></td>
                 {%for metric in link['scores'] %}
@@ -32,12 +37,12 @@
                 <td><a>{{link['scores']['mean'] | safe}}</a></td>
                 </tr>
                 {%endfor%}
+                {%endfor%}
             </table>
           </div>
           <!-- /.card-body -->
         </div>
       </div>
     </div>
-  {%endfor%}
   {%endif%}
-{% include "footer.html" %}
+{% endblock %}

@@ -88,17 +88,26 @@ def run_problem(problem_id):
 	url = "{}/api/problems/{}".format(URL, str(problem_id))
 	req = requests.get(url)
 	data_problem = req.json()
-	print(data_problem)
 	url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
 	url_scoss = "{}/api/problems/{}/results/scoss".format(URL, str(problem_id))
 	url_smoss = "{}/api/problems/{}/results/smoss".format(URL, str(problem_id))
 	req_status = requests.get(url=url_status)
+	metric_list = []
+	for met in data_problem['metrics']:
+		metric_list.append(met['name'])
+		
 	if req_status.json()['problem_status'] in ['init', 'reopen', 'checked']:
 		doc_status = {
 			"problem_status": "running"
 		}
 		requests.put(url=url_status, json=doc_status)
 		check_run = False
+		if 'moss_score' not in metric_list:
+			doc_scoss = {
+				"similarity_smoss_list": [],
+				"alignment_smoss_list": []
+			}
+			requests.put(url=url_smoss, json=doc_scoss)
 		for metric in all_metrics:
 			for met in data_problem['metrics']:
 				if metric.get_name() == met['name']:
@@ -112,6 +121,12 @@ def run_problem(problem_id):
 					break
 		for met in data_problem['metrics']:
 			if met['name'] == 'moss_score':
+				if len(metric_list) == 1:
+					doc_scoss = {
+						"similarity_list": [],
+						"alignment_list": []
+					}
+					req = requests.put(url=url_scoss, json=doc_scoss)
 				similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
 				if len(similarity_smoss_list) >= 0 and len(alignment_smoss_list) >= 0:
 					doc_scoss = {
@@ -123,5 +138,5 @@ def run_problem(problem_id):
 		doc_status = {
 			"problem_status": "checked"
 		}
-		requests.put(url=url_status, json=doc_status)
+		requests.put(url=url_status, json=doc_status)		
 		requests.get(url="{}/api/contests/check_status".format(URL))

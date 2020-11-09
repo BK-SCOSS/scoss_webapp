@@ -1,5 +1,8 @@
-{% include "header.html" %}
-    
+{% extends "base.html" %}
+
+{% block title %}SCOSS - Problems{% endblock %}
+	
+{% block content %}
     <div class="row">
       <div class="col-12">
         <div class="card">
@@ -30,9 +33,9 @@
                 <tr>
 					<th style="width: 4em;">#</th>
 					<th>Name</th>
-					<th>Status</th>
+					<th style="text-align: center; width: 15%;">Status</th>
 					{% if session['role'] == 0 or author == session['user_id'] %}
-					<th style="text-align: center;">Actions</th>
+					<th style="text-align: center; width: 15%;">Actions</th>
 					{% endif %}
 				</tr>
 				{%if data|length > 0%}
@@ -40,7 +43,7 @@
 				<tr>
 					<td>{{loop.index}}</td>
 					<td><a href="/problems/{{problem['problem_id']}}/sources">{{problem['problem_name']}}</a></td>
-					<td class="project-state">
+					<td class="text-center project-state">
 						<span class="badge badge-success">{{problem['problem_status']}}</span>
 					</td>
 					{% if session['role'] == 0 or author == session['user_id'] %}
@@ -131,62 +134,9 @@
 			</div>	
 		</div>
 	</div>
+{% endblock %}
 
-    <script type="text/javascript">
-        document.getElementById('countCheckBox').onchange = function() {
-            document.getElementById('countOperator').disabled = !this.checked;
-        };
-
-        document.getElementById('setCheckBox').onchange = function() {
-            document.getElementById('setOperator').disabled = !this.checked;
-        };
-
-        document.getElementById('hashCheckBox').onchange = function() {
-            document.getElementById('hashOperator').disabled = !this.checked;
-        };
-
-        document.getElementById('smossCheckBox').onchange = function() {
-			document.getElementById('smossMetric').disabled = !this.checked;
-		};
-
-		function createProblem() {
-			const form = document.createElement('form')
-			const input = document.createElement('input')
-			const submit = document.createElement('input')
-			const row = document.createElement('div')
-			const col10 = document.createElement('div')
-			const col2 = document.createElement('div')
-
-			form.method = "POST"
-			form.action = "/contests/" + "{{contest_id}}" + "/problems"
-			form.className = "form-horizontal"
-
-			row.className = "form-group row"
-			col10.className = "col-sm-10"
-			col2.className = "col-sm-2"
-
-			input.className = "form-control"
-			input.name = "problem_name"
-
-			submit.type = 'submit'
-			submit.className = 'btn btn-primary'
-			submit.name = 'submit'
-			submit.value = 'Submit'
-			submit.id = "create-pname-btn"
-
-			col10.appendChild(input)
-			col2.appendChild(submit)
-
-			row.appendChild(col10)
-			row.appendChild(col2)
-
-			form.appendChild(row)
-
-			link = document.getElementById('create-problem').remove()
-			
-			document.getElementById('problem-name').appendChild(form)
-		}
-    </script>
+{% block js %}
 <!-- jQuery -->
 <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
 <!-- Bootstrap 4 -->
@@ -196,124 +146,5 @@
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
 
-<script>
-  $(document).ready(function() {
-	$.ajaxSetup({
-	  headers: {
-		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-	  }
-	});
-
-	const Toast = Swal.mixin({
-		toast: true,
-		position: 'top-end',
-		showConfirmButton: false,
-		timer: 5000
-	})
-
-	$("#contest-run").submit(function(e){
-		e.preventDefault(); // avoid to execute the actual submit of the form.
-
-		var form = $(this);
-		var list_operator = form.serializeArray()
-		console.log(list_operator)
-		if (list_operator.length > 0) {
-			var send_data = []
-			list_operator.forEach(element => {
-				var temp = {
-					'name': element['name'],
-					'threshold': element['value']/100
-				}
-				send_data.push(temp)
-			});
-			var data_form = {'metrics': send_data}
-			$.ajax({
-				type: "POST",
-				url: "/api/contests/{{contest_id}}/run",
-				contentType: 'application/json',
-				data: JSON.stringify(data_form),
-				success: function()
-				{   
-					$("#run").disabled
-					$("#run").append("<span>", {"class": "pinner-border spinner-border-sm"})
-					$("#run").text("Running...")
-					var timer = setInterval(function() {
-						$.get("/api/contests/{{contest_id}}/status", function(data) { 
-							var contest_status = data['contest_status']
-							if (contest_status == "checked") {
-								$.get("/api/contests/{{contest_id}}/results", function(data, status){
-									var result = JSON.stringify(data)
-									if (data['results'].length > 0) {
-										result = $("<button>", {"class": "btn btn-default"})
-										a = $("<a>", {"href":"/contests/{{contest_id}}/results", "target": "_blank"})
-										a.text("Result")
-										result.append(a)
-										$(".card-footer").append(result)
-										$("#run").empty()
-										$("#run").text("Run")
-										$("#run").removeAttr("disabled")
-									} else {
-										Toast.fire({
-											icon: 'error',
-											title: 'No result in database'
-										})
-									}
-								});
-								clearInterval(timer);
-							}
-						})  
-					}, 10000);
-					
-				},
-				error: function(data)
-				{
-					alert(data['error'])
-				}
-			});
-		} else {
-			Toast.fire({
-				icon: 'warning',
-				title: 'Please select metrics first!'
-			})
-		}
-	})
-
-	$(document).on("click",".btn-delete",function(){
-	  problem_id = $(this).attr('problem_id');
-	  Swal.fire({
-		title: 'Are you sure?',
-		text: "You won't be able to revert this!",
-		icon: 'warning',
-		showCancelButton: true,
-		confirmButtonColor: '#3085d6',
-		cancelButtonColor: '#d33',
-		confirmButtonText: 'Delete'
-		}).then((result) => {
-			if (result.isConfirmed) {
-				$.ajax({
-					type: "DELETE",
-					contentType: 'application/json',
-					url: "/api/problems/" + problem_id,
-					success: function (data) {
-						Toast.fire({
-							icon: 'success',
-							title: data['info']
-						})
-						setTimeout(function(){
-							location.reload(true);
-						}, 3000);
-					},
-					error: function (data) {
-						Toast.fire({
-							icon: 'error',
-							title: data['error']
-						})
-					}
-				});
-			}
-		})
-	});
-  })
-</script>
-
-</body></html>
+<script src="{{ url_for('static', filename = 'problem.js') }}"></script>
+{% endblock %}

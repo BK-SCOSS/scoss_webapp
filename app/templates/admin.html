@@ -1,5 +1,8 @@
-{% include "header.html" %}
+{% extends "base.html" %}
 
+{% block title %}SCOSS - Admin{% endblock %}
+
+{% block content %}
 <div class="row">
     <div class="col-12">
       <div class="card">
@@ -61,7 +64,9 @@
     </div>
     <!-- /.modal-dialog -->
 </div>
+{% endblock %}
 
+{% block js %}
 <!-- jQuery -->
 <script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
 <!-- Bootstrap 4 -->
@@ -97,5 +102,4 @@
 	});
   })
 </script>
-
-</body></html>
+{% endblock %}
