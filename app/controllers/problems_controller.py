@@ -253,6 +253,11 @@ def run_source(problem_id):
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
         if len(data_problem) > 0:
             if data_problem.problem_status in ['init', 'reopen', 'checked']:
+                doc_status = {
+                    "problem_status": "waiting"
+                }
+                url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
+                requests.put(url=url_status, json=doc_status)
                 tq.enqueue_nowait(problem_id)
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
