@@ -27,11 +27,11 @@
             <th>Name</th>
             <th style="text-align: center; width: 15%;">Author</th>
             <th style="text-align: center; width: 15%;">Status</th>
-            {% if session['role'] == 0 %}
+            {% if session['role'] == 0 or session['user_id'] %}
             <th style="text-align: center; width: 15%;">Actions</th>
             {% endif %}
           </tr>
-          {%for context in data%}
+          {%for context in data %}
           <tr>
             <td>{{loop.index}}</td>
             <td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a></td>
@@ -39,11 +39,11 @@
             <td class="text-center project-state">
               <span class="status badge">{{context['contest_status']}}</span>
             </td>
-            {% if session['role'] == 0 %}
             <td class="text-center py-0 align-middle">
+              {% if session['role'] == 0 or session['user_id'] == context['user_id'] %}
               <a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i class="fas fa-trash"></i></a>
+              {% endif %}
             </td>
-            {% endif %}
           </tr>
           {%endfor%}
         </table>
@@ -86,12 +86,5 @@
 {% endblock %}
 
 {% block js %}
-<!-- jQuery -->
-<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
-<!-- AdminLTE App -->
-<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
-
 <script src="{{ url_for('static', filename = 'contest.js') }}"></script>
 {% endblock %}

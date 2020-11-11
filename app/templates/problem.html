@@ -44,7 +44,7 @@
 					<td>{{loop.index}}</td>
 					<td><a href="/problems/{{problem['problem_id']}}/sources">{{problem['problem_name']}}</a></td>
 					<td class="text-center project-state">
-						<span class="badge badge-success">{{problem['problem_status']}}</span>
+						<span class="badge status">{{problem['problem_status']}}</span>
 					</td>
 					{% if session['role'] == 0 or author == session['user_id'] %}
 					<td class="text-center py-0 align-middle">
@@ -137,14 +137,8 @@
 {% endblock %}
 
 {% block js %}
-<!-- jQuery -->
-<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
-<!-- SweetAlert -->
-<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
-<!-- AdminLTE App -->
-<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
-
+<script>
+	contest_id = '{{contest_id}}'
+</script>
 <script src="{{ url_for('static', filename = 'problem.js') }}"></script>
 {% endblock %}

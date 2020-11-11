@@ -1,57 +1,45 @@
 import os
 import sys
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(WORKING_DIR, '../scoss'))
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, send_file
-from api import scoss_api
-import requests
+sys.path.append(os.path.join(WORKING_DIR, './'))
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify
+from models.models import db
+from flask_socketio import SocketIO, emit
+
+# config 
 app = Flask(__name__)
+app.config.from_object('config')
+db.init_app(app)
 
-app.register_blueprint(scoss_api.mod)
-@app.route('/api/login', methods=["GET"])
-def login():
-	return render_template('login.html')
+#import controller
+#import views
+from controllers.contests_controller import contests_controller
+from controllers.problems_controller import problems_controller
+from controllers.users_controller import users_controller
+from controllers.task_queue import tq
 
-@app.route('/api/signup', methods=["POST"])
-def signup():
-	pass
+from views.contests_page import contests
+from views.home_page import home
+from views.users_page import user
+from views.login_page import login
+from views.problems_page import problems
+from views.tests_page import tests
+# from view.
+app.register_blueprint(contests_controller)
+app.register_blueprint(problems_controller)
+app.register_blueprint(users_controller)
+app.register_blueprint(contests)
+app.register_blueprint(home)
+app.register_blueprint(user)
+app.register_blueprint(login)
+app.register_blueprint(problems)
+app.register_blueprint(tests)
 
-@app.route('/')
-def index():
-	return render_template('index.html')
+socketio = SocketIO(app, async_mode = None)
 
-@app.route('/document')
-def document():
-	return render_template('document.html')
-
-@app.route('/api')
-def api():
-	return render_template('api.html')
-
-@app.route('/test')
-def test():
-	return render_template('test.html')
-
-@app.route('/contest')
-def contest():
-	return render_template('contest.html')
-
-@app.route('/problem')
-def problem():
-	return render_template('problem.html')
-
-@app.route('/source')
-def source():
-	return render_template('source.html')
-
-@app.route('/admin')
-def admin():
-	return render_template('admin.html')
-
-@app.route('/result')
-def result():
-	return render_template('result.html')
+@socketio.on('connect', namespace='/')
+def test_connect():
+    emit('my response', {'data': 'Connected'})
 
 if __name__ == "__main__":
-	app.debug = True
-	app.run()
+	socketio.run(app, host='0.0.0.0', port=5005)

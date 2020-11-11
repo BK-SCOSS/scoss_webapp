@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, send_file, Blueprint
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, send_file, Blueprint, Response
 from scoss import Scoss
 import json
 import time
@@ -231,3 +231,11 @@ def check_status():
         return jsonify({'info': 'status update was successful'}), 200
     except Exception:
         return jsonify({"error":"Can't update status contest"}),400
+
+@contests_controller.route('/contests/<contest_id>/status')
+def status(contest_id):
+	def check_status(contest_id):
+		data_contest = Contest.objects.get(contest_id=contest_id)
+		yield 'data: {}\n\n'.format(data_contest.contest_status)
+    
+	return Response(check_status(contest_id), mimetype="text/event-stream")

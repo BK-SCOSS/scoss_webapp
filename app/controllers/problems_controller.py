@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, send_file, Blueprint
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, send_file, Blueprint, stream_with_context, Response
 from scoss import Scoss
 import json
 import time
@@ -266,3 +266,11 @@ def get_source(problem_id):
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'problem_id': problem_id, 'sources': sources}), 200
+
+@problems_controller.route('/problems/<problem_id>/status')
+def status(problem_id):
+	def check_status(problem_id):
+		data_problem = Problem.objects.get(problem_id=problem_id)
+		yield 'data: {}\n\n'.format(data_problem.problem_status)
+    
+	return Response(check_status(problem_id), mimetype="text/event-stream")

@@ -5,6 +5,13 @@ $(document).ready(function() {
         }
     });
 
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
+
     $(".status").each(function(){
         if ($(this).text() == "checked") {
             $(this).addClass("badge-success")
@@ -40,13 +47,7 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 url: "/api/contests/" + contest_id,
                 success: function (data) {
-                    Toast.fire({
-                        icon: 'success',
-                        title: data['info']
-                    })
-                    setTimeout(function(){
-                        location.reload(true);
-                    }, 3000);
+                    location.reload();
                 },
                 error: function (data) {
                     Toast.fire({

@@ -5,7 +5,7 @@ from scoss import Scoss
 from scoss import smoss
 from scoss.metrics import all_metrics
 from sctokenizer import Source
-
+from flask_socketio import SocketIO, emit
 
 def cal_scoss(sources, metrics):
 	programs = []

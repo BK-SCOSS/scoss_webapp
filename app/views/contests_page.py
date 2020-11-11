@@ -73,11 +73,12 @@ def results(contest_id):
 					heads = []
 					heads.append('source1')
 					heads.append('source2')
-					for metric in results[0]['results'][0]['scores']:
-						if (metric == 'mean'):
-							continue
-						heads.append(metric)
-					heads.append('mean')
+					if len(results[0]['results']) > 0:
+						for metric in results[0]['results'][0]['scores']:
+							if (metric == 'mean'):
+								continue
+							heads.append(metric)
+						heads.append('mean')
 
 					for problem in results:
 						for prob_res in problem['results']:

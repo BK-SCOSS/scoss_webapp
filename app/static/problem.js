@@ -4,7 +4,7 @@ $(document).ready(function() {
 		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
 	  }
 	});
-
+	
 	const Toast = Swal.mixin({
 		toast: true,
 		position: 'top-end',
@@ -12,13 +12,34 @@ $(document).ready(function() {
 		timer: 5000
 	})
 
-	$.get("/api/contests/{{contest_id}}/results", function(data, status){
-		if (data['results'].length > 0) {
-			result = $("<button>", {"class": "btn btn-default"})
-			a = $("<a>", {"href":"/contests/{{contest_id}}/results", "target": "_blank"})
+	$(".status").each(function(){
+		switch($(this).text()){
+			case "checked":
+				$(this).addClass("badge-success")
+				break
+			case "init":
+				$(this).addClass("badge-secondary")
+				break
+			case "running":
+				$(this).addClass("badge-primary")
+				break
+			case "failed":
+				$(this).addClass("badge-danger")
+				break
+			case "waiting":
+				$(this).addClass("badge-info")
+				break
+		}
+    })
+
+	$.get("/api/contests/"+ contest_id + "/status", function(data){
+		if (data['contest_status'] == "checked") {
+			result = $("<button>", {"class": "btn btn-default", "id":"result"})
+			a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
 			a.text("Result")
 			result.append(a)
 			$(".card-footer").append(result)
+			$("#run").text("Rerun")
 		}
 	})
 
@@ -40,7 +61,7 @@ $(document).ready(function() {
 			var data_form = {'metrics': send_data}
 			$.ajax({
 				type: "POST",
-				url: "/api/contests/{{contest_id}}/run",
+				url: "/api/contests/"+contest_id+"/run",
 				contentType: 'application/json',
 				data: JSON.stringify(data_form),
 				success: function()
@@ -48,33 +69,32 @@ $(document).ready(function() {
 					$("#run").disabled
 					$("#run").append("<span>", {"class": "pinner-border spinner-border-sm"})
 					$("#run").text("Running...")
-					var timer = setInterval(function() {
-						$.get("/api/contests/{{contest_id}}/status", function(data) { 
-							var contest_status = data['contest_status']
-							if (contest_status == "checked") {
-								$.get("/api/contests/{{contest_id}}/results", function(data, status){
-									var result = JSON.stringify(data)
-									if (data['results'].length > 0) {
-										result = $("<button>", {"class": "btn btn-default"})
-										a = $("<a>", {"href":"/contests/{{contest_id}}/results", "target": "_blank"})
-										a.text("Result")
-										result.append(a)
-										$(".card-footer").append(result)
-										$("#run").empty()
-										$("#run").text("Run")
-										$("#run").removeAttr("disabled")
-									} else {
-										Toast.fire({
-											icon: 'error',
-											title: 'No result in database'
-										})
-									}
-								});
-								clearInterval(timer);
-							}
-						})  
-					}, 10000);
-					
+					$(".card-footer #result").remove()
+					var source = new EventSource('/contests/' + contest_id + '/status');
+					source.onmessage = function(event) {
+                        console.log(event.data)
+                        if (event.data == 'checked') {
+							$.get("/api/contests/"+contest_id+"/results", function(data, status){
+								var result = JSON.stringify(data)
+								if (data['results'].length > 0) {
+									result = $("<button>", {"class": "btn btn-default", "id":"result"})
+									a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
+									a.text("Result")
+									result.append(a)
+									$(".card-footer").append(result)
+									$("#run").empty()
+									$("#run").text("Rerun")
+									$("#run").removeAttr("disabled")
+									source.close()
+								} else {
+									Toast.fire({
+										icon: 'error',
+										title: 'No result in database'
+									})
+								}
+							});
+						}
+					}
 				},
 				error: function(data)
 				{
@@ -106,13 +126,7 @@ $(document).ready(function() {
 					contentType: 'application/json',
 					url: "/api/problems/" + problem_id,
 					success: function (data) {
-						Toast.fire({
-							icon: 'success',
-							title: data['info']
-						})
-						setTimeout(function(){
-							location.reload(true);
-						}, 3000);
+							location.reload();
 					},
 					error: function (data) {
 						Toast.fire({
@@ -151,7 +165,7 @@ function createProblem() {
     const col2 = document.createElement('div')
 
     form.method = "POST"
-    form.action = "/contests/" + "{{contest_id}}" + "/problems"
+    form.action = "/contests/" + contest_id + "/problems"
     form.className = "form-horizontal"
 
     row.className = "form-group row"

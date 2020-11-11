@@ -48,7 +48,7 @@ $(function() {
                 if (metric == 'mean') {
                     continue
                 }
-                a = $("<a>", {"href": `/problems/{{problem_id}}/compare?source1=${source1}&source2=${source2}&metrics=${metric}`, 
+                a = $("<a>", {"href": `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metrics=${metric}`, 
                     "target": "_blank"})
                 create_row_result(link['scores'][metric], a)
             }
@@ -82,7 +82,7 @@ $(function() {
             var data_form = {'metrics': send_data}
             $.ajax({
                 type: "POST",
-                url: "/api/problems/{{problem_id}}/run",
+                url: "/api/problems/"+ problem_id + "/run",
                 contentType: 'application/json',
                 data: JSON.stringify(data_form),
                 success: function()
@@ -90,40 +90,36 @@ $(function() {
                     $("#run").disabled
                     $("#run").append("<span>", {"class": "pinner-border spinner-border-sm"})
                     $("#run").text("Running...")
-                    var timer = setInterval(function() {
-                        $.get("/api/problems/{{problem_id}}/status", function(data) { 
-                            var problem_status = data['problem_status']
-                            if (problem_status == "checked") {
-                                $.get("/api/problems/{{problem_id}}/results", function(data, status){
-                                    var result = JSON.stringify(data)
-                                    if (data['results'].length > 0) {
-                                        $("#run").empty()
-                                        $("#run").text("Run")
-                                        $("#run").removeAttr("disabled")
-                                        $("#result").remove()
-                                        var heads = []
-                                        heads.push('source1')
-                                        heads.push('source2')
-                                        for(metric in data.results[0].scores) {
-                                            if (metric == 'mean') {
-                                                continue
-                                            }
-                                            heads.push(metric)
+                    var source = new EventSource('/problems/' + problem_id + '/status');
+                    source.onmessage = function(event) {
+                        if (event.data == 'checked') {
+                            source.close()
+                            $.get("/api/problems/"+ problem_id+"/results", function(data){
+                                if (data['results'].length > 0) {
+                                    $("#run").empty()
+                                    $("#run").text("Run")
+                                    $("#run").removeAttr("disabled")
+                                    $("#result").remove()
+                                    var heads = []
+                                    heads.push('source1')
+                                    heads.push('source2')
+                                    for(metric in data.results[0].scores) {
+                                        if (metric == 'mean') {
+                                            continue
                                         }
-                                        heads.push('mean')
-                                        create_result(heads, links=data['results'])
-                                    } else {
-                                        Toast.fire({
-                                            icon: 'error',
-                                            title: 'No result in database'
-                                        })
+                                        heads.push(metric)
                                     }
-                                });
-                                clearInterval(timer);
-                            }
-                        })  
-                    }, 5000);
-                    
+                                    heads.push('mean')
+                                    create_result(heads, links=data['results'])
+                                } else {
+                                    Toast.fire({
+                                        icon: 'error',
+                                        title: 'No result in database'
+                                    })
+                                }
+                            });
+                        }
+                    }
                 },
                 error: function(data)
                 {
@@ -174,7 +170,7 @@ function createSource() {
     const col2 = document.createElement('div')
 
     form.method = "POST"
-    form.action = "/problems/{{problem_id}}/add_file"
+    form.action = "/problems/"+problem_id+"/add_file"
     form.className = "form-horizontal"
     form.enctype = "multipart/form-data"
 
