@@ -178,6 +178,11 @@ def run_contest(contest_id):
         url_contest = URL + '/api/contests/' + str(contest_id)
         metrics = request.json
         data_problems = requests.get(url=url_contest)
+        doc_status = {
+            "contest_status": "run"
+        }
+        url_status = '{}/api/contests/{}/status'.format(URL, contest_id)
+        requests.put(url=url_status, json=doc_status)
         for problem in data_problems.json()['problems']:
             problem_id = problem['problem_id']
             url_run = URL + '/api/problems/'+problem_id+'/run'
@@ -226,7 +231,7 @@ def check_status():
             doc_status = {
                 "contest_status": status
             }
-            url_status = URL + '/api/contests/{}/status'.format(contests.contest_id)
+            url_status = '{}/api/contests/{}/status'.format(URL, contests.contest_id)
             requests.put(url=url_status, json=doc_status)
         return jsonify({'info': 'status update was successful'}), 200
     except Exception:

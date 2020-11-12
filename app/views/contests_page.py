@@ -28,11 +28,8 @@ def contest():
 				else:	
 					url = URL + '/api/users/' + user_id + '/contests'
 					data = requests.get(url=url)
-				if len(data.json()['contests']) > 0 and int(role) == 1:
-					author = data.json()['contests'][0]['user_id']
-					return render_template('contest.html', data=data.json()['contests'], author=author)
-				else:
-					return render_template('contest.html', data=data.json()['contests'])
+	
+				return render_template('contest.html', data=data.json()['contests'])
 			else: 
 				# print(request.form['contest_name'])
 				user_id = session['user_id']

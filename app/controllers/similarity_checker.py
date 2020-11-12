@@ -96,7 +96,7 @@ def run_problem(problem_id):
 	for met in data_problem['metrics']:
 		metric_list.append(met['name'])
 		
-	if req_status.json()['problem_status'] in ['init', 'reopen', 'checked']:
+	if req_status.json()['problem_status'] in ['waiting']:
 		doc_status = {
 			"problem_status": "running"
 		}
