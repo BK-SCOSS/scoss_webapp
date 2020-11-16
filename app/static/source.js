@@ -66,6 +66,7 @@ $(function() {
 
     $("#problem-run").submit(function(e){
         e.preventDefault(); // avoid to execute the actual submit of the form.
+        $("#result").remove()
 
         var form = $(this);
         var list_operator = form.serializeArray()
@@ -88,7 +89,7 @@ $(function() {
                 success: function()
                 {   
                     $("#run").disabled
-                    $("#run").append("<span>", {"class": "pinner-border spinner-border-sm"})
+                    $("#run").append("<span class='spinner-border spinner-border-sm'></span>")
                     $("#run").text("Running...")
                     var source = new EventSource('/problems/' + problem_id + '/status');
                     source.onmessage = function(event) {
@@ -99,7 +100,6 @@ $(function() {
                                     $("#run").empty()
                                     $("#run").text("Run")
                                     $("#run").removeAttr("disabled")
-                                    $("#result").remove()
                                     var heads = []
                                     heads.push('source1')
                                     heads.push('source2')
@@ -113,9 +113,12 @@ $(function() {
                                     create_result(heads, links=data['results'])
                                 } else {
                                     Toast.fire({
-                                        icon: 'error',
-                                        title: 'No result in database'
-                                    })
+										icon: 'error',
+										title: 'Threre is no result'
+									})
+									$("#run").empty()
+									$("#run").text("Run")
+									$("#run").removeAttr("disabled")
                                 }
                             });
                         }
@@ -139,8 +142,7 @@ $(function() {
         var data = $(this).attr("data-row")
         var title = $(this).text()
         $("#title").text(title)
-        source_content = '<pre>' + data + '</pre>'
-        $("#source-content").append(source_content)
+        $("#source-content").text(data)
     })
 });
 

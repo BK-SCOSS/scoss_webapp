@@ -26,9 +26,10 @@ def problem(contest_id):
 				if 'contest_id' in req.json().keys():
 					if len(req.json()['problems']) > 0:
 						author = req.json()['problems'][0]['user_id']
-						return render_template('problem.html', data=req.json()['problems'], contest_id=contest_id, author=author)	
+						return render_template('problem.html', data=req.json()['problems'], \
+						contest_id=contest_id, author=author, contest_name=req.json()['contest_name'])	
 					else:
-						return render_template('problem.html', contest_id=contest_id)
+						return render_template('problem.html', contest_id=contest_id, contest_name=req.json()['contest_name'])
 				else:
 					return render_template('problem.html', contest_id=contest_id, error=req.json()['error'])
 			if request.method == 'POST':
@@ -50,8 +51,9 @@ def source(problem_id):
 				url = URL + '/api/problems/' + problem_id
 				req = requests.get(url=url)
 				if 'problem_id' in req.json().keys():
-					return render_template('source.html', data=req.json()['sources'], 
-						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'])
+					return render_template('source.html', data=req.json()['sources'], \
+						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'], \
+						contest_name=req.json()['contest_name'], contest_id=req.json()['contest_id'])
 			else:
 				source_name = request.form['source_name']
 				data_form = {'source_name': source_name}

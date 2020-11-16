@@ -53,10 +53,12 @@ def problems(contest_id):
 def get_problem(problem_id):
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
+        contest_name = Contest.objects.get(contest_id=data_problem.contest_id).contest_name
         data_doc = {
             'problem_id': data_problem.problem_id,
             'problem_name': data_problem.problem_name,
             'contest_id': data_problem.contest_id,
+            'contest_name': contest_name,
             'user_id': data_problem.user_id,
             'sources': data_problem.sources,
             'metrics': data_problem.metrics
@@ -147,6 +149,7 @@ def add_source(problem_id):
 def get_results(problem_id):
     try: 
         data_problem = Problem.objects.get(problem_id=problem_id)
+        problem_name = data_problem.problem_name
         similarity_list = data_problem.similarity_list
         similarity_smoss_list = data_problem.similarity_smoss_list
         metrics = data_problem.metrics
@@ -200,10 +203,10 @@ def get_results(problem_id):
             if num_of_score != 0:
                 res[key]['scores']['mean'] = total/num_of_score
         if(len(res.keys()) == check_zero):
-            return jsonify({'problem_id': problem_id, 'results': []}), 200
+            return jsonify({'problem_id': problem_id, 'results': [], 'problem_name': problem_name}), 200
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
-    return jsonify({'problem_id': problem_id, 'results': list(res.values())}), 200
+    return jsonify({'problem_id': problem_id, 'results': list(res.values()), 'problem_name': problem_name}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods = ['GET'])
 def get_result_scoss(problem_id):

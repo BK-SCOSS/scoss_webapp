@@ -83,6 +83,7 @@ def contest():
 def get_contest(contest_id):
     try:
         data_contests = Problem.objects(contest_id=contest_id)
+        contest_name = Contest.objects.get(contest_id=contest_id).contest_name
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
@@ -90,7 +91,7 @@ def get_contest(contest_id):
             res.append(temp)
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
-    return jsonify({'contest_id':contest_id,'problems': res})
+    return jsonify({'contest_id':contest_id,'problems': res, 'contest_name': contest_name})
 
 @contests_controller.route('/api/contests/<contest_id>', methods=['DELETE'])
 def delete_contest(contest_id):
@@ -179,7 +180,7 @@ def run_contest(contest_id):
         metrics = request.json
         data_problems = requests.get(url=url_contest)
         doc_status = {
-            "contest_status": "run"
+            "contest_status": "running"
         }
         url_status = '{}/api/contests/{}/status'.format(URL, contest_id)
         requests.put(url=url_status, json=doc_status)

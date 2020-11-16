@@ -2,6 +2,22 @@
 
 {% block title %}SCOSS - Problems{% endblock %}
 	
+{% block header %}
+<div class="container">
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h1 class="m-0 text-dark">{{contest_name}}</small></h1>
+    </div><!-- /.col -->
+    <div class="col-sm-6">
+      <ol class="breadcrumb float-sm-right">
+        <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
+        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
+      </ol>
+    </div><!-- /.col -->
+  </div><!-- /.row -->
+</div>
+{% endblock %}
+
 {% block content %}
     <div class="row">
       <div class="col-12">
@@ -12,9 +28,9 @@
 			</div>
 			{%endif%}
           <div class="card-header">
-			<h3 class="card-title">{{contest_name}} - List problem</h3>
+			<h3 class="card-title">List problem</h3>
 			<div class="card-tools">
-				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data>
+				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data title="Select file zip to extract">
 					<div class="form-group row">
 						<div class="col-sm-9">
 							<input type="file" name="file">
@@ -78,7 +94,7 @@
 							<div class="col-sm-5">
 								<div class="form-group row">
 									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="countCheckBox">
+										<input class="custom-control-input" type="checkbox" id="countCheckBox" autocomplete='off'>
 										<label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
 									</div>
 									<div class="col-sm-6">
@@ -90,7 +106,7 @@
 							<div class="col-sm-5">
 								<div class="form-group row">
 									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="setCheckBox">
+										<input class="custom-control-input" type="checkbox" id="setCheckBox" autocomplete='off'>
 										<label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
 									</div>
 									<div class="col-sm-6">
@@ -104,8 +120,9 @@
 							<div class="col-sm-5">
 								<div class="form-group row">
 									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="hashCheckBox">
-										<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
+										<input class="custom-control-input" type="checkbox" id="hashCheckBox" autocomplete='off'>
+										<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									
+									</div>
 									<div class="col-sm-6">
 										<input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
 									</div>
@@ -115,7 +132,7 @@
 							<div class="col-sm-5">
 								<div class="form-group row">
 									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="smossCheckBox">
+										<input class="custom-control-input" type="checkbox" id="smossCheckBox" autocomplete='off'>
 										<label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
 									</div>
 									<div class="col-sm-6">

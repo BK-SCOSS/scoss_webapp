@@ -2,12 +2,32 @@
 
 {% block title %}SCOSS - Sources{% endblock %}
 
+{% block css %}
+<script src="https://www.w3schools.com/lib/w3.js"></script>
+{% endblock %}
+{% block header %}
+<div class="container">
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h1 class="m-0 text-dark">{{problem_name}}</small></h1>
+    </div><!-- /.col -->
+    <div class="col-sm-6">
+      <ol class="breadcrumb float-sm-right">
+        <li class="breadcrumb-item"><a href="/contests">Contests</a></li>
+        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
+        <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources">{{problem_name}}</a></li>
+      </ol>
+    </div><!-- /.col -->
+  </div><!-- /.row -->
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12">
     <div class="card">
         <div class="card-header">
-        <h3 class="card-title"><b>{{problem_name}}</b> - List source</h3>
+        <h3 class="card-title">List source</h3>
         <div class="card-tools">
             <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data>
                 <div class="form-group row">
@@ -65,13 +85,11 @@
             <span aria-hidden="true">×</span>
           </button>
         </div>
-        <div class="modal-body" id="source-content">
-          
+        <div class="modal-body">
+            <pre><code id="source-content"></code></pre>
         </div>
       </div>
-      <!-- /.modal-content -->
     </div>
-    <!-- /.modal-dialog -->
 </div>
 
 <div class="row">
@@ -144,39 +162,6 @@
     </div>	
 </div>
 </div>
-{% if heads %}
-<div class="row" id="result">
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Result</h3>
-            </div>
-            <!-- /.card-header -->
-            <div class="card-body table-responsive p-0">
-              <table id="usersTable" class="table table-hover table-bordered">
-                  <tr>
-                      {%for head in heads%}
-                      <th>{{head}} <i class="fa fa-sort"></i></th>
-                      {%endfor%}
-                  </tr>
-                  {%for link in links%}
-                  <tr class="item">
-                  <td>{{link['source1']}}</a></td>
-                  <td>{{link['source2']}}</a></td>
-                  {%for metric in link['scores'] %}
-                  <td><a href="/problems/summary" target="_blank" >{{link['scores'][metric]}}</a></td>
-                  {%endfor%}
-                  </tr>
-                  {%endfor%}
-              </table>
-            </div>
-            <!-- /.card-body -->
-          </div>
-        </div>
-      </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block js %}

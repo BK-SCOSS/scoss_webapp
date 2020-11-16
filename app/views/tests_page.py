@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import Environment
 from config import URL
 from zipfile import ZipFile
-# from similarity_checker import cal_smoss, call_scoss
+from controllers.similarity_checker import cal_smoss, cal_scoss
 
 tests = Blueprint('tests_page', __name__)
 
@@ -24,24 +24,23 @@ def test():
 				if 'sources' in session:
 					return render_template('test.html', data=session['sources'])
 				else:
+					session['sources'] = []
 					return render_template('test.html')
-			elif request.method == 'POST':
+			else:
 				mask = request.form['mask']
 				sourceFile = request.files['file']
 				data_doc = {
 					"pathfile": sourceFile.filename,
 					"lang": sourceFile.filename.split('.')[-1],
 					'mask': mask,
-					'source_str': sourceFile.read()
+					'source_str': sourceFile.read().decode('utf-8')
 				}
 				if 'sources' in session:
 					temp = session['sources']
 					temp.append(data_doc)
 					session['sources'] = temp
-				else:
-					session['sources'] = data_doc
-				
-				return render_template('test.html', data=session['sources'])
+
+				return redirect(url_for('tests_page.test'))
 	return redirect(url_for('login'))
 
 @tests.route('/test/from_zip', methods=['POST'])
@@ -63,12 +62,12 @@ def from_zip():
 									'source_str': zf.read(file).decode('utf-8')
 								}
 								sources.append(data_doc)
-						if 'sources' in session:
-							temp = session['sources']
-							temp.append(sources)
-							session['sources'] = temp
-						else:
-							session['sources'] = sources
+
+					if 'sources' in session:
+						temp = session['sources']
+						fin = temp + sources 
+						session['sources'] = fin
+
 					return redirect(url_for('tests_page.test'))
 	return redirect(url_for('login_page.login_page'))
 
@@ -80,6 +79,9 @@ def run():
 				sources = session['sources']
 				list_operator = request.form
 				metrics = []
+				metric_list = []
+
+				print(sources)
 
 				for op in list_operator:
 					temp = {
@@ -89,20 +91,22 @@ def run():
 					metrics.append(temp)
 					metric_list.append(op)
 
+				print(metrics)
+
 				for metric in all_metrics:
-					for met in data_problem['metrics']:
+					for met in metrics:
 						if metric.get_name() == met['name']:
-							similarity_list, alignment_list = cal_scoss(data_problem['sources'], data_problem['metrics'])
+							similarity_list, alignment_list = cal_scoss(sources, metrics)
 							break
-				for met in data_problem['metrics']:
+				for met in metrics:
 					if met['name'] == 'moss_score':
-						similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
+						similarity_smoss_list, alignment_smoss_list = cal_smoss(sources, metrics)
 						break
 				
-				similarity_list, alignment_list = cal_scoss(sources, metrics)
-				similarity_smoss_list, alignment_smoss_list = cal_smoss(sources, metrics)
-
-				results = get_results(similarity_list, similarity_smoss_list, metrics)
+				if len(similarity_list) >= 0 and len(similarity_smoss_list) >= 0:
+					results = get_results(similarity_list, similarity_smoss_list, metrics)
+				else:
+					results = []
 
 				if len(results) > 0:
 					heads = []
@@ -125,6 +129,11 @@ def run():
 								B = 0
 								span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'								
 								prob_res['scores'][metric] = span
+
+					return render_template('result.html', heads=heads, data=results)
+				else:
+					return render_template('result.html', error="No result in database!")
+	return redirect(url_for('login_page.login_page'))
 
 def get_results(similarity_list, similarity_smoss_list, metrics):
 	metric_list = []

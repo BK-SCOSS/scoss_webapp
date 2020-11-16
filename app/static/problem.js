@@ -30,16 +30,32 @@ $(document).ready(function() {
 				$(this).addClass("badge-info")
 				break
 		}
-    })
+	})
+
+	function updateBtnStatus() {
+		$("#run").text("Rerun")
+		$("#run").removeAttr("disabled")
+		result = $("<button>", {"class": "btn btn-default", "id":"result-btn"})
+		a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
+		a.text("Result")
+		result.append(a)
+		$(".card-footer").append(result)
+	}
 
 	$.get("/api/contests/"+ contest_id + "/status", function(data){
-		if (data['contest_status'] == "checked") {
-			result = $("<button>", {"class": "btn btn-default", "id":"result"})
-			a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
-			a.text("Result")
-			result.append(a)
-			$(".card-footer").append(result)
-			$("#run").text("Rerun")
+		contest_status = data['contest_status']
+		if (contest_status == "checked") {
+			updateBtnStatus()
+		} else if (contest_status == 'running') {
+			$("#run").text("Running")
+			$("#run").prop("disabled", true)
+			var source = new EventSource('/contests/' + contest_id + '/status');
+			source.onmessage = function(event) {
+				if (event.data == 'checked') {
+					updateBtnStatus()
+					source.close()
+				}
+			}
 		}
 	})
 
@@ -66,31 +82,24 @@ $(document).ready(function() {
 				data: JSON.stringify(data_form),
 				success: function()
 				{   
-					$("#run").disabled
-					$("#run").append("<span>", {"class": "pinner-border spinner-border-sm"})
+					$("#run").prop("disabled", true)
 					$("#run").text("Running...")
-					$(".card-footer #result").remove()
+					$("#result-btn").remove()
 					var source = new EventSource('/contests/' + contest_id + '/status');
 					source.onmessage = function(event) {
-                        console.log(event.data)
                         if (event.data == 'checked') {
-							$.get("/api/contests/"+contest_id+"/results", function(data, status){
-								var result = JSON.stringify(data)
+							$.get("/api/contests/"+contest_id+"/results", function(data){
 								if (data['results'].length > 0) {
-									result = $("<button>", {"class": "btn btn-default", "id":"result"})
-									a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
-									a.text("Result")
-									result.append(a)
-									$(".card-footer").append(result)
-									$("#run").empty()
-									$("#run").text("Rerun")
-									$("#run").removeAttr("disabled")
+									updateBtnStatus()
 									source.close()
 								} else {
 									Toast.fire({
 										icon: 'error',
-										title: 'No result in database'
+										title: 'Threre is no result'
 									})
+									$("#run").empty()
+									$("#run").text("Run")
+									$("#run").removeAttr("disabled")
 								}
 							});
 						}

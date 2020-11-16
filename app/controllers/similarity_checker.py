@@ -5,7 +5,6 @@ from scoss import Scoss
 from scoss import smoss
 from scoss.metrics import all_metrics
 from sctokenizer import Source
-from flask_socketio import SocketIO, emit
 
 def cal_scoss(sources, metrics):
 	programs = []
@@ -108,6 +107,7 @@ def run_problem(problem_id):
 				"alignment_smoss_list": []
 			}
 			requests.put(url=url_smoss, json=doc_scoss)
+		
 		for metric in all_metrics:
 			for met in data_problem['metrics']:
 				if metric.get_name() == met['name']:
@@ -119,6 +119,7 @@ def run_problem(problem_id):
 						}
 						req = requests.put(url=url_scoss, json=doc_scoss)
 					break
+					
 		for met in data_problem['metrics']:
 			if met['name'] == 'moss_score':
 				if len(metric_list) == 1:

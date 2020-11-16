@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
 {% block title %}SCOSS - Results{% endblock %}
-    
+
+{% block css %}
+<script src="https://www.w3schools.com/lib/w3.js"></script>
+<link href="https://www.w3schools.com/w3css/4/w3.css" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
   {%if data|length > 0%}
     <div class="row">
@@ -9,6 +14,9 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Results</h3>
+            <div class="card-tools">
+              <button class="btn btn-default" id="export" title="Save as CSV"><i class="fas fa-download"></i></button>
+            </div>
           </div>
           <!-- /.card-header -->
           <div class="card-body table-responsive p-0">
@@ -22,7 +30,7 @@
                 {%for problem in data %}
                 {%for link in problem['results']%}
                 <tr class="item">
-                <td>{{problem['problem_id']}}</td>
+                <td>{{problem['problem_name']}}</td>
                 <td>{{link['source1']}}</a></td>
                 <td>{{link['source2']}}</a></td>
                 {%for metric in link['scores'] %}
@@ -45,4 +53,80 @@
       </div>
     </div>
   {%endif%}
+{% endblock %}
+
+{% block js%}
+<script>
+  let tid = "#usersTable";
+  let headers = document.querySelectorAll(tid + " th");
+
+  // Sort the table element when clicking on the table headers
+  headers.forEach(function(element, i) {
+      element.addEventListener("click", function() {
+      w3.sortHTML(tid, ".item", "td:nth-child(" + (i + 1) + ")");
+      });
+  });
+  
+  $("#export").click(function() {
+    var titles = []
+    var data = []
+
+    $('#usersTable th').each(function() {
+      titles.push($(this).text());
+    });
+
+    /*
+    * Get the actual data, this will contain all the data, in 1 array
+    */
+    $('#usersTable td').each(function() {
+      var str = $(this).text()
+      var trimStr = $.trim(str)
+      data.push(trimStr);
+    });
+
+    var CSVString = prepCSVRow(titles, titles.length, '');
+    CSVString = prepCSVRow(data, titles.length, CSVString);
+
+    var downloadLink = document.createElement("a");
+    var blob = new Blob(["\ufeff", CSVString]);
+    var url = URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.download = "data.csv";
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+  })
+  
+  function prepCSVRow(arr, columnCount, initial) {
+  var row = '';
+  var delimeter = ',';
+  var newLine = '\r\n';
+
+  function splitArray(_arr, _count) {
+    var splitted = [];
+    var result = [];
+    _arr.forEach(function(item, idx) {
+      if ((idx + 1) % _count === 0) {
+        splitted.push(item);
+        result.push(splitted);
+        splitted = [];
+      } else {
+        splitted.push(item);
+      }
+    });
+    return result;
+  }
+  var plainArr = splitArray(arr, columnCount);
+  plainArr.forEach(function(arrItem) {
+    arrItem.forEach(function(item, idx) {
+      row += item + ((idx + 1) === arrItem.length ? '' : delimeter);
+    });
+    row += newLine;
+  });
+  return initial + row;
+}
+
+</script>
 {% endblock %}

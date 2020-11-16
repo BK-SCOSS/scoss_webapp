@@ -91,5 +91,5 @@ def results(contest_id):
 
 					return render_template('result.html', heads=heads, data=results)
 				else:
-					return render_template('result', error="No result in database!")
+					return render_template('result.html', error="No result in database!")
 	return redirect(url_for('login'))
