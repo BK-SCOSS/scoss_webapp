@@ -21,7 +21,7 @@ ipaddr==2.2.0
 itsdangerous==1.1.0
 Jinja2==2.11.2
 lockfile==0.12.2
-lxml==4.5.2
+lxml==4.6.2
 MarkupSafe==1.1.1
 mongoengine==0.20.0
 mosspy==1.0.8
