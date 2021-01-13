@@ -2,6 +2,13 @@ from __future__ import absolute_import
 from flask_mongoengine import MongoEngine
 db = MongoEngine()
 
+class Status():
+    init = 1
+    waiting = 2
+    running = 3
+    checked = 4
+    failed = 5
+
 class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
@@ -13,11 +20,11 @@ class Contest(db.Document):
     contest_name = db.StringField()
     metrics = db.ListField()
     user_id = db.StringField(required=True)
-    contest_status = db.StringField(required=True)
+    contest_status = db.IntField(required=True)
 class Problem(db.Document):
     problem_id = db.StringField(required=True, unique=True)
     problem_name = db.StringField(required=True)
-    problem_status = db.StringField(required=True)
+    problem_status = db.IntField(required=True)
     sources = db.ListField()
     metrics = db.ListField()
     similarity_list = db.ListField()

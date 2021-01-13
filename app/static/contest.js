@@ -13,21 +13,28 @@ $(document).ready(function() {
     });
 
     $(".status").each(function(){
-        if ($(this).text() == "checked") {
-            $(this).addClass("badge-success")
-        }
-        else if ($(this).text() == "init") {
-            $(this).addClass("badge-secondary")
-        }
-        else if ($(this).text() == "running") {
-            $(this).addClass("badge-primary")
-        }
-        else if ($(this).text() == "failed") {
-            $(this).addClass("badge-danger")
-        }
-        else if ($(this).text() == "waiting") {
-            $(this).addClass("badge-info")
-        }
+        switch($(this).text()){
+            case "1":
+                $(this).addClass("badge-secondary")
+                $(this).text("init")
+                break
+            case "2":
+                $(this).addClass("badge-info")
+                $(this).text("waiting")
+                break
+            case "3":
+                $(this).addClass("badge-primary")
+                $(this).text("running")
+                break
+			case "4":
+				$(this).addClass("badge-success")
+                $(this).text("checked")
+                break
+			case "5":
+				$(this).addClass("badge-danger")
+                $(this).text("failed")
+                break
+		}
     })
 
     $(document).on("click",".btn-delete",function(){

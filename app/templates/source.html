@@ -4,6 +4,7 @@
 
 {% block css %}
 <script src="https://www.w3schools.com/lib/w3.js"></script>
+<link href="https://www.w3schools.com/w3css/4/w3.css" rel="stylesheet" />
 {% endblock %}
 {% block header %}
 <div class="container">
@@ -13,7 +14,7 @@
     </div><!-- /.col -->
     <div class="col-sm-6">
       <ol class="breadcrumb float-sm-right">
-        <li class="breadcrumb-item"><a href="/contests">Contests</a></li>
+        <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
         <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
         <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources">{{problem_name}}</a></li>
       </ol>
@@ -29,8 +30,8 @@
         <div class="card-header">
         <h3 class="card-title">List source</h3>
         <div class="card-tools">
-            <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data>
-                <div class="form-group row">
+            <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data style="margin:0;">
+                <div class="form-group row" style="margin:0;">
                     <div class="col-sm-9">
                         <input type="file" name="file">
                     </div>
@@ -169,4 +170,15 @@
     var problem_id = '{{problem_id}}'
 </script>
 <script src="{{ url_for('static', filename = 'source.js') }}"></script>
+<script>
+    let tid = "#usersTable";
+    let headers = document.querySelectorAll(tid + " th");
+
+    // Sort the table element when clicking on the table headers
+    headers.forEach(function(element, i) {
+        element.addEventListener("click", function() {
+        w3.sortHTML(tid, ".item", "td:nth-child(" + (i + 1) + ")");
+        });
+    });
+</script>
 {% endblock %}

@@ -27,9 +27,10 @@ def problem(contest_id):
 					if len(req.json()['problems']) > 0:
 						author = req.json()['problems'][0]['user_id']
 						return render_template('problem.html', data=req.json()['problems'], \
-						contest_id=contest_id, author=author, contest_name=req.json()['contest_name'])	
+							contest_id=contest_id, author=author, contest_data=req.json()['contest_data'])	
 					else:
-						return render_template('problem.html', contest_id=contest_id, contest_name=req.json()['contest_name'])
+						return render_template('problem.html', contest_id=contest_id, \
+							contest_data=req.json()['contest_data'])
 				else:
 					return render_template('problem.html', contest_id=contest_id, error=req.json()['error'])
 			if request.method == 'POST':

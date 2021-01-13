@@ -4,6 +4,7 @@ from scoss import Scoss
 from scoss import smoss
 from scoss.metrics import all_metrics
 from sctokenizer import Source
+from models.models import Status
 import config
 
 all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
@@ -79,7 +80,7 @@ def run_problem(problem_id):
     req_status = requests.get(url=url_status)
         
     doc_status = {
-        "problem_status": "running"
+        "problem_status": Status.running
     }
     requests.put(url=url_status, json=doc_status)
 
@@ -114,7 +115,7 @@ def run_problem(problem_id):
 
     # update status
     doc_status = {
-        "problem_status": "checked"
+        "problem_status": Status.checked
     }
     requests.put(url=url_status, json=doc_status)       
     requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR))

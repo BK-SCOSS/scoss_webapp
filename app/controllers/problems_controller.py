@@ -30,7 +30,7 @@ def add_problem(contest_id):
             problem_id += 1
         problem_id = str(problem_id)
         problem_name = request.json['problem_name']
-        problem_status = 'init'
+        problem_status = Status.init
         req = Contest.objects.get(contest_id=contest_id)
         contest_id = contest_id
         user_id = req.user_id

@@ -6,12 +6,14 @@
 <div class="container">
   <div class="row mb-2">
     <div class="col-sm-6">
-      <h1 class="m-0 text-dark">{{contest_name}}</small></h1>
+      	<h1 class="m-0 text-dark">
+			{{contest_data.contest_name}} - <span class="status">{{contest_data['contest_status']}}</span>
+		</h1>
     </div><!-- /.col -->
     <div class="col-sm-6">
       <ol class="breadcrumb float-sm-right">
         <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
-        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
+        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_data['contest_name']}}</a></li>
       </ol>
     </div><!-- /.col -->
   </div><!-- /.row -->
@@ -30,8 +32,9 @@
           <div class="card-header">
 			<h3 class="card-title">List problem</h3>
 			<div class="card-tools">
-				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data title="Select file zip to extract">
-					<div class="form-group row">
+				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" 
+					enctype=multipart/form-data title="Select file zip to extract" style="margin: 0;">
+					<div class="form-group row" style="margin:0;">
 						<div class="col-sm-9">
 							<input type="file" name="file">
 						</div>

@@ -14,21 +14,26 @@ $(document).ready(function() {
 
 	$(".status").each(function(){
 		switch($(this).text()){
-			case "checked":
+            case "1":
+                $(this).addClass("badge-secondary")
+                $(this).text("init")
+                break
+            case "2":
+                $(this).addClass("badge-info")
+                $(this).text("waiting")
+                break
+            case "3":
+                $(this).addClass("badge-primary")
+                $(this).text("running")
+                break
+			case "4":
 				$(this).addClass("badge-success")
-				break
-			case "init":
-				$(this).addClass("badge-secondary")
-				break
-			case "running":
-				$(this).addClass("badge-primary")
-				break
-			case "failed":
+                $(this).text("checked")
+                break
+			case "5":
 				$(this).addClass("badge-danger")
-				break
-			case "waiting":
-				$(this).addClass("badge-info")
-				break
+                $(this).text("failed")
+                break
 		}
 	})
 
@@ -95,7 +100,7 @@ $(document).ready(function() {
 								} else {
 									Toast.fire({
 										icon: 'error',
-										title: 'Threre is no result'
+										title: 'No matches found!'
 									})
 									$("#run").empty()
 									$("#run").text("Run")
