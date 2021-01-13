@@ -24,7 +24,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
       MONGO_INITDB_DATABASE: scoss
     volumes:
-      - ./mongo_volume:/data/db
+      - mongo_volume:/data/db
       - ./app/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - 27017:27017
@@ -73,4 +73,5 @@ services:
     depends_on:
       - rq-server
 
-
+volumes:
+  mongo_volume: 
