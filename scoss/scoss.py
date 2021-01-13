@@ -141,8 +141,8 @@ class Scoss():
 
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
-            print(name, flush=True)
             scores = self.check_similarity(src)
+            scores = {}
 
             self.__similarity_matrix[name] = scores
             for other_name, score in scores.items():

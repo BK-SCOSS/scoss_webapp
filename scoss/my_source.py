@@ -108,7 +108,6 @@ class MySource(Source):
             return self.hashes
 
         hashes = {}
-
         last = ['', '', '', '']
         tokens = self.get_normalized_tokens()
         for token in tokens:

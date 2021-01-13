@@ -67,7 +67,7 @@ def cal_smoss(sources, metrics):
     return matches, comparisons
 
 def run_problem(problem_id):
-    print("Running problem ", problem_id)
+    print("Running problem ", problem_id, flush=True)
     url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
     url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
     url_scoss = "{}/api/problems/{}/results/scoss".format(config.API_URI_SR, str(problem_id))
