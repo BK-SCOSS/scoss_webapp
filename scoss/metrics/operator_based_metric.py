@@ -58,6 +58,8 @@ class CountOperator(OperatorBasedMetric):
             else:
                 diff1 += 1
         diff2 = len(vecfrec2) - taken
+        if len(vecfrec1) + len(vecfrec2) == 0:
+            return 0
         return (1 - ((diff1 + diff2) / (len(vecfrec1) + len(vecfrec2))))
 
 
@@ -85,6 +87,8 @@ class SetOperator(OperatorBasedMetric):
             else:
                 diff += vecfrec1[key1]
         diff += size2 - taken
+        if size1 + size2 == 0:
+            return 0
         return (1 - (diff/(size1+size2)))
 
 class HashOperator(OperatorBasedMetric):
@@ -110,5 +114,7 @@ class HashOperator(OperatorBasedMetric):
             else:
                 diff += hashes1[key1]
         diff += size2 - taken
+        if size1 + size2 == 0:
+            return 0
         return (1-(diff / (size1 + size2)))
 

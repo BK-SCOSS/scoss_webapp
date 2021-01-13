@@ -39,7 +39,7 @@ pytoml==0.1.21
 pytz==2020.1
 requests==2.22.0
 retrying==1.3.3
--e git+https://github.com/ngocjr7/code-similarity.git@bcadd088812a68d1cc2cc393e450727d896d6544#egg=scoss
+-e git+https://github.com/ngocjr7/code-similarity.git#egg=scoss
 sctokenizer==0.0.2
 six==1.14.0
 soupsieve==2.0.1

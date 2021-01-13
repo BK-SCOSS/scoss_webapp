@@ -18,10 +18,8 @@ class TokenBasedMetric(Metric):
         if source1.lang != source2.lang:
             raise ValueError(
                 'source1 and source2 is written on different language')
-        tokens1 = source1.tokenize()
-        tokens2 = source2.tokenize()
-        tokens1 = self.normalize_tokens(tokens1)
-        tokens2 = self.normalize_tokens(tokens2)
+        tokens1 = source1.get_normalized_tokens()
+        tokens2 = source2.get_normalized_tokens()
         if len(tokens1) != len(tokens2):
             return 0.0
         for i in range(len(tokens1)):

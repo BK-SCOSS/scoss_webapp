@@ -124,9 +124,7 @@ class Scoss():
         """
         ret = dict()
         for other_mask, other in self.__sources.items():
-            # start_time = time.time()
             scores = self.__metric_list.evaluate(src, other)
-            # print("evaluation x <> y : ", time.time() - start_time)
             ret[other_mask] = scores
 
         return ret
@@ -143,6 +141,7 @@ class Scoss():
 
         pending_pool_items = list(self.__pending_pool.items())
         for name, src in pending_pool_items:
+            print(name, flush=True)
             scores = self.check_similarity(src)
 
             self.__similarity_matrix[name] = scores
@@ -284,7 +283,6 @@ class Scoss():
                     link['scores'][metric] = score_color(score) 
                 links.append(links)
             links = matches 
-        print(matches)
 
         print("Saving summary...")
         page = Environment().from_string(HTML1).render(heads=heads, links=links)
