@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from scoss.metrics.operator_based_metric import *
 from scoss.metrics.token_based_metric import *
+import time
 
 all_metrics = [
     CountOperator(),
@@ -29,8 +30,8 @@ class MetricList():
 
     def add_metric(self, metric, exist_ok=False):
         if isinstance(metric, Metric):
-            for metric in self.metric_list:
-                if metric.get_name() == metric.get_name():
+            for _metric in self.metric_list:
+                if _metric.get_name() == metric.get_name():
                     if exist_ok:
                         return
                     else:
@@ -65,7 +66,9 @@ class MetricList():
     def evaluate(self, source1, source2):
         ret = {}
         for metric in self.metric_list:
+            # start_time = time.time()
             ret[metric.get_name()] = metric.evaluate(source1, source2)
+            # print("\t metric {} : {}".format(metric.name, time.time() - start_time))
         return ret
 
     def align_source(self, source1, source2):

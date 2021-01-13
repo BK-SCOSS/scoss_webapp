@@ -1,0 +1,76 @@
+version: "3"
+
+services:
+  scoss_app:
+    image: ngocjr/scoss
+    command: python app/run.py
+    volumes:
+      - .:/code
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    depends_on:
+      - rq-server
+      - mongo
+      - rq-worker
+
+  mongo:
+    image: 'mongo'
+    container_name: 'scoss_mongodb'
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: scoss
+    volumes:
+      - ./mongo_volume:/data/db
+      - ./app/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+    depends_on:
+      - mongo
+
+  rq-server:
+    image: redis:alpine
+    volumes:
+      - .:/code
+    ports:
+      - 6379:6379
+    expose:
+      - '6379'
+
+  rq-worker:
+    build: . 
+    volumes:
+      - .:/code
+    image: ngocjr/scoss
+    command: rq worker -u redis://rq-server:6379 --path ${TASK_PATH}
+    deploy:
+      replicas: ${NO_WORKERS}
+    depends_on:
+      - rq-server
+
+  rq-monitor:
+    container_name: rq-monitor
+    image: ngocjr/scoss
+    volumes:
+      - .:/code
+    command: python -m rqmonitor -u redis://rq-server:6379 -p 9181
+    ports:
+      - 9181:9181
+    expose:
+      - '9181'
+    depends_on:
+      - rq-server
+
+

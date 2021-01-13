@@ -30,13 +30,6 @@ class TokenBasedMetric(Metric):
                 return 0.0
         return 1.0
 
-    def compact_line(self, tokens):
-        lines = [[] for _ in range(tokens[-1].line)]
-        for token in tokens:
-            lines[token.line-1].append(token)
-
-        return lines
-
     def is_equal_tokens(self, tokens1, tokens2):
         if len(tokens1) != len(tokens2):
             return 0.0
@@ -50,10 +43,8 @@ class TokenBasedMetric(Metric):
         return 1 * self.is_equal_tokens(line1, line2)
 
     def align_source(self, source1, source2):
-        tokens1 = source1.tokenize()
-        lines1 = self.compact_line(tokens1)
-        tokens2 = source2.tokenize()
-        lines2 = self.compact_line(tokens2)
+        lines1 = source1.get_lines()
+        lines2 = source2.get_lines()
         
         n, m = len(lines1), len(lines2)
         

@@ -1,9 +1,11 @@
 import os
 import sys
+import argparse
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(WORKING_DIR, './'))
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify
 from models.models import db
+import config
 
 # config 
 app = Flask(__name__)
@@ -38,8 +40,6 @@ app.register_blueprint(tests)
 
 if __name__ == "__main__":
 	app.debug = True
-	app.run(host='0.0.0.0', port=5005)
-
-    
+	app.run(host=config.APP_HOST, port=config.APP_PORT)
 
 

@@ -4,19 +4,27 @@ from scoss.metrics import CountOperator, SetOperator, HashOperator
 from scoss import Scoss
 from app.config import URL
 import requests
+import time
+
 # src1 = Source.from_file('./data/a.cpp')
 # src2 = Source.from_file('./tests/data/b.cpp')
 # for token in src2.tokenize():
 #     print(token)
 
 def test_scoss():
+    start_time = time.time()
     sc = Scoss(lang='cpp')
-    sc.add_metric('count_operator')
-    sc.add_metric('set_operator')
-    sc.add_file('./tests/data/a.cpp')
-    sc.add_file('./tests/data/b.cpp')
-    sc.add_file('./tests/data/c.cpp')
+    # sc.add_metric('count_operator')
+    # sc.add_metric('set_operator')
+    # sc.add_metric('hash_operator')
+    sc.add_file_by_wildcard('./tests/data/digits_short/*.cpp')
+    print("preparation cost : ", time.time() - start_time)
+
+    start_time = time.time()
     sc.run()
+    # print(sc.get_matches(align=True))
+    sc.save_as_html('./tests/result/', and_thresholds=True, align=True)
+    print("running time cost : ", time.time() - start_time)
 
 
 def test_scoss_or():
@@ -38,7 +46,7 @@ def test_scoss_and():
     sc.add_file('./tests/data/c.cpp')
     sc.run()
     print(sc.get_matches(and_thresholds=True))
-    sc.save_as_html('./tests/result/')
+    sc.save_as_html('./tests/result/', align=False)
 
 def test_scoss_csv():
     sc = Scoss(lang='cpp')
@@ -86,13 +94,16 @@ def cal_scoss(sources, metrics):
 	# sc.add_file('./tests/data/c.cpp', mask='Ngoc')
     # sc.run()
     # print(sc.get_matches())
+
 def test_run():
     strs = '#include <stdio.h>\r\n#include <conio.h>\r\n\r\nvoid main()\r\n{\r\n    int i=0, s=0,n;\r\n    printf("Nhap vao so n:");\r\n    scanf("%d", &n);\r\n    while(i++<n)\r\n        s=s+i;\r\n    printf("Tong la: %d\\n", s);\r\n    getch();\r\n}\r\n'
     src2 = Source.from_str(strs)
     for token in src2.tokenize():
         print(token)
+
 if __name__ == '__main__':
-    test_run()
+    test_scoss()
+    # test_run()
     # python3 tests/test_scoss.py 
     # test_scoss_or()
     # test_scoss_and()

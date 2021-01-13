@@ -25,6 +25,7 @@ def login_page():
 		params = {'username': username}
 		url = URL + '/api/users/username'
 		req = requests.get(url=url, params=params)
+		print(req.json(), flush=True)
 		print( check_password_hash(req.json()['password'], password))
 		if 'password' in req.json().keys():
 			if check_password_hash(req.json()['password'], password):
@@ -36,6 +37,7 @@ def login_page():
 			else:
 				return render_template('login.html', info='wrong_pass')
 		return render_template('login.html', info='wrong_user')
+
 @login.route('/logout')
 def logout():
 	session.clear()
