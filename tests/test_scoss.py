@@ -17,15 +17,15 @@ def test_scoss():
     # sc.add_metric('count_operator')
     # sc.add_metric('set_operator')
     # sc.add_metric('hash_operator')
-    sc.add_file_by_wildcard('./tests/data/digits_short/*.cpp')
+    sc.add_file_by_wildcard('./tests/olympic-submission/ALICEADD/*.c*')
     print("preparation cost : ", time.time() - start_time)
 
     start_time = time.time()
     sc.run()
-    # print(sc.get_matches(align=True))
-    sc.save_as_html('./tests/result/', and_thresholds=True, align=True)
-    print("running time cost : ", time.time() - start_time)
+    print(len(sc.get_matches()))
+    # sc.save_as_html('./tests/result/', and_thresholds=True)
 
+    print("running time cost : ", time.time() - start_time)
 
 def test_scoss_or():
     sc = Scoss(lang='cpp')

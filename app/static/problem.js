@@ -1,3 +1,9 @@
+const init = 1
+const waiting = 2
+const running = 3
+const checked = 4
+const failed = 5
+
 $(document).ready(function() {
 	$.ajaxSetup({
 	  headers: {
@@ -14,23 +20,23 @@ $(document).ready(function() {
 
 	$(".status").each(function(){
 		switch($(this).text()){
-            case "1":
+            case init.toString():
                 $(this).addClass("badge-secondary")
                 $(this).text("init")
                 break
-            case "2":
+            case waiting.toString():
                 $(this).addClass("badge-info")
                 $(this).text("waiting")
                 break
-            case "3":
+            case running.toString():
                 $(this).addClass("badge-primary")
                 $(this).text("running")
                 break
-			case "4":
+			case checked.toString():
 				$(this).addClass("badge-success")
                 $(this).text("checked")
                 break
-			case "5":
+			case failed.toString():
 				$(this).addClass("badge-danger")
                 $(this).text("failed")
                 break
@@ -49,14 +55,14 @@ $(document).ready(function() {
 
 	$.get("/api/contests/"+ contest_id + "/status", function(data){
 		contest_status = data['contest_status']
-		if (contest_status == "checked") {
+		if (contest_status == checked) {
 			updateBtnStatus()
-		} else if (contest_status == 'running') {
+		} else if (contest_status == running) {
 			$("#run").text("Running")
 			$("#run").prop("disabled", true)
 			var source = new EventSource('/contests/' + contest_id + '/status');
 			source.onmessage = function(event) {
-				if (event.data == 'checked') {
+				if (event.data == checked) {
 					updateBtnStatus()
 					source.close()
 				}
@@ -92,7 +98,8 @@ $(document).ready(function() {
 					$("#result-btn").remove()
 					var source = new EventSource('/contests/' + contest_id + '/status');
 					source.onmessage = function(event) {
-                        if (event.data == 'checked') {
+						console.log(event.data)
+						if (event.data == checked) {
 							$.get("/api/contests/"+contest_id+"/results", function(data){
 								if (data['results'].length > 0) {
 									updateBtnStatus()

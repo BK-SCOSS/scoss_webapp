@@ -12,9 +12,9 @@ MONGODB_DATABASE = 'scoss'
 MONGODB_USERNAME = 'scoss_admin'
 MONGODB_PASSWORD = 'scoss_admin'
 
-MONGO_EXPRESS_URL = 'http://{APP_HOST}:8081'
+MONGO_EXPRESS_URL = 'http://{}:8081'
 
-REDIS_MONITOR_URL = 'http://{APP_HOST}:9181'
+REDIS_MONITOR_URL = 'http://{}:9181'
 
 API_URI = f'http://{APP_HOST}:{APP_PORT}'
 URL = f'http://{APP_HOST}:{APP_PORT}'

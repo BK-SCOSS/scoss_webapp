@@ -1,3 +1,9 @@
+const init = 1
+const waiting = 2
+const running = 3
+const checked = 4
+const failed = 5
+
 $(function() {
     $.ajaxSetup({
         headers: {
@@ -14,12 +20,12 @@ $(function() {
 
     $.get("/api/problems/"+ problem_id + "/status", function(data){
 		problem_status = data['problem_status']
-		if (problem_status == "checked") {
+		if (problem_status == checked) {
             $.get("/api/problems/"+ problem_id + "/results", function(data){
                 create_result(data)
                 $("#run").text("Rerun")
             })
-		} else if (problem_status == 'running') {
+		} else if (problem_status == running) {
 			$("#run").text("Running")
 			$("#run").prop("disabled", true)
 		}
@@ -121,7 +127,7 @@ $(function() {
                     $("#run").text("Running...")
                     var source = new EventSource('/problems/' + problem_id + '/status');
                     source.onmessage = function(event) {
-                        if (event.data == 'checked') {
+                        if (event.data == checked) {
                             source.close()
                             $.get("/api/problems/"+ problem_id+"/results", function(data){
                                 if (data['results'].length > 0) {
@@ -132,7 +138,7 @@ $(function() {
                                 } else {
                                     Toast.fire({
 										icon: 'error',
-										title: 'Threre is no result'
+										title: 'No matches found!'
 									})
 									$("#run").empty()
 									$("#run").text("Run")

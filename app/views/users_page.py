@@ -11,7 +11,7 @@ from models.models import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import Environment
 from config import URL
-
+import config
 user = Blueprint('users_page', __name__)
 
 @user.route('/admin', methods=['GET', 'POST'])
@@ -22,7 +22,9 @@ def admin():
 				url = URL + '/api/users'
 				data = requests.get(url=url)
 				# print(data.json())
-				return render_template('admin.html', data=data.json()['users'])
+				mongo_url = config.MONGO_EXPRESS_URL
+				redis_url = config.REDIS_MONITOR_URL
+				return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)
 			else: 
 				username = request.form['username']
 				password = '12345'

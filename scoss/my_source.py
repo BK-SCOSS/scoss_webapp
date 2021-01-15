@@ -57,6 +57,7 @@ class MySource(Source):
         for token in tokens:
             lines[token.line-1].append(token)
 
+        self.lines = lines
         return lines
 
     def get_normalized_tokens(self):
@@ -107,7 +108,6 @@ class MySource(Source):
             return self.hashes
 
         hashes = {}
-
         last = ['', '', '', '']
         tokens = self.get_normalized_tokens()
         for token in tokens:

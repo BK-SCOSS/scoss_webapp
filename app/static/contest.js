@@ -1,3 +1,9 @@
+const init = 1
+const waiting = 2
+const running = 3
+const checked = 4
+const failed = 5
+
 $(document).ready(function() {
     $.ajaxSetup({
         headers: {
@@ -13,29 +19,29 @@ $(document).ready(function() {
     });
 
     $(".status").each(function(){
-        switch($(this).text()){
-            case "1":
+		switch($(this).text()){
+            case init.toString():
                 $(this).addClass("badge-secondary")
                 $(this).text("init")
                 break
-            case "2":
+            case waiting.toString():
                 $(this).addClass("badge-info")
                 $(this).text("waiting")
                 break
-            case "3":
+            case running.toString():
                 $(this).addClass("badge-primary")
                 $(this).text("running")
                 break
-			case "4":
+			case checked.toString():
 				$(this).addClass("badge-success")
                 $(this).text("checked")
                 break
-			case "5":
+			case failed.toString():
 				$(this).addClass("badge-danger")
                 $(this).text("failed")
                 break
 		}
-    })
+	})
 
     $(document).on("click",".btn-delete",function(){
         contest_id = $(this).attr('contest_id');
