@@ -1,7 +1,7 @@
 import time
 import requests
 from scoss import Scoss
-from scoss import smoss
+from scoss import SMoss
 from scoss.metrics import all_metrics
 from sctokenizer import Source
 from models.models import Status
@@ -49,7 +49,7 @@ def cal_smoss(sources, metrics):
     for source in sources:
         lang = source['lang']
         if lang not in smosses:
-            smoss = smoss.SMoss(lang=lang)
+            smoss = SMoss(lang=lang)
             for metric in metrics:
                 smoss.add_metric(metric['name'], metric['threshold'])
             smosses[lang] = smoss

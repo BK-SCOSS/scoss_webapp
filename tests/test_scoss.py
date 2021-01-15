@@ -5,6 +5,7 @@ from scoss import Scoss
 from app.config import URL
 import requests
 import time
+import scoss
 
 # src1 = Source.from_file('./data/a.cpp')
 # src2 = Source.from_file('./tests/data/b.cpp')
@@ -26,6 +27,12 @@ def test_scoss():
     # sc.save_as_html('./tests/result/', and_thresholds=True)
 
     print("running time cost : ", time.time() - start_time)
+    
+
+def test_scoss_cmd():
+    src_str_1 = open('./tests/data/a.cpp').read()
+    src_str_2 = open('./tests/data/b.cpp').read()
+    print(scoss.align_source('count_operator', src_str_1, src_str_2, 'cpp'))
 
 def test_scoss_or():
     sc = Scoss(lang='cpp')
@@ -102,7 +109,7 @@ def test_run():
         print(token)
 
 if __name__ == '__main__':
-    test_scoss()
+    test_scoss_cmd()
     # test_run()
     # python3 tests/test_scoss.py 
     # test_scoss_or()

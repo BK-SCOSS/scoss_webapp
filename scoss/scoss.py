@@ -48,12 +48,11 @@ class Scoss():
         self.__similarity_matrix = dict()
         self.__alignment_matrix = dict()
     
-    @staticmethod
-    def align_source(src1, src2):
-        pass
-
     def get_language(self):
         return self.__lang
+
+    def get_number_of_sources(self):
+        return len(self.__sources) + len(self.__pending_pool)
 
     def set_metric_threshold(self, metric_name, threshold: float):
         if metric_name not in self.__thresholds:
