@@ -16,6 +16,7 @@ from collections import OrderedDict
 from bs4 import BeautifulSoup
 from jinja2 import Environment
 from sctokenizer import Source
+import requests
 
 from scoss.utils import check_language
 
@@ -60,7 +61,7 @@ class SMoss():
             "javascript",
             "plsql")
 
-    def __init__(self, lang, userid=43511):
+    def __init__(self, lang, userid=32193):
         
         SMoss.__id += 1
         self.id = SMoss.__id
@@ -217,8 +218,11 @@ class SMoss():
         tds = soup.find_all('td')
         i = 0
         self.__matches = []
+        with open('./scoss/assets/smoss_comparison.html', mode='r') as f:
+            big_html_string = f.read()
+        bases = big_html_string.split('<<<>>>')
         while i < len(tds):
-            score = int(tds[0].contents[0].contents[0][-4:-2])/100
+            score = int(tds[i].contents[0].contents[0][-4:-2])/100
             if score < self.__threshold:
                 i += 3
                 continue
@@ -231,7 +235,7 @@ class SMoss():
             a_match['source1'] = src1
             a_match['source2'] = src2
             a_match['scores'] = a_score
-            a_match['link'] = tds[0].contents[0].attrs['href']
+            a_match['link'] = tds[i].contents[0].attrs['href']
             self.__matches.append(a_match)
 
             # Construct similarity_matrix
@@ -240,22 +244,17 @@ class SMoss():
 
             # # Construct matches_file
             base_url = os.path.dirname(a_match['link'])
-            summary_html = self.url_content_to_str(a_match['link'])
-            soup = BeautifulSoup(summary_html, 'lxml')
+            match_name = os.path.splitext(os.path.basename(a_match['link']))[0]
+            print(match_name)
             html_strs = []
-            for more_url in soup.find_all('frame'):
-                html_str = self.url_content_to_str(base_url + '/' + more_url.get('src'))
-                soup = BeautifulSoup(html_str, 'lxml')
-                for a in soup.findAll('a'):
-                    del a['href']
-                html_strs.append(str(soup))
-            with open('./scoss/assets/smoss_comparison.html', mode='r') as f:
-                big_html_string = f.read()
-            big_html_string = big_html_string.replace('<<<top>>>', html_strs[0])
-            big_html_string = big_html_string.replace('<<<src1>>>', html_strs[1])
-            big_html_string = big_html_string.replace('<<<src2>>>', html_strs[2])
-            self.__matches_file[src1] = {src2:big_html_string}
-            self.__matches_file[src2] = {src1:big_html_string}
+            more_urls = ['-top.html', '-0.html', '-1.html']
+            for more_url in more_urls:
+                html_str = self.url_content_to_str(base_url + '/' + match_name + more_url)
+                html_strs.append(html_str)
+            match_comparison = bases[0] + html_strs[0] + bases[1] + \
+                            html_strs[1] + bases[2] + html_strs[2] + bases[3] 
+            self.__matches_file[src1] = {src2:match_comparison}
+            self.__matches_file[src2] = {src1:match_comparison}
             # with open(os.path.join('./tests/smoss_result/', 'big_all_html.html'), 'w') as file:
             #     file.write(big_html_string)
             i += 3
@@ -309,17 +308,24 @@ class SMoss():
 
     def run(self):
         if self.__state != SMossState.CLOSE:
+            start_time = time.time()
+            print("Sending")
             url = self.send()
+            print("sending time = ", time.time() - start_time)
+            start_time = time.time()
             if url == '':
                 raise ValueError("MOSS Server returned empty url. Please check userid.")
+            print("Parsing html")
             self.parse_html_table(url)
+            print("Parsing time = ", time.time() - start_time)
             self.__state = SMossState.CLOSE
         else:
             raise ValueError("Can only execute run function once.")
 
     def url_content_to_str(self, url):
-        html_str = urlopen(url).read().decode()
-        return html_str
+        # html_str = urlopen(url).read().decode()
+        res = requests.get(url)
+        return res.text
 
     def process_url(self, url, file_name, path):
         def save_html(url, file_name):
