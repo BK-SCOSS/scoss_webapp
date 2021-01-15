@@ -60,18 +60,18 @@ services:
     depends_on:
       - rq-server
 
-  rq-monitor:
-    container_name: rq-monitor
-    image: ngocjr/scoss
-    volumes:
-      - .:/code
-    command: python -m rqmonitor -u redis://rq-server:6379 -p 9181
-    ports:
-      - 9181:9181
-    expose:
-      - '9181'
-    depends_on:
-      - rq-server
+  # rq-monitor:
+  #   container_name: rq-monitor
+  #   image: ngocjr/scoss
+  #   volumes:
+  #     - .:/code
+  #   command: python -m rqmonitor -u redis://rq-server:6379 -p 9181
+  #   ports:
+  #     - 9181:9181
+  #   expose:
+  #     - '9181'
+  #   depends_on:
+  #     - rq-server
 
 volumes:
   mongo_volume: 

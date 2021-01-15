@@ -168,10 +168,12 @@ class SMoss():
 
     def add_file_by_wildcard(self, dirpath, recursive=True):
         if self.__state == SMossState.INIT:
+            print(dirpath)
             for file in glob.glob(dirpath, recursive=recursive):
                 self.add_file(file)
         else:
             raise ValueError('Cannot add file after running')
+        print(len(self.__sources))
 
     def get_matches(self):
         if self.__state == SMossState.INIT:

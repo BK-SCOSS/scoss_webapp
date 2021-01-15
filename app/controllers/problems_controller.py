@@ -5,14 +5,16 @@ from models.models import *
 from zipfile import ZipFile
 from config import URL
 from werkzeug.utils import secure_filename
-from controllers.similarity_checker import run_problem
+from controllers.similarity_checker import do_job
 from controllers.task_queue import tq
+from models.models import Status
 
 import json
 import time
 import os
 import shutil
 import requests
+import config
 
 problems_controller = Blueprint('problems_controller', __name__)
 
@@ -280,15 +282,15 @@ def run_source(problem_id):
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
         if len(data_problem) > 0:
-            # if data_problem.problem_status in ['init', 'reopen', 'checked']:
-            #     doc_status = {
-            #         "problem_status": "waiting"
-            #     }
-            # url_status = "{}/api/problems/{}/status".format(
-            #     URL, str(problem_id))
+            if data_problem.problem_status is not Status.running:
+                doc_status = {
+                    "problem_status": Status.waiting
+                }
+                url_status = "{}/api/problems/{}/status".format(
+                    URL, str(problem_id))
 
-            # requests.put(url=url_status, json=doc_status)
-            tq.enqueue(run_problem, problem_id, job_timeout=500)
+                requests.put(url=url_status, json=doc_status)
+                tq.enqueue(do_job, args=(problem_id, config.JOB_TIMEOUT), job_timeout=1000)
     except Exception as e:
         raise e
         return jsonify({"error": "Exception: {}".format(e)}), 400
