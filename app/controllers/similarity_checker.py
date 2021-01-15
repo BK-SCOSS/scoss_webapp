@@ -6,6 +6,7 @@ from scoss.metrics import all_metrics
 from sctokenizer import Source
 from models.models import Status
 import config
+import timeout_decorator
 
 all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
 
@@ -50,8 +51,6 @@ def cal_smoss(sources, metrics):
         lang = source['lang']
         if lang not in smosses:
             smoss = SMoss(lang=lang)
-            for metric in metrics:
-                smoss.add_metric(metric['name'], metric['threshold'])
             smosses[lang] = smoss
 
         mask = source['mask'] if source['mask'] != '' else source['pathfile']
@@ -67,55 +66,90 @@ def cal_smoss(sources, metrics):
         comparisons.extend(sm_comparisons)
     return matches, comparisons
 
-def run_problem(problem_id):
-    print("Running problem ", problem_id, flush=True)
-    url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
-    url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
-    url_scoss = "{}/api/problems/{}/results/scoss".format(config.API_URI_SR, str(problem_id))
-    url_smoss = "{}/api/problems/{}/results/smoss".format(config.API_URI_SR, str(problem_id))
 
-    req = requests.get(url)
-    data_problem = req.json()
+def run_problem_with_timeout(problem_id, timeout=510):
+    @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
+    def run_problem(problem_id, _timeout):
+        logs = {'str': '', 'exception': []}
+        print(f"running problem {problem_id} in {_timeout}", flush=True)
+        logs['str'] += f"Running problem {problem_id}\n"
+        url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
+        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
+        url_scoss = "{}/api/problems/{}/results/scoss".format(config.API_URI_SR, str(problem_id))
+        url_smoss = "{}/api/problems/{}/results/smoss".format(config.API_URI_SR, str(problem_id))
 
-    req_status = requests.get(url=url_status)
-        
-    doc_status = {
-        "problem_status": Status.running
-    }
-    requests.put(url=url_status, json=doc_status)
+        req = requests.get(url)
+        data_problem = req.json()
 
-    metric_list = []
-    scoss_metrics = []
-    for met in data_problem['metrics']:
-        metric_list.append(met['name'])
-        if met['name'] in all_scoss_metric_names:
-            scoss_metrics.append(met)
+        req_status = requests.get(url=url_status)
+            
+        doc_status = {
+            "problem_status": Status.running
+        }
+        requests.put(url=url_status, json=doc_status)
 
-    # run scoss
-    if len(scoss_metrics) > 0:
-        similarity_list = cal_scoss(data_problem['sources'], scoss_metrics)
-    else:
-        similarity_list = []
-    doc_scoss = {
-        "similarity_list": similarity_list,
-        "alignment_list": []
-    }
-    req = requests.put(url=url_scoss, json=doc_scoss)
+        metric_list = []
+        scoss_metrics = []
+        for met in data_problem['metrics']:
+            metric_list.append(met['name'])
+            if met['name'] in all_scoss_metric_names:
+                scoss_metrics.append(met)
 
-    # run smoss
-    if 'moss_score' in metric_list:
-        similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
-    else:
-        similarity_smoss_list, alignment_smoss_list = [], []
-    doc_smoss = {
-        "similarity_smoss_list": similarity_smoss_list,
-        "alignment_smoss_list": alignment_smoss_list
-    }
-    requests.put(url=url_smoss, json=doc_smoss)
+        # run scoss
+        logs['str'] += f"Running scoss\n"
+        if len(scoss_metrics) > 0:
+            similarity_list = cal_scoss(data_problem['sources'], scoss_metrics)
+        else:
+            similarity_list = []
+        logs['str'] += "Done scoss\n"
 
-    # update status
-    doc_status = {
-        "problem_status": Status.checked
-    }
-    requests.put(url=url_status, json=doc_status)       
-    requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR))
+        doc_scoss = {
+            "similarity_list": similarity_list,
+            "alignment_list": []
+        }
+        req = requests.put(url=url_scoss, json=doc_scoss)
+
+        # run smoss
+        logs['str'] += f"Running smoss\n"
+        if 'moss_score' in metric_list:
+            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
+        else:
+            similarity_smoss_list, alignment_smoss_list = [], []
+        logs['str'] += "Done smoss\n"
+
+        doc_smoss = {
+            "similarity_smoss_list": similarity_smoss_list,
+            "alignment_smoss_list": alignment_smoss_list
+        }
+        requests.put(url=url_smoss, json=doc_smoss)
+
+        # update status
+        doc_status = {
+            "problem_status": Status.checked
+        }
+        requests.put(url=url_status, json=doc_status)       
+        requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR))
+        return logs
+    return run_problem(problem_id, _timeout=timeout-5)
+
+def do_job(problem_id, timeout=510):
+    def update_status_failed(problem_id):
+        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
+        # update status
+        doc_status = {
+            "problem_status": Status.failed
+        }
+        requests.put(url=url_status, json=doc_status)       
+        requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR))
+
+    try:
+        logs = run_problem_with_timeout(problem_id, timeout=timeout)
+        if len(logs['exception']) > 0:
+            update_status_failed(problem_id)
+            raise Exception
+    except Exception as e:
+        update_status_failed(problem_id)
+        raise e
+
+
+

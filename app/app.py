@@ -5,10 +5,13 @@ sys.path.append(os.path.join(WORKING_DIR, './'))
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify
 from models.models import db
 from flask_socketio import SocketIO, emit
+import rq_dashboard
 
 # config 
 app = Flask(__name__)
 app.config.from_object('config')
+app.config.from_object(rq_dashboard.default_settings)
+app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 db.init_app(app)
 
 #import controller
@@ -42,4 +45,5 @@ def test_connect():
     emit('my response', {'data': 'Connected'})
 
 if __name__ == "__main__":
+
 	socketio.run(app, host='0.0.0.0', port=5005)

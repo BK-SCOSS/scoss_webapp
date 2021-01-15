@@ -20,3 +20,6 @@ API_URI = f'http://{APP_HOST}:{APP_PORT}'
 URL = f'http://{APP_HOST}:{APP_PORT}'
 API_URI_SR = f'http://{APP_SELF_REF}:{APP_PORT}'
 
+
+JOB_TIMEOUT = 12
+
