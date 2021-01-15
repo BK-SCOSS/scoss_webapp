@@ -245,7 +245,6 @@ class SMoss():
             # # Construct matches_file
             base_url = os.path.dirname(a_match['link'])
             match_name = os.path.splitext(os.path.basename(a_match['link']))[0]
-            print(match_name)
             html_strs = []
             more_urls = ['-top.html', '-0.html', '-1.html']
             for more_url in more_urls:
@@ -309,15 +308,11 @@ class SMoss():
     def run(self):
         if self.__state != SMossState.CLOSE:
             start_time = time.time()
-            print("Sending")
             url = self.send()
-            print("sending time = ", time.time() - start_time)
             start_time = time.time()
             if url == '':
                 raise ValueError("MOSS Server returned empty url. Please check userid.")
-            print("Parsing html")
             self.parse_html_table(url)
-            print("Parsing time = ", time.time() - start_time)
             self.__state = SMossState.CLOSE
         else:
             raise ValueError("Can only execute run function once.")
