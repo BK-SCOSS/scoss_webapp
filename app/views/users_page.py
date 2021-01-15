@@ -21,7 +21,6 @@ def admin():
 			if request.method == 'GET':
 				url = URL + '/api/users'
 				data = requests.get(url=url)
-				# print(data.json())
 				mongo_url = config.MONGO_EXPRESS_URL
 				redis_url = config.REDIS_MONITOR_URL
 				return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)

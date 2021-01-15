@@ -33,6 +33,7 @@ class Problem(db.Document):
     alignment_smoss_list = db.ListField()
     contest_id = db.StringField()
     user_id = db.StringField()
+    log = db.StringField()
 
 class Counter(db.Document):
     name = db.StringField()

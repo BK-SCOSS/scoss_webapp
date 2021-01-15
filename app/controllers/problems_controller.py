@@ -295,11 +295,29 @@ def run_source(problem_id):
     return jsonify({'problem_id': problem_id}), 200
 
 
+# @problems_controller.route('/api/problems/<problem_id>/sources', methods=['GET'])
+# def get_source(problem_id):
+#     try:
+#         data_problem = Problem.objects.get(problem_id=problem_id)
+#         sources = data_problem.sources
+#     except Exception as e:
+#         return jsonify({"error": "Exception: {}".format(e)}), 400
+#     return jsonify({'problem_id': problem_id, 'sources': sources}), 200
+
 @problems_controller.route('/api/problems/<problem_id>/sources', methods=['GET'])
 def get_source(problem_id):
     try:
-        data_problem = Problem.objects.get(problem_id=problem_id)
-        sources = data_problem.sources
+        source1 = request.args.get('source1')
+        source2 = request.args.get('source2')
+        sources = [source1, source2]
+        print(source1, flush=True)
+        # data_sources1 = Problem.objects(problem_id=problem_id, sources__mask=source1)
+        # if not data_sources1:
+        data_sources1 = Problem.objects(problem_id=problem_id, sources__pathfile=source1).only('problem_id', 'sources__pathfile')
+        # data_sources2 = Problem.objects(problem_id=problem_id, sources__mask=source2)
+        # if not data_sources2:
+        # data_sources2 = Problem.objects.get(problem_id=problem_id, sources__pathfile=source2)
+        sources = data_sources1
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id, 'sources': sources}), 200

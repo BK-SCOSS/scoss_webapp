@@ -1,10 +1,10 @@
 import os
 import sys
+import requests
+import scoss
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, Response, stream_with_context
-import requests
 from sctokenizer import Source
-from scoss import Scoss
 from scoss.metrics import all_metrics
 from models.models import db
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -113,6 +113,8 @@ def compare(problem_id):
 			source2 = request.args.get('source2')
 			metrics = request.args.get('metrics')
 			if metrics != 'moss_score':
+				# scoss.align_source('count_operator', src_str_1, src_str_2, 'cpp')
+				
 				req_list = requests.get(url = "{}/api/problems/{}/results/scoss".format(URL, problem_id))
 				for simi in req_list.json()['similarity_list']:
 					if simi['source1'] == source1 and simi['source2'] == source2:

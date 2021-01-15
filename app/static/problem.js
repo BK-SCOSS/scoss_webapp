@@ -46,6 +46,8 @@ $(document).ready(function() {
 	function updateBtnStatus() {
 		$("#run").text("Rerun")
 		$("#run").removeAttr("disabled")
+		$("#run").removeClass("btn-primary")
+		$("#run").addClass("btn-danger")
 		result = $("<button>", {"class": "btn btn-default", "id":"result-btn"})
 		a = $("<a>", {"href":"/contests/"+contest_id+"/results", "target": "_blank"})
 		a.text("Result")

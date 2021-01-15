@@ -90,7 +90,8 @@
           <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
               <li>
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" id="user-management-tab" data-toggle="pill" href="#user-management" 
+                  role="tab" aria-controls="user-management" aria-selected="false">
                   <i class="nav-icon fas fa-tachometer-alt"></i>
                   <p>
                     Users management
@@ -98,7 +99,7 @@
                 </a>
               </li>
               <li>
-                <a href="{{mongo_url}}" class="nav-link">
+                <a href="{{mongo_url}}" class="nav-link" target="_blank">
                   <i class="nav-icon fas fa-tachometer-alt"></i>
                   <p>
                     Mongodb express
@@ -106,7 +107,7 @@
                 </a>
               </li>
               <li>
-                <a href="{{redis_url}}" class="nav-link">
+                <a href="{{redis_url}}" class="nav-link" target="_blank">
                   <i class="nav-icon fas fa-tachometer-alt"></i>
                   <p>
                     Redis monitor
@@ -166,45 +167,49 @@
             <div class="container">
               <div class="row">
                 <div class="col-12">
-                  <div class="card">
-                    <div class="card-header">
-                      <h3 class="card-title">Users list</h3>
-                      <div class="card-tools">
-                        <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-user">Create</a>
-                      </div>
-                    </div>
-                    <!-- /.card-header -->
-                    <div class="card-body table-responsive p-0">
-                      <table class="table table-hover table-bordered">
-                        <tr>
-                          <th>#</th>
-                          <th>Username</th>
-                          <th>Role</th>
-                          <th class="text-center" style="width: 150px;">Action</th>
-                        </tr>
-                        {% for user in data %}
-                        <tr>
-                          <td>{{loop.index}}</td>
-                          <td><a>{{ user['username'] }}</a></td>
-                          {% if user.role == 0 %}
-                          <td><a>Admin</a></td>
-                          {% else %}
-                          <td><a>User</a></td>
-                          {%endif%}
-                          {% if user.role != 0 %}
-                          <td class="text-center py-0 align-middle">
-                            <a href="#" class="btn btn-danger btn-delete" user_id="{{user['user_id']}}"><i class="fas fa-trash"></i></a>
-                          </td>
-                          {% endif %}
-                        </tr>
-                        {% endfor %}
-                      </table>
-                    </div>
-                    <!-- /.card-body -->
-                  </div>
+                  
                 </div>
               </div>
             
+              <div class="tab-pane" id="user-management" role="tabpanel" aria-labelledby="user-management-tab">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Users list</h3>
+                    <div class="card-tools">
+                      <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-user">Create</a>
+                    </div>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body table-responsive p-0">
+                    <table class="table table-hover table-bordered">
+                      <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th class="text-center" style="width: 150px;">Action</th>
+                      </tr>
+                      {% for user in data %}
+                      <tr>
+                        <td>{{loop.index}}</td>
+                        <td><a>{{ user['username'] }}</a></td>
+                        {% if user.role == 0 %}
+                        <td><a>Admin</a></td>
+                        {% else %}
+                        <td><a>User</a></td>
+                        {%endif%}
+                        {% if user.role != 0 %}
+                        <td class="text-center py-0 align-middle">
+                          <a href="#" class="btn btn-danger btn-delete" user_id="{{user['user_id']}}"><i class="fas fa-trash"></i></a>
+                        </td>
+                        {% endif %}
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+              </div>
+
               <div class="modal fade" id="modal-create-user" style="display: none;" aria-hidden="true">
                 <div class="modal-dialog">
                   <div class="modal-content">
