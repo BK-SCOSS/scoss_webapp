@@ -54,7 +54,8 @@ def source(problem_id):
 				if 'problem_id' in req.json().keys():
 					return render_template('source.html', data=req.json()['sources'], \
 						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'], \
-						contest_name=req.json()['contest_name'], contest_id=req.json()['contest_id'])
+						contest_name=req.json()['contest_name'], contest_id=req.json()['contest_id'], \
+						metrics=req.json()['metrics'], problem_status=req.json()['problem_status'])
 			else:
 				source_name = request.form['source_name']
 				data_form = {'source_name': source_name}
@@ -112,6 +113,8 @@ def compare(problem_id):
 			source1 = request.args.get('source1')
 			source2 = request.args.get('source2')
 			metrics = request.args.get('metrics')
+			payload = {'source1': source1, 'source2': source2}
+
 			if metrics != 'moss_score':
 				# scoss.align_source('count_operator', src_str_1, src_str_2, 'cpp')
 				
@@ -120,12 +123,16 @@ def compare(problem_id):
 					if simi['source1'] == source1 and simi['source2'] == source2:
 						score_metric = round(simi['scores'][metrics],4)
 						break
-				for simi in req_list.json()['alignment_list']:
-					if simi['source1'] == source1 and simi['source2'] == source2:
-						score_alignment = simi['scores'][metrics]
-						break
-				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id))
+				# for simi in req_list.json()['alignment_list']:
+				# 	if simi['source1'] == source1 and simi['source2'] == source2:
+				# 		score_alignment = simi['scores'][metrics]
+				# 		break
+
+				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id), params=payload)
 				sources = req_source.json()['sources']
+				lang = sources[0]['lang']
+				print(lang, flush=True)
+				
 				for source in sources:
 					if source['mask'] == '':
 						if source['pathfile'] == source1:
@@ -142,6 +149,9 @@ def compare(problem_id):
 					elif source['mask'] == source2:
 						data2 = source['source_str']
 						break
+
+				score_alignment = scoss.align_source(metrics, data1, data2, lang)
+
 				data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1.split('\n')]
 				data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2.split('\n')]
 				html1 = ''
@@ -178,7 +188,7 @@ def compare(problem_id):
 				G = 0
 				B = 0
 				span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'
-				with open(r'H:\Project\code-similarity\app\templates\comparison.html', mode='r') as f:
+				with open('app/templates/comparison.html', 'r') as f:
 					HTML2 = f.read()
 				compe = Environment().from_string(HTML2).render(file1=source1, file2=source2, \
 								metric=metrics, score=span, \

@@ -1,9 +1,3 @@
-const init = 1
-const waiting = 2
-const running = 3
-const checked = 4
-const failed = 5
-
 $(function() {
     $.ajaxSetup({
         headers: {
@@ -22,10 +16,24 @@ $(function() {
 		problem_status = data['problem_status']
 		if (problem_status == checked) {
             $.get("/api/problems/"+ problem_id + "/results", function(data){
+                // if (data['results'].length > 0) {
+                   
+                // }
                 create_result(data)
+                $("#run").removeClass("btn-primary")
+                $("#run").addClass("btn-danger")
                 $("#run").text("Rerun")
             })
 		} else if (problem_status == running) {
+            var source = new EventSource('/problems/' + problem_id + '/status');
+			source.onmessage = function(event) {
+				if (event.data == checked) {
+					$("#run").removeClass("btn-primary")
+                    $("#run").addClass("btn-danger")
+                    $("#run").text("Rerun")
+					source.close()
+				}
+			}
 			$("#run").text("Running")
 			$("#run").prop("disabled", true)
 		}
@@ -115,7 +123,7 @@ $(function() {
                 }
                 send_data.push(temp)
             });
-            var data_form = {'metrics': send_data}
+            var data_form = {"metrics": send_data}
             $.ajax({
                 type: "POST",
                 url: "/api/problems/"+ problem_id + "/run",
@@ -131,10 +139,7 @@ $(function() {
                             source.close()
                             $.get("/api/problems/"+ problem_id+"/results", function(data){
                                 if (data['results'].length > 0) {
-                                    $("#run").empty()
-                                    $("#run").text("Run")
-                                    $("#run").removeAttr("disabled")
-                                    create_result(data)
+                                    location.reload()
                                 } else {
                                     Toast.fire({
 										icon: 'error',
@@ -169,22 +174,6 @@ $(function() {
         $("#source-content").text(data)
     })
 });
-
-document.getElementById('countCheckBox').onchange = function() {
-    document.getElementById('countOperator').disabled = !this.checked;
-};
-
-document.getElementById('setCheckBox').onchange = function() {
-    document.getElementById('setOperator').disabled = !this.checked;
-};
-
-document.getElementById('hashCheckBox').onchange = function() {
-    document.getElementById('hashOperator').disabled = !this.checked;
-};
-
-document.getElementById('smossCheckBox').onchange = function() {
-    document.getElementById('smossMetric').disabled = !this.checked;
-};
 
 function createSource() {
     const form = document.createElement('form')
@@ -231,3 +220,32 @@ function createSource() {
     
     document.getElementById('source-name').appendChild(form)
 }
+
+$(document).on("click","#delete-all",function(){
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Delete'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              $.ajax({
+                  type: "DELETE",
+                  contentType: 'application/json',
+                  url: '/api/problems/'+problem_id+'/sources/delete_all',
+                  success: function () {
+                          location.reload();
+                  },
+                  error: function (data) {
+                      Toast.fire({
+                          icon: 'error',
+                          title: data['error']
+                      })
+                  }
+              });
+          }
+      })
+  });

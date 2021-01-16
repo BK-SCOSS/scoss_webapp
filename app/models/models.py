@@ -4,10 +4,10 @@ db = MongoEngine()
 
 class Status():
     init = 1
-    waiting = 2
-    running = 3
-    checked = 4
-    failed = 5
+    failed = 2
+    waiting = 3
+    running = 4
+    checked = 5
 
 class User(db.Document):
     user_id = db.StringField(required=True, unique=True)

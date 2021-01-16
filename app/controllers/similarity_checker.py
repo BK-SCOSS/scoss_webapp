@@ -80,6 +80,7 @@ def run_problem_with_timeout(problem_id, timeout=510):
 
         req = requests.get(url)
         data_problem = req.json()
+        contest_id = data_problem['contest_id']
 
         req_status = requests.get(url=url_status)
             
@@ -128,7 +129,7 @@ def run_problem_with_timeout(problem_id, timeout=510):
             "problem_status": Status.checked
         }
         requests.put(url=url_status, json=doc_status)       
-        requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR))
+        # requests.get(url="{}/api/contests/{}/check_status".format(config.API_URI_SR, contest_id))
         return logs
     return run_problem(problem_id, _timeout=timeout-5)
 

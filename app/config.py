@@ -14,12 +14,12 @@ MONGODB_PASSWORD = 'scoss_admin'
 
 MONGO_EXPRESS_URL = f'http://{APP_HOST}:8081'
 
-REDIS_MONITOR_URL = f'http://{APP_HOST}:9181'
+REDIS_MONITOR_URL = f'http://{APP_HOST}:8080/rq'
 
 API_URI = f'http://{APP_HOST}:{APP_PORT}'
 URL = f'http://{APP_HOST}:{APP_PORT}'
 API_URI_SR = f'http://{APP_SELF_REF}:{APP_PORT}'
 
 
-JOB_TIMEOUT = 12
+JOB_TIMEOUT = 1000
 

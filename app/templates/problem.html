@@ -22,7 +22,7 @@
 
 {% block content %}
     <div class="row">
-      <div class="col-12">
+      <div class="col-md-9">
         <div class="card">
 			{%if info == 'wrong'%}
 			<div class="alert alert-danger" role="alert">
@@ -81,84 +81,88 @@
 		  </div>
           <!-- /.card-body -->
         </div>
-      </div>
-    </div>
-   
-	<div class="row">
-		<div class="col-sm-12">
-			<div class="card card-info">
-				<div class="card-header">
-					<h3 class="card-title">Run contest</h3>
+	  </div>
+	  <div class="col-md-3">
+		<div class="card card-info" style="position:sticky; top: 0;">
+			<div class="card-header">
+				<h3 class="card-title">Run contest</h3>
+			</div>
+			<!-- /.card-header -->
+			<form class="form-horizontal" method="POST" id="contest-run">
+				<div class="card-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="count_operator_check">
+									<label for="count_operator_check" class="custom-control-label"><b>CountOperator: </b></label>        
+								</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="count_operator" name="count_operator" min="0" max="100" value="70" disabled>        
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="set_operator_check">
+									<label for="set_operator_check" class="custom-control-label"><b>SetOperator: </b></label>  
+								</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="set_operator" name="set_operator" min="0" max="100" value="70" disabled> 
+								</div>
+							</div>
+						</div>		
+					</div>
+	
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="hash_operator_check">
+									<label for="hash_operator_check" class="custom-control-label"><b>HashOperator: </b></label>									</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="hash_operator" name="hash_operator" min="0" max="100" value="70" disabled>	
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="moss_score_check">
+									<label for="moss_score_check" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+								</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="moss_score" name="moss_score" min="0" max="100" value="70" disabled>
+								</div>
+							</div>
+						</div>		
+					</div>
 				</div>
-				<!-- /.card-header -->
-				<form class="form-horizontal" method="POST" id="contest-run">
-					<div class="card-body">
-						<div class="row">
-							<div class="col-sm-5">
-								<div class="form-group row">
-									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="countCheckBox" autocomplete='off'>
-										<label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
-									</div>
-									<div class="col-sm-6">
-										<input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="50" disabled>        
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-2"></div>
-							<div class="col-sm-5">
-								<div class="form-group row">
-									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="setCheckBox" autocomplete='off'>
-										<label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
-									</div>
-									<div class="col-sm-6">
-										<input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="50" disabled> 
-									</div>
-								</div>
-							</div>		
-						</div>
-
-						<div class="row">
-							<div class="col-sm-5">
-								<div class="form-group row">
-									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="hashCheckBox" autocomplete='off'>
-										<label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									
-									</div>
-									<div class="col-sm-6">
-										<input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-2"></div>
-							<div class="col-sm-5">
-								<div class="form-group row">
-									<div class="custom-control custom-checkbox col-sm-6">
-										<input class="custom-control-input" type="checkbox" id="smossCheckBox" autocomplete='off'>
-										<label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
-									</div>
-									<div class="col-sm-6">
-										<input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="50" disabled>
-									</div>
-								</div>
-							</div>		
-						</div>
-					</div>
-					<div class="card-footer">	
-						<button type="submit" class="btn btn-primary" id="run">
-							Run
-						</button>
-					</div>
-				</form>
-			</div>	
+			</form>
+			<div class="card-footer">	
+				<button type="submit" class="btn btn-primary" id="run" form="contest-run">
+					Run
+				</button>
+				<button class="btn btn-info" id="reset" dtype="contest">
+					Reset
+				</button>
+			</div>
 		</div>
-	</div>
+	  </div>
+    </div>
 {% endblock %}
 
 {% block js %}
 <script>
 	contest_id = '{{contest_id}}'
+	
+	metrics = {{contest_data.metrics|tojson}}
 </script>
+<script src="{{ url_for('static', filename = 'main.js') }}"></script>
 <script src="{{ url_for('static', filename = 'problem.js') }}"></script>
 {% endblock %}

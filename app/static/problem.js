@@ -1,9 +1,3 @@
-const init = 1
-const waiting = 2
-const running = 3
-const checked = 4
-const failed = 5
-
 $(document).ready(function() {
 	$.ajaxSetup({
 	  headers: {
@@ -16,31 +10,6 @@ $(document).ready(function() {
 		position: 'top-end',
 		showConfirmButton: false,
 		timer: 5000
-	})
-
-	$(".status").each(function(){
-		switch($(this).text()){
-            case init.toString():
-                $(this).addClass("badge-secondary")
-                $(this).text("init")
-                break
-            case waiting.toString():
-                $(this).addClass("badge-info")
-                $(this).text("waiting")
-                break
-            case running.toString():
-                $(this).addClass("badge-primary")
-                $(this).text("running")
-                break
-			case checked.toString():
-				$(this).addClass("badge-success")
-                $(this).text("checked")
-                break
-			case failed.toString():
-				$(this).addClass("badge-danger")
-                $(this).text("failed")
-                break
-		}
 	})
 
 	function updateBtnStatus() {
@@ -87,12 +56,14 @@ $(document).ready(function() {
 				}
 				send_data.push(temp)
 			});
-			var data_form = {'metrics': send_data}
+			var data_form = {"metrics": send_data}
+			console.log(JSON.stringify(data_form))
 			$.ajax({
 				type: "POST",
 				url: "/api/contests/"+contest_id+"/run",
 				contentType: 'application/json',
 				data: JSON.stringify(data_form),
+				dataType: 'json',
 				success: function()
 				{   
 					$("#run").prop("disabled", true)
@@ -102,10 +73,10 @@ $(document).ready(function() {
 					source.onmessage = function(event) {
 						console.log(event.data)
 						if (event.data == checked) {
+							source.close()
 							$.get("/api/contests/"+contest_id+"/results", function(data){
 								if (data['results'].length > 0) {
-									updateBtnStatus()
-									source.close()
+									location.reload()
 								} else {
 									Toast.fire({
 										icon: 'error',
@@ -163,22 +134,6 @@ $(document).ready(function() {
 	});
 })
 
-document.getElementById('countCheckBox').onchange = function() {
-    document.getElementById('countOperator').disabled = !this.checked;
-};
-
-document.getElementById('setCheckBox').onchange = function() {
-    document.getElementById('setOperator').disabled = !this.checked;
-};
-
-document.getElementById('hashCheckBox').onchange = function() {
-    document.getElementById('hashOperator').disabled = !this.checked;
-};
-
-document.getElementById('smossCheckBox').onchange = function() {
-    document.getElementById('smossMetric').disabled = !this.checked;
-};
-
 function createProblem() {
     const form = document.createElement('form')
     const input = document.createElement('input')
@@ -216,3 +171,4 @@ function createProblem() {
     
     document.getElementById('problem-name').appendChild(form)
 }
+

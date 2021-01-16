@@ -1,8 +1,8 @@
 const init = 1
-const waiting = 2
-const running = 3
-const checked = 4
-const failed = 5
+const failed = 2
+const waiting = 3
+const running = 4
+const checked = 5
 
 $(document).ready(function() {
     $.ajaxSetup({

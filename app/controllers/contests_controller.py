@@ -83,7 +83,7 @@ def contest():
 def get_contest(contest_id):
     try:
         res = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id')
-        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status').first()
+        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status', 'metrics').first()
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'contest_id':contest_id, 'problems': res, 'contest_data': contest_data})
@@ -170,9 +170,11 @@ def add_zip(contest_id):
 
 @contests_controller.route('/api/contests/<contest_id>/run', methods = ['POST'])
 def run_contest(contest_id):
+    print(request.json, flush=True)
     try:
         url_contest = URL + '/api/contests/' + str(contest_id)
         metrics = request.json
+        Contest.objects(contest_id=contest_id).update(metrics=metrics)
         data_problems = requests.get(url=url_contest)
         doc_status = {
             "contest_status": Status.running
@@ -202,37 +204,39 @@ def get_result(contest_id):
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
 
-@contests_controller.route('/api/contests/check_status', methods = ['GET'])
-def check_status():
+@contests_controller.route('/api/contests/<contest_id>/check_status', methods = ['GET'])
+def check_status(contest_id):
     try:
-        data_contest = Contest.objects()
-        for contests in data_contest:
-            data_problems = Problem.objects(contest_id=contests.contest_id)
-            status = Status.init
-            res = []
-            for data_problem in data_problems:
-                temp = data_problem.to_mongo()
-                res.append(temp['problem_status'])
-            if Status.init in res:
-                status = Status.init
-            elif Status.waiting in res:
-                status = Status.waiting
-            print(res, flush=True)
-            if len(res) > 0:
-                checked = True
-                for sta in res:
-                    if sta != Status.checked:
-                        checked = False
-                    if checked == True:
-                        status = Status.checked
-            doc_status = {
-                "contest_status": status
-            }
-            url_status = '{}/api/contests/{}/status'.format(URL, contests.contest_id)
-            requests.put(url=url_status, json=doc_status)
+        data_problems = Problem.objects(contest_id=contest_id)
+        status = Status.init
+        res = []
+        for data_problem in data_problems:
+            temp = data_problem.to_mongo()
+            res.append(temp['problem_status'])
+        status = min(res)
+        print(status, flush=True)
+        doc_status = {
+            "contest_status": status
+        }
+        url_status = '{}/api/contests/{}/status'.format(URL, contest_id)
+        requests.put(url=url_status, json=doc_status)
         return jsonify({'info': 'status update was successful'}), 200
     except Exception:
         return jsonify({"error":"Can't update status contest"}),400
+
+@contests_controller.route('/api/contests/<contest_id>/reset', methods=['PUT'])
+def reset(contest_id):
+    try:
+        problem_list = Problem.objects(contest_id=contest_id).only('problem_id')
+        for problem in problem_list:
+            problem_id = problem.problem_id
+            Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
+                        similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
+        Contest.objects(contest_id=contest_id).update(contest_status=1, metrics=[])
+        info = 'Reset all!'
+    except Exception as e:
+        return jsonify({"error": "Exception: {}".format(e)}), 400
+    return jsonify({'info': info}), 200
 
 @contests_controller.route('/contests/<contest_id>/status')
 def status(contest_id):

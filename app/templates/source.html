@@ -8,176 +8,208 @@
 {% endblock %}
 {% block header %}
 <div class="container">
-  <div class="row mb-2">
-    <div class="col-sm-6">
-      <h1 class="m-0 text-dark">{{problem_name}}</small></h1>
-    </div><!-- /.col -->
-    <div class="col-sm-6">
-      <ol class="breadcrumb float-sm-right">
-        <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
-        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
-        <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources">{{problem_name}}</a></li>
-      </ol>
-    </div><!-- /.col -->
-  </div><!-- /.row -->
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1 class="m-0 text-dark">
+                {{problem_name}} - <small><span class="badge status">{{problem_status}}</span></small>
+            </h1>
+        </div><!-- /.col -->
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
+                <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
+                <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources">{{problem_name}}</a></li>
+            </ol>
+        </div><!-- /.col -->
+    </div><!-- /.row -->
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
-    <div class="card">
-        <div class="card-header">
-        <h3 class="card-title">List source</h3>
-        <div class="card-tools">
-            <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST" enctype=multipart/form-data style="margin:0;">
-                <div class="form-group row" style="margin:0;">
-                    <div class="col-sm-9">
-                        <input type="file" name="file">
-                    </div>
-                    <div class="col-sm-3">
-                        <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">						
-                    </div>					
-                </div>		
-            </form>
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">List source</h3>
+                <div class="card-tools">
+                    <form action="/problems/{{problem_id}}/from_zip" class="form-horizontal" method="POST"
+                        enctype=multipart/form-data style="margin:0;">
+                        <div class="form-group row" style="margin:0;">
+                            <div class="col-sm-9">
+                                <input type="file" name="file">
+                            </div>
+                            <div class="col-sm-3">
+                                <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /.card-header -->
+
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover table-bordered">
+                    <tr>
+                        <th style="width: 4rem;!important">#</th>
+                        <th>Name</th>
+                    </tr>
+                    {%if data|length > 0%}
+                    {%for da in data%}
+                    <tr>
+                        <td>{{loop.index}}</td>
+                        {%if da['mask'] == ''%}
+                        <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal"
+                            data-target="#sourcecontent-modal">
+                            {{da['pathfile']}}
+                        </td>
+                        {%else%}
+                        <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal"
+                            data-target="#sourcecontent-modal">
+                            {{da['mask']}}
+                        </td>
+                        {%endif%}
+                    </tr>
+                    {%endfor%}
+                    {%endif%}
+                    <tr>
+                        <td>#</td>
+                        <td id="source-name" colspan="2">
+                            <a href="#" id="create-source" onclick="createSource()">
+                                <b>Add new source</b>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>#</td>
+                        <td id="delete-link" colspan="2">
+                            <a href="#" id="delete-all">
+                                <b style="color: red;">Delete all source</b>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!-- /.card-body -->
         </div>
-        </div>
-        <!-- /.card-header -->
-        
-        <div class="card-body table-responsive p-0">
-        <table class="table table-hover table-bordered">
-            <tr>
-            <th style="width: 4em;">#</th>
-            <th>Name</th>
-            </tr>
-            {%if data|length > 0%}
-            {%for da in data%}
-            <tr>
-            <td>{{loop.index}}</td>
-            {%if da['mask'] == ''%}
-            <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal" data-target="#sourcecontent-modal">
-                {{da['pathfile']}}
-            </td>
-            {%else%}
-            <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal" data-target="#sourcecontent-modal">
-                {{da['mask']}}
-            </td>
-            {%endif%}
-            </tr>
-            {%endfor%}
-            {%endif%}
-            <tr>
-            <td>#</td>
-            <td id="source-name" colspan="2"><a href="#" id="create-source" onclick="createSource()"><b>Add new source</b></a></td>
-            </tr>
-        </table>
-        </div>
-        <!-- /.card-body -->
     </div>
+
+    <div class="col-md-3">
+        <div class="card card-info" style="position:sticky; top: 0;">
+            <div class="card-header">
+                <h3 class="card-title">Run problem</h3>
+            </div>
+            <!-- /.card-header -->
+            <form class="form-horizontal" method="POST" id="problem-run">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group row">
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="count_operator_check">
+                                    <label for="count_operator_check" class="custom-control-label"><b>CountOperator:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="count_operator" name="count_operator"
+                                        min="0" max="100" value="70" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group row">
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="set_operator_check">
+                                    <label for="set_operator_check" class="custom-control-label"><b>SetOperator:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="set_operator" name="set_operator"
+                                        min="0" max="100" value="70" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group row">
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="hash_operator_check">
+                                    <label for="hash_operator_check" class="custom-control-label"><b>HashOperator:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="hash_operator" name="hash_operator"
+                                        min="0" max="100" value="70" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group row">
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="moss_score_check">
+                                    <label for="moss_score_check" class="custom-control-label"><b>SMOSS Metric:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="moss_score" name="moss_score" min="0"
+                                        max="100" value="70" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="card-footer">
+                <!-- <input type="submit" class="btn btn-primary"> -->
+                <button type="submit" class="btn btn-primary" id="run" form="problem-run">
+                    Run
+                </button>
+                <button class="btn btn-info" id="reset" dtype="problem">
+                    Reset
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="modal fade" id="sourcecontent-modal" style="display: none;" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="title"></h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">
-            <pre><code id="source-content"></code></pre>
-        </div>
-      </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12">
-    <div class="card card-info">
-        <div class="card-header">
-            <h3 class="card-title">Run problem</h3>
-        </div>
-        <!-- /.card-header -->
-        <form class="form-horizontal" method="POST" id="problem-run">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-sm-5">
-                        <div class="form-group row">
-                            <div class="custom-control custom-checkbox col-sm-6">
-                                <input class="custom-control-input" type="checkbox" id="countCheckBox">
-                                <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
-                            </div>
-                            <div class="col-sm-6">
-                                <input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="50" disabled>        
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-5">
-                        <div class="form-group row">
-                            <div class="custom-control custom-checkbox col-sm-6">
-                                <input class="custom-control-input" type="checkbox" id="setCheckBox">
-                                <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
-                            </div>
-                            <div class="col-sm-6">
-                                <input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="50" disabled> 
-                            </div>
-                        </div>
-                    </div>		
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-5">
-                        <div class="form-group row">
-                            <div class="custom-control custom-checkbox col-sm-6">
-                                <input class="custom-control-input" type="checkbox" id="hashCheckBox">
-                                <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
-                            <div class="col-sm-6">
-                                <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-5">
-                        <div class="form-group row">
-                            <div class="custom-control custom-checkbox col-sm-6">
-                                <input class="custom-control-input" type="checkbox" id="smossCheckBox">
-                                <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
-                            </div>
-                            <div class="col-sm-6">
-                                <input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="50" disabled>
-                            </div>
-                        </div>
-                    </div>		
-                </div>
-            </div>
-            <div class="card-footer">	
-                <!-- <input type="submit" class="btn btn-primary"> -->
-                <button type="submit" class="btn btn-primary" id="run">
-                    Run
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="title"></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
-        </form>
-    </div>	
-</div>
+            <div class="modal-body">
+                <pre><code id="source-content"></code></pre>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block js %}
 <script>
     var problem_id = '{{problem_id}}'
+    var metrics = {{ metrics| tojson }}
+    console.log(metrics)
 </script>
+<script src="{{ url_for('static', filename = 'main.js') }}"></script>
 <script src="{{ url_for('static', filename = 'source.js') }}"></script>
 <script>
     let tid = "#usersTable";
     let headers = document.querySelectorAll(tid + " th");
 
     // Sort the table element when clicking on the table headers
-    headers.forEach(function(element, i) {
-        element.addEventListener("click", function() {
-        w3.sortHTML(tid, ".item", "td:nth-child(" + (i + 1) + ")");
+    headers.forEach(function (element, i) {
+        element.addEventListener("click", function () {
+            w3.sortHTML(tid, ".item", "td:nth-child(" + (i + 1) + ")");
         });
     });
 </script>
