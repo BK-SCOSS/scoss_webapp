@@ -10,7 +10,7 @@ def test_smoss():
     # sm.add_file('./tests/data/b.cpp', "Ngoc2")
     # sm.add_file('./tests/data/c.cpp', "Vien")
     # sm.add_file('./tests/data/c.cpp', "Vien2")
-    sm.add_file_by_wildcard("./tests/data/digits_short/*.cpp")
+    sm.add_file_by_wildcard("./tests/TTUD20201/GROUPUP/*.cpp")
     # sm.set_threshold(0.5)
     # sm.run()
     sm.run()

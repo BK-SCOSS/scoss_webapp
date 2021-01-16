@@ -222,7 +222,9 @@ class SMoss():
             big_html_string = f.read()
         bases = big_html_string.split('<<<>>>')
         while i < len(tds):
-            score = int(tds[i].contents[0].contents[0][-4:-2])/100
+            score_str = tds[i].contents[0].contents[0][-4:-2]
+            score_str = ''.join(c for c in score_str if c.isdigit())
+            score = int(score_str)/100
             if score < self.__threshold:
                 i += 3
                 continue

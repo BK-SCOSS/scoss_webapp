@@ -18,7 +18,7 @@ def test_scoss():
     # sc.add_metric('count_operator')
     # sc.add_metric('set_operator')
     # sc.add_metric('hash_operator')
-    sc.add_file_by_wildcard('./tests/olympic-submission/ALICEADD/*.c*')
+    sc.add_file_by_wildcard('./tests/olympic-submission/ALICEADD/*')
     print("preparation cost : ", time.time() - start_time)
 
     start_time = time.time()
@@ -109,7 +109,7 @@ def test_run():
         print(token)
 
 if __name__ == '__main__':
-    test_scoss_cmd()
+    test_scoss()
     # test_run()
     # python3 tests/test_scoss.py 
     # test_scoss_or()
