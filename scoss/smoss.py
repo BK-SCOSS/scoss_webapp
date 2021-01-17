@@ -241,8 +241,15 @@ class SMoss():
             self.__matches.append(a_match)
 
             # Construct similarity_matrix
-            self.__similarity_matrix[src1] = {src2:a_score}
-            self.__similarity_matrix[src2] = {src1:a_score}
+            if src1 in self.__similarity_matrix:
+                self.__similarity_matrix[src1][src2] = a_score
+            else:
+                self.__similarity_matrix[src1] = {src2:a_score}
+
+            if src2 in self.__similarity_matrix:
+                self.__similarity_matrix[src2][src1] = a_score
+            else:
+                self.__similarity_matrix[src2] = {src1:a_score}
 
             # # Construct matches_file
             base_url = os.path.dirname(a_match['link'])
@@ -254,8 +261,15 @@ class SMoss():
                 html_strs.append(html_str)
             match_comparison = bases[0] + html_strs[0] + bases[1] + \
                             html_strs[1] + bases[2] + html_strs[2] + bases[3] 
-            self.__matches_file[src1] = {src2:match_comparison}
-            self.__matches_file[src2] = {src1:match_comparison}
+            if src1 in self.__matches_file:
+                self.__matches_file[src1][src2] = match_comparison
+            else:
+                self.__matches_file[src1] = {src2:match_comparison}
+
+            if src2 in self.__matches_file:
+                self.__matches_file[src2][src1] = match_comparison
+            else:
+                self.__matches_file[src2] = {src1:match_comparison}
             # with open(os.path.join('./tests/smoss_result/', 'big_all_html.html'), 'w') as file:
             #     file.write(big_html_string)
             i += 3
