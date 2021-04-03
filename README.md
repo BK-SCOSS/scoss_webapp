@@ -1,5 +1,5 @@
 # scoss_webapp
-A Web application for SCOSS - Source Code Similarity System - using to
+A Web application for [SCOSS](https://github.com/ngocjr7/scoss) - Source Code Similarity System - using to
 
 * Upload problems or contests (multi-problem) of source-codes and check plagiarism.
 * Able to handle multi-requests using task queue (RQ)
