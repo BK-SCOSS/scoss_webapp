@@ -7,7 +7,7 @@ A Web application for SCOSS - Source Code Similarity System - using to
 
 ## How it looks
 
-![alt tag](https://github.com/ngocjr7/scoss_webapp/blob/master/docs/demo.png)
+![alt tag](https://github.com/ngocjr7/scoss_webapp/blob/master/docs/demo.png?raw=true)
 
 ## How to run
 
