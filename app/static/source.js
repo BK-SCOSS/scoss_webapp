@@ -12,6 +12,8 @@ $(function() {
         timer: 3000
     });
 
+    // $('#source-table').DataTable();
+
     $.get("/api/problems/"+ problem_id + "/status", function(data){
 		problem_status = data['problem_status']
 		if (problem_status == checked) {
