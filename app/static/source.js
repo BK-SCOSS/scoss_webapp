@@ -60,7 +60,6 @@ $(function() {
 
         var form = $(this);
         var list_operator = form.serializeArray()
-        console.log(list_operator)
         if (list_operator.length > 0) {
             var send_data = []
             list_operator.forEach(element => {
@@ -105,6 +104,7 @@ $(function() {
                     alert(data['error'])
                 }
             });
+            // location.reload()
         } else {
             Toast.fire({
                 icon: 'warning',

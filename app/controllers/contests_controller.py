@@ -173,7 +173,6 @@ def run_contest(contest_id):
     try:
         url_contest = URL + '/api/contests/' + str(contest_id)
         metrics = request.json        
-        print("c", metrics, flush=True)
         Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest)
         doc_status = {
@@ -214,7 +213,6 @@ def check_status(contest_id):
             temp = data_problem.to_mongo()
             res.append(temp['problem_status'])
         status = min(res)
-        print(status, flush=True)
         doc_status = {
             "contest_status": status
         }

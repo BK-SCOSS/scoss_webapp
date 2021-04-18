@@ -215,7 +215,6 @@
 <script>
     var problem_id = '{{problem_id}}'
     var metrics = {{ metrics| tojson }}
-    console.log(metrics)
 </script>
 <script src="{{ url_for('static', filename = 'main.js') }}"></script>
 <script src="{{ url_for('static', filename = 'source.js') }}"></script>
@@ -237,7 +236,6 @@
     $.ajax({
         url: '/api/problems/' + problem_id + '/results',
         success: function (data) {
-            console.log(data)
             var thead = []
             var heads = []
             thead.push('Source1')
@@ -248,7 +246,6 @@
                 if (metric == 'mean') {
                     continue
                 }
-                console.log("metric: " + metric)
                 thead.push(metric)
                 heads.push(
                     {

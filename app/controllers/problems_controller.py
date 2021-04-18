@@ -221,7 +221,6 @@ def get_results(problem_id):
                 key = hash(simi['source1']) ^ hash(simi['source2'])
                 temp_list = simi
                 res[key] = temp_list
-        print('res', res, flush=True)
         check_zero = 0
         for key in res:
             total = 0
@@ -289,11 +288,9 @@ def update_result_smoss(problem_id):
 
 @problems_controller.route('/api/problems/<problem_id>/run', methods=['POST'])
 def run_source(problem_id):
-    print(request.json, flush=True)
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
-        print("p",metrics, flush=True)
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
         if len(data_problem) > 0:
             if data_problem.problem_status not in [Status.running, Status.waiting]:
@@ -327,7 +324,6 @@ def get_source(problem_id):
                 'source_str': data_source[0]['sources'][0]['source_str'],
             }
             sources.append(temp)
-        # print(sources, flush=True)
 
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
