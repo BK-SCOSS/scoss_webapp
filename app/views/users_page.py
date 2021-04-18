@@ -37,14 +37,15 @@ def admin():
 
 @user.route('/admin/redis', methods=['GET'])
 def admin_rq():
-	# print("fdf " + request.remote_addr, flush=True)
-	url = 'http://{}:{}/rq'.format(request.remote_addr, config.REDIS_PORT)
+	server_name = request.host.split(":")[0]
+	url = 'http://{}:{}/rq'.format(server_name, config.REDIS_PORT)
 	return redirect(url)
 
 @user.route('/admin/mongo', methods=['GET'])
 def admin_mg():
-	# print(request.host_url, flush=True)
-	url = 'http://{}:{}'.format(request.remote_addr, config.MONGO_PORT)
+	server_name = request.host.split(":")[0]
+	# print("server_name " + server_name, flush=True)
+	url = 'http://{}:{}'.format(server_name, config.MONGO_PORT)
 	return redirect(url)
 
 @user.route('/users/<user_id>/update', methods=['POST'])
