@@ -18,27 +18,28 @@ user = Blueprint('users_page', __name__)
 def admin():
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
-			if request.method == 'GET':
-				url = URL + '/api/users'
-				data = requests.get(url=url)
-				mongo_url = config.MONGO_EXPRESS_URL
-				redis_url = config.REDIS_MONITOR_URL
-				return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)
-			else: 
-				username = request.form['username']
-				password = '12345'
-				role = 1
-				data_form = {'username': username, 'role': role, 'password': password}
-				url = URL + '/api/users/add'
-				req = requests.post(url=url,json=data_form)
-				if 'user_id' in req.json().keys():
-					return redirect(url_for('users_page.admin'))
-				else:
-					return redirect(url_for('users_page.admin', info='wrong'))
+			if session['role'] == 0:
+				if request.method == 'GET':
+					url = URL + '/api/users'
+					data = requests.get(url=url)
+					mongo_url = config.MONGO_EXPRESS_URL
+					redis_url = config.REDIS_MONITOR_URL
+					return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)
+				else: 
+					username = request.form['username']
+					password = '12345'
+					role = 1
+					data_form = {'username': username, 'role': role, 'password': password}
+					url = URL + '/api/users/add'
+					req = requests.post(url=url,json=data_form)
+					if 'user_id' in req.json().keys():
+						return redirect(url_for('users_page.admin'))
+					else:
+						return redirect(url_for('users_page.admin', info='wrong'))
 
-@user.route('/admin/rq', methods=['GET'])
+@user.route('/admin/mongo', methods=['GET'])
 def admin_rq():
-	print(request.host_url, flush=True)
+	# print(request.host_url, flush=True)
 	return redirect('http://127.0.0.1:8081')
 
 @user.route('/users/<user_id>/update', methods=['POST'])

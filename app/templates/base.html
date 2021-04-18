@@ -17,6 +17,8 @@
     <!-- Font Awesome Icons -->
     <script src="https://kit.fontawesome.com/3089485309.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css">
+
     <!-- Lightweight client-side loader that feature-detects and load polyfills only when necessary -->
     <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
 
@@ -143,7 +145,7 @@
             Vietnam
         </div>
         <!-- Default to the left -->
-        <strong> &copy; 2020 <a>HUST</a>.</strong>
+        <strong> &copy; 2021 <a>HUST</a>.</strong>
     </footer>
 </div>
 <!-- jQuery -->
@@ -155,6 +157,8 @@
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
 {% block js %}{% endblock %}
 </body>
 </html>

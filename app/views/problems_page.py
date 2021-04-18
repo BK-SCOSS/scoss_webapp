@@ -131,7 +131,6 @@ def compare(problem_id):
 				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id), params=payload)
 				sources = req_source.json()['sources']
 				lang = sources[0]['lang']
-				print(lang, flush=True)
 				
 				for source in sources:
 					if source['mask'] == '':

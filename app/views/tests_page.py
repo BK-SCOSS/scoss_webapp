@@ -81,8 +81,6 @@ def run():
 				metrics = []
 				metric_list = []
 
-				print(sources)
-
 				for op in list_operator:
 					temp = {
 						'name': op,
@@ -90,8 +88,6 @@ def run():
 					}
 					metrics.append(temp)
 					metric_list.append(op)
-
-				print(metrics)
 
 				for metric in all_metrics:
 					for met in metrics:
