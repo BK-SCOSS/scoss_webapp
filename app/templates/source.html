@@ -184,7 +184,7 @@
                 <h3 class="card-title">Result</h3>
             </div>
             <div class="card-body table-responsive p-0">
-                <table id="test" class="display">
+                <table id="result-table" class="display">
                     <thead>
                         <tr></tr>
                     </thead>
@@ -260,7 +260,7 @@
                             R = parseInt(C)
                             G = 0
                             B = 0
-                            var title = $('#test').DataTable().columns(colIndex).header(); 
+                            var title = $('#result-table').DataTable().columns(colIndex).header(); 
                             var columnName = $(title).html();
                             var url = `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metrics=${columnName}`;
                             text = `<span style='color:rgb(${R}, ${G}, ${B});'>` + (cellData*100).toFixed(2) + "%</span>"
@@ -286,9 +286,9 @@
                 }
             )
             for (th of thead) {
-                $("#test thead tr").append("<th>"+ th +"</>")
+                $("#result-table thead tr").append("<th>"+ th +"</>")
             }
-            $('#test').DataTable({
+            $('#result-table').DataTable({
                 data: data.results,
                 columns: heads,
             });

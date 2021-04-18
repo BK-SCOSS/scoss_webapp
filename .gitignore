@@ -10,7 +10,7 @@ __pycache__/
 .env
 # C extensions
 *.so
-
+.idea
 .vim/*
 *.DS_Store
 app/config.py

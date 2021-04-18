@@ -69,10 +69,15 @@ def results(contest_id):
 			heads.append('source1')
 			heads.append('source2')
 			if len(results[0]['results']) > 0:
+				i = 0
 				for metric in results[0]['results'][0]['scores']:
 					if (metric == 'mean'):
 						continue
-					heads.append(metric)
+					if session:
+						heads.append(metric)
+					else:
+						heads.append("Metric " + str(i))	
+					i += 1
 				heads.append('mean')
 
 			for problem in results:

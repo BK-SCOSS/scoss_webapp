@@ -5,48 +5,9 @@
 {% block titlle %}SCOSS{% endblock %}
 
 {% block content %}
-<div style="width: 700px;">
-<h3>What is SCoSS?</h3>
-<p>
-  SCoSS (Source Code Similarity System) is an automatic system for determining the similarity of source codes. 
-  The main application of SCoSS has been in detecting plagiarism in programming classes. 
-  Unlike Moss (Stanford), our system is developed focusing on the application in competitive programming contests.
-</p>
-
-<h3>Languages</h3>
-<p>
- Four languages is supported including:
- <li>C++</li>
- <li>Python</li>
- <li>Java</li>
- <li>PHP</li>
- The others (Pascal, Javascript, Matlab,..) are in our list of development.
-</p>
-
-<h3>Metrics</h3>
-<p>
-  <li>CountOperator</li> 
-  <li>SetOperator</li>
-  <li>HashOperator</li>
-  <li>Moss</li>
-</p>
-
-<h3>Usage</h3>
-<p> 
-  SCoSS is for non-commercial use.
-  If you want to use SCoSS for academic purposes, 
-  you can send an email to <a href="#">thuandp@soict.hust.edu.vn</a>.
-</p>
-
-<h3>Issues</h3>
-<p>
-  If you have any technical issue, please report to <a href="#">ngocjr7@gmail.com</a>. <br> 
-  If you have disagree with our results, please send an email to <a href="#">thuandp@soict.hust.edu.vn</a>. 
-</p>
-
-<h3>Credits</h3>
-<p>
-  Hanoi University of Science and Technology.
-</p>
+<div class='card'>
+  <div class="card-body">     
+      <zero-md src="{{ url_for('static', filename = 'assets/home.md') }}"></zero-md>
+  </div>
 </div>
 {% endblock %}
