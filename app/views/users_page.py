@@ -22,9 +22,7 @@ def admin():
 				if request.method == 'GET':
 					url = URL + '/api/users'
 					data = requests.get(url=url)
-					mongo_url = config.MONGO_EXPRESS_URL
-					redis_url = config.REDIS_MONITOR_URL
-					return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)
+					return render_template('admin.html', data=data.json()['users'])
 				else: 
 					username = request.form['username']
 					password = '12345'
@@ -37,10 +35,17 @@ def admin():
 					else:
 						return redirect(url_for('users_page.admin', info='wrong'))
 
-@user.route('/admin/mongo', methods=['GET'])
+@user.route('/admin/redis', methods=['GET'])
 def admin_rq():
+	# print("fdf " + request.remote_addr, flush=True)
+	url = 'http://{}:{}/rq'.format(request.remote_addr, config.REDIS_PORT)
+	return redirect(url)
+
+@user.route('/admin/mongo', methods=['GET'])
+def admin_mg():
 	# print(request.host_url, flush=True)
-	return redirect('http://127.0.0.1:8081')
+	url = 'http://{}:{}'.format(request.remote_addr, config.MONGO_PORT)
+	return redirect(url)
 
 @user.route('/users/<user_id>/update', methods=['POST'])
 def update_password(user_id):
