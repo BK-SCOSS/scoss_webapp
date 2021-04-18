@@ -2,7 +2,7 @@
 SCoSS (Source Code Similarity System) is an automatic system for determining the similarity of source codes. The main application of SCoSS has been in detecting plagiarism in programming classes. Unlike Moss (Stanford), our system is developed focusing on the application in competitive programming contests.
 
 # Languages
-Four languages is supported including:
+Four languages are supported including:
 
 * C++
 * Python
@@ -11,18 +11,21 @@ Four languages is supported including:
 
 The others (Pascal, Javascript, Matlab,..) are in our list of development.
 
-* Metrics
+Metrics:
+
 * CountOperator
 * SetOperator
 * HashOperator
 * Moss
-* Usage
+
+# Usage
 
 SCoSS is for non-commercial use. If you want to use SCoSS for academic purposes, you can send an email to [thuandp@soict.hust.edu.vn](mailto:thuandp@soict.hust.edu.vn).
 
 # Issues
-If you have any technical issue, please report to ngocjr7@gmail.com. 
-If you have disagree with our results, please send an email to thuandp@soict.hust.edu.vn.
+
+* If you have any technical issues, please report to ngocjr7@gmail.com. 
+* If you have disagreed with our results, please send an email to thuandp@soict.hust.edu.vn.
 
 # Credits
 Hanoi University of Science and Technology.
