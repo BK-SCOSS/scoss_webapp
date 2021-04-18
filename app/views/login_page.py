@@ -41,7 +41,8 @@ def login_page():
 @login.route('/logout')
 def logout():
 	session.clear()
-	return render_template('login.html', info='')
+	return redirect(url_for('home_page.index'))
+
 
 @login.route('/signup', methods=["GET", "POST"])
 def signup():

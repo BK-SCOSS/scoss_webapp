@@ -36,6 +36,11 @@ def admin():
 				else:
 					return redirect(url_for('users_page.admin', info='wrong'))
 
+@user.route('/admin/rq', methods=['GET'])
+def admin_rq():
+	print(request.host_url, flush=True)
+	return redirect('http://127.0.0.1:8081')
+
 @user.route('/users/<user_id>/update', methods=['POST'])
 def update_password(user_id):
 	if 'logged_in' in session:

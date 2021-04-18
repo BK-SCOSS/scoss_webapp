@@ -1,4 +1,4 @@
-version: "3"
+version: "3.3"
 
 services:
   scoss_app:
@@ -55,8 +55,10 @@ services:
       - .:/code
     image: ngocjr/scoss
     command: rq worker -u redis://rq-server:6379 --path ${TASK_PATH}
+    env_file:
+      - .env
     deploy:
-      replicas: ${NO_WORKERS}
+      replicas: 4
     depends_on:
       - rq-server
 

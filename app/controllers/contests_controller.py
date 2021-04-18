@@ -170,11 +170,11 @@ def add_zip(contest_id):
 
 @contests_controller.route('/api/contests/<contest_id>/run', methods = ['POST'])
 def run_contest(contest_id):
-    print(request.json, flush=True)
     try:
         url_contest = URL + '/api/contests/' + str(contest_id)
-        metrics = request.json
-        Contest.objects(contest_id=contest_id).update(metrics=metrics)
+        metrics = request.json        
+        print("c", metrics, flush=True)
+        Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest)
         doc_status = {
             "contest_status": Status.running
