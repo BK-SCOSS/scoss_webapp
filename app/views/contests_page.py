@@ -57,7 +57,7 @@ def add_zip_file(contest_id):
 					req = requests.post(url=url, files={'file': zip_file})
 					return redirect(url_for('problems_page.problem', contest_id= contest_id))
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 @contests.route('/contests/<contest_id>/results', methods=['GET'])
 def results(contest_id):
@@ -95,4 +95,4 @@ def results(contest_id):
 			return render_template('result.html', heads=heads, data=results)
 		else:
 			return render_template('result.html', error="No result in database!")
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
