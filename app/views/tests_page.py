@@ -41,7 +41,7 @@ def test():
 					session['sources'] = temp
 
 				return redirect(url_for('tests_page.test'))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 @tests.route('/test/from_zip', methods=['POST'])
 def from_zip():
