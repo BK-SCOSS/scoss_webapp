@@ -288,6 +288,7 @@
             $('#result-table').DataTable({
                 data: data.results,
                 columns: heads,
+                order: [[thead.length-1, "desc"]]
             });
         }
     })

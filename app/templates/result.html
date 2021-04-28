@@ -20,7 +20,7 @@
           </div>
           <!-- /.card-header -->
           <div class="card-body table-responsive p-0">
-            <table id="resultTable" class="table table-hover table-bordered">
+            <table id="resultTable" class="display">
               <thead>
                 <tr>
                       <th>Problem</th>
@@ -61,17 +61,19 @@
 
 {% block js%}
 <script>
+   var indexLastColumn = $("#resultTable").find('tr')[0].cells.length-1;
   $('#resultTable').DataTable({
-        "columnDefs": [ {
+        columnDefs: [ {
             "searchable": false,
             "orderable": false,
             "targets": 0
         }],
-        "pageLength": 50,
+        pageLength: 50,
         "dom": 'Bfrtip',
         "buttons": [
           'csv'
-        ]
+        ],
+        order: [[indexLastColumn, "desc"]]
     })
 </script>
 {% endblock %}
