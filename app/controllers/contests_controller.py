@@ -142,7 +142,7 @@ def add_zip(contest_id):
                     try:
                         source_str = zf.read(file).decode('utf-8')
                     except:
-                        source_str = zf.read(file).decode('latin-1')
+                        source_str = zf.read(file).decode('cp437')
                     if file.split('/')[-2] in contest_list:
                         data_doc = {
                             "pathfile": file.split('/')[-1],
