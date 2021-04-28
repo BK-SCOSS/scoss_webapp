@@ -133,12 +133,16 @@ def add_zip(problem_id):
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             for file in zfile:
+                try:
+                    source_str = zf.read(file).decode('utf-8')
+                except:
+                    source_str = zf.read(file).decode('latin-1')
                 if len(file.split('/')) > 1 and file.split('/')[-1] != '':
                     data_doc = {
                         "pathfile": file.split('/')[-1],
                         "lang": file.split('.')[-1],
                         'mask': '',
-                        'source_str': zf.read(file).decode('utf-8')
+                        'source_str': source_str
                     }
                     sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)

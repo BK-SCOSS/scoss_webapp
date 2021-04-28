@@ -21,6 +21,7 @@ class Contest(db.Document):
     metrics = db.ListField()
     user_id = db.StringField(required=True)
     contest_status = db.IntField(required=True)
+    
 class Problem(db.Document):
     problem_id = db.StringField(required=True, unique=True)
     problem_name = db.StringField(required=True)

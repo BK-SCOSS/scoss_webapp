@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from models.models import *
 from config import URL
 import requests
+import io
 
 contests_controller = Blueprint('contests_controller', __name__)
 
@@ -129,29 +130,36 @@ def add_zip(contest_id):
         ----file2.cpp
         ----file3.cpp
     """
+    # print("hello")
     try: 
         contest_list = {}
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
+            # print(zfile)
+
             for file in zfile:
                 if len(file.split('/')) > 2 and file.split('/')[-1] != '':
-                    if file.split('/')[1] in contest_list:
+                    try:
+                        source_str = zf.read(file).decode('utf-8')
+                    except:
+                        source_str = zf.read(file).decode('latin-1')
+                    if file.split('/')[-2] in contest_list:
                         data_doc = {
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': source_str
                         }
-                        contest_list[file.split('/')[1]].append(data_doc)
+                        contest_list[file.split('/')[-2]].append(data_doc)
                     else:
-                        contest_list[file.split('/')[1]] = []
+                        contest_list[file.split('/')[-2]] = []
                         data_doc = {
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': source_str
                         }
-                        contest_list[file.split('/')[1]].append(data_doc)
+                        contest_list[file.split('/')[-2]].append(data_doc)
         url_contest = URL + '/api/contests/'+contest_id+'/problems/add'
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key})
@@ -241,5 +249,4 @@ def status(contest_id):
 	def check_status(contest_id):
 		data_contest = Contest.objects.get(contest_id=contest_id)
 		yield 'data: {}\n\n'.format(data_contest.contest_status)
-    
 	return Response(check_status(contest_id), mimetype="text/event-stream")
