@@ -133,6 +133,7 @@ def add_zip(contest_id):
     # print("hello")
     try: 
         contest_list = {}
+        # print(request.files['file'], flush=True)
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             # print(zfile)

@@ -55,7 +55,10 @@ def add_zip_file(contest_id):
 					zip_file = request.files['file'].read()					
 					url = URL + '/api/contests/{}/from_zip'.format(contest_id)
 					req = requests.post(url=url, files={'file': zip_file})
-					return redirect(url_for('problems_page.problem', contest_id= contest_id))
+					if 'error' in req.json():
+						return redirect(url_for('problems_page.problem', contest_id= contest_id, error=req.json()['error']))
+					else:	
+						return redirect(url_for('problems_page.problem', contest_id= contest_id))
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
 	return redirect(url_for('login_page.login_page'))
 

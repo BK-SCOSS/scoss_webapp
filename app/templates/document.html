@@ -5,7 +5,120 @@
 {% block content %}
 <div class='card'>
     <div class="card-body">     
-        <zero-md src="{{ url_for('static', filename = 'assets/document.md') }}"></zero-md>
+        <zero-md>
+            <script type="text/markdown">
+                # How to create contest
+We have two ways to create a contest:
+
+## Using zip file to create a contest
+1. In contest list page, click on create button to create a new contest.
+<img src="/static/images/create_contest.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+2. Then click on contest, click choose file to add a zip file.
+<img src="/static/images/add_zip.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+3. File zip must have a defined folder structure as below ([example](https://drive.google.com/file/d/1FcYiTlXvgYi_MkhWy2v90o6OFbaEuutY/view)):
+
+```sh
+    Contest_name/
+        ├── Problem A/
+        │   ├── a.cpp
+        │   ├── b.py
+        │   ├── ...
+        │   └── c.java
+        ├── Problem B/
+        │   ├── d.py
+        │   ├── e.py
+        │   └── f.c
+        └── ...
+```
+4. After submitting successfully, we have result as below:
+<img src="/static/images/result_add_zip.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+## Create manually
+1. In contest list page, click on create button to create a new contest.
+
+2. Then click on contest, click on "Add new problem".
+<img src="/static/images/create_problem.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+3. Type problem name and submit.
+<img src="/static/images/type_pname.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+4. When problem is created, click on it.
+<img src="/static/images/list_problem.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+5. Click on "Add new source"
+
+6. Type mask and choose file (if mask is empty, it will be filename)
+<img src="/static/images/add_source.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+# Check plagiarism
+We can check on whole created contest or a single problem separately. On contest's page, we have:
+
+<img src="/static/images/run.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+### Status
+
+Checking status of a problem:
+
+* ```init```: created
+* ```waiting```: on queue
+* ```running```: server's working on it
+* ```checked```: done
+* ```failed```: something happened and caused a fatal error. Usually, each problem is run with a time limit of 5 minutes. See detail of error in RQ monitor on admin's page.
+
+Status of a contest is the minimum level of the problems' status.
+
+### Metrics:
+
+There are four available metrics:
+
+* `count_operator`: A metric that counts operators in source code to calculate similarity score.
+* `set_operator`: A metric that checks the presence of operators in source code to calculate similarity score.
+* `hash_operator`: A metric that uses the combination of adjacent operators to calculate similarity score.
+* `SMoss`: A wrapper of [MOSS](http://theory.stanford.edu/~aiken/moss/) (the same as `mosspy`).
+
+<p style="color: red;">NOTES:</p> 
+
+* The MOSS server is often broken down. If you got an error, try running without ```SMOSS``` metric or try later.
+* `count_operator` and `set_operator` have shown poor performance compared to `hash_operator` and `SMoss`. It is recommended to use one of `hash_operator` or `SMoss` as the primary metric.
+
+### Threshold
+
+Only pairs with greater similarity scores than thresholds are shown. 
+
+## Get results
+
+To get combined results of a contest, press `result` button in contest's page. Result button is shown only when all problems are `checked`.
+
+You can use result page's link to share result with others or download to `csv` format.
+
+<img src="/static/images/csv.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+
+## Admin controllers
+
+### Task Queue management
+
+See tasks in queue or failure information of a task:
+
+<img src="/static/images/rq_fail.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+
+### Create new user
+Default password of a created user is `12345`
+
+<img src="/static/images/create_user.png" style="display: block;margin-left: auto;
+margin-right: auto;width: 70%;">
+            </script>
+        </zero-md>
     </div>
 </div>
 {% endblock %}

@@ -13,9 +13,6 @@ from config import URL
 
 problems = Blueprint('problems_page', __name__)
 
-
-
-
 @problems.route('/contests/<contest_id>/problems', methods=['GET', 'POST'])
 def problem(contest_id):
 	if 'logged_in' in session:
@@ -42,7 +39,7 @@ def problem(contest_id):
 					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
 				else:
 					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
-	return redirect(url_for('login_page.login_page'))
+	return redirect(url_for('login'))
 
 @problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
 def source(problem_id):
@@ -65,7 +62,7 @@ def source(problem_id):
 					return redirect(url_for('contest_page.contest'))
 				else:
 					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
-	return redirect(url_for('login_page.login_page'))
+	return redirect(url_for('login'))
 
 @problems.route('/problems/<problem_id>/add_file', methods=['POST'])
 def add_file(problem_id):
@@ -95,7 +92,7 @@ def add_zip_file(problem_id):
 					req = requests.post(url=url, files={'file': zip_file})
 					return redirect(url_for('problems_page.source', problem_id= problem_id))
 				return redirect(url_for('problems_page.source', problem_id= problem_id))
-	return redirect(url_for('login_page.login_page'))
+	return redirect(url_for('login'))
 
 
 @problems.route('/problems/<problem_id>/all', methods=['GET'])
