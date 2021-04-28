@@ -39,7 +39,7 @@ def problem(contest_id):
 					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
 				else:
 					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
 def source(problem_id):
@@ -62,7 +62,7 @@ def source(problem_id):
 					return redirect(url_for('contest_page.contest'))
 				else:
 					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/add_file', methods=['POST'])
 def add_file(problem_id):
@@ -92,7 +92,7 @@ def add_zip_file(problem_id):
 					req = requests.post(url=url, files={'file': zip_file})
 					return redirect(url_for('problems_page.source', problem_id= problem_id))
 				return redirect(url_for('problems_page.source', problem_id= problem_id))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 
 @problems.route('/problems/<problem_id>/all', methods=['GET'])
@@ -117,7 +117,9 @@ def compare(problem_id):
 				
 				req_list = requests.get(url = "{}/api/problems/{}/results/scoss".format(URL, problem_id))
 				for simi in req_list.json()['similarity_list']:
-					if simi['source1'] == source1 and simi['source2'] == source2:
+					if simi['source1'] == source1 and simi['source2'] == source2\
+						or simi['source1'] == source2 and simi['source2'] == source1:
+						print(2, flush=True)
 						score_metric = round(simi['scores'][metrics],4)
 						break
 				# for simi in req_list.json()['alignment_list']:
@@ -194,6 +196,7 @@ def compare(problem_id):
 				req_list = requests.get(url = "{}/api/problems/{}/results/smoss".format(URL, problem_id))
 				alignment_list = req_list.json()['alignment_smoss_list']
 				for alignment in alignment_list:
-					if alignment['source1'] == source1 and alignment['source2'] == source2:
+					if alignment['source1'] == source1 and alignment['source2'] == source2\
+					or alignment['source1'] == source2 and alignment['source2'] == source1:
 						return alignment['scores']
 	return redirect(url_for('login_page.login_page'))
