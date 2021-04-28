@@ -131,16 +131,18 @@ def add_zip(contest_id):
     """
     try: 
         contest_list = {}
+        # print(request.files['file'], flush=True)
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             for file in zfile:
                 if len(file.split('/')) > 2 and file.split('/')[-1] != '':
+                    # print(file, flush=True)
                     if file.split('/')[1] in contest_list:
                         data_doc = {
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': zf.read(file).decode('latin-1')
                         }
                         contest_list[file.split('/')[1]].append(data_doc)
                     else:
@@ -149,7 +151,7 @@ def add_zip(contest_id):
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': zf.read(file).decode('latin-1')
                         }
                         contest_list[file.split('/')[1]].append(data_doc)
         url_contest = URL + '/api/contests/'+contest_id+'/problems/add'
