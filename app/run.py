@@ -12,7 +12,7 @@ import rqmonitor
 app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_object(rqmonitor.defaults)
-app.config['RQ_MONITOR_REDIS_URL'] = 'redis://rq-server:6379' 
+app.config['RQ_MONITOR_REDIS_URL'] = 'redis://:redis_server_pass@rq-server:6379' 
 app.register_blueprint(rqmonitor.monitor_blueprint, url_prefix="/rq")
 db.init_app(app)
 
