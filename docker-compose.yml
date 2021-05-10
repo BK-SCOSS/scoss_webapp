@@ -42,6 +42,7 @@ services:
 
   rq-server:
     image: redis:alpine
+    command: redis-server --requirepass redis_server_pass
     volumes:
       - .:/code
     ports:
@@ -54,7 +55,7 @@ services:
     volumes:
       - .:/code
     image: ngocjr/scoss
-    command: rq worker -u redis://rq-server:6379 --path ${TASK_PATH}
+    command: rq worker -u redis://:redis_server_pass@rq-server:6379 --path ${TASK_PATH}
     env_file:
       - .env
     deploy:
