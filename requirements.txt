@@ -51,3 +51,4 @@ pyyaml
 timeout-decorator
 rqmonitor
 rq
+tqdm
