@@ -1,62 +1,190 @@
-{% include "header.html" %}
-    
+{% extends "base.html" %}
+
+{% block title %}SCOSS - Problems{% endblock %}
+	
+{% block header %}
+<div class="container">
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      	<h1 class="m-0 text-dark">
+			{{contest_data.contest_name}} - <small><span class="badge status">{{contest_data['contest_status']}}</span></small>
+		</h1>
+    </div><!-- /.col -->
+    <div class="col-sm-6">
+      <ol class="breadcrumb float-sm-right">
+        <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
+        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_data['contest_name']}}</a></li>
+      </ol>
+    </div><!-- /.col -->
+  </div><!-- /.row -->
+</div>
+{% endblock %}
+
+{% block content %}
     <div class="row">
-      <div class="col-12">
+      <div class="col-md-9">
         <div class="card">
 			{%if info == 'wrong'%}
 			<div class="alert alert-danger" role="alert">
 			  The problem name may already exist.
 			</div>
 			{%endif%}
+			{%if error %}
+			<div class="alert alert-danger" role="alert">
+			  {{error}}
+			</div>
+			{%endif%}
           <div class="card-header">
-            <h3 class="card-title">Problem</h3>
+			<h3 class="card-title">List problem</h3>
+			<div class="card-tools">
+				<form action="/contests/{{contest_id}}/from_zip" class="form-horizontal" method="POST" 
+					enctype=multipart/form-data title="Select file zip to extract" style="margin: 0;">
+					<div class="form-group row" style="margin:0;">
+						<div class="col-sm-9">
+							<input type="file" name="file">
+						</div>
+						<div class="col-sm-3">
+							<input type="submit" class="btn btn-primary" name="fileSubmit" value="Submit" style="float:right;">						
+						</div>					
+					</div>		
+				</form>
+			</div>
           </div>
 		  <!-- /.card-header -->
-		  {%if data|length > 0%}
+		  
           <div class="card-body table-responsive p-0">
-            <table class="table table-hover table-bordered">
-                <tr>
-					<th style="width: 4em;">#</th>
-					<th>Name</th>
+            <table class="display" id="problem-table">
+				<thead>
+					<tr>
+						<th style="width: 4rem;">#</th>
+						<th>Name</th>
+						<th style="text-align: center; width: 15%;">Status</th>
+						{% if session['role'] == 0 or author == session['user_id'] %}
+						<th style="text-align: center; width: 15%;">Actions</th>
+						{% endif %}
+					</tr>
+				</thead>
+				<tbody>
+					{%if data|length > 0%}
+					{%for problem in data%}
+					<tr>
+						<td>{{loop.index}}</td>
+						<td><a href="/problems/{{problem['problem_id']}}/sources">{{problem['problem_name']}}</a></td>
+						<td class="text-center project-state">
+							<span class="badge status">{{problem['problem_status']}}</span>
+						</td>
+						{% if session['role'] == 0 or author == session['user_id'] %}
+						<td class="text-center py-0 align-middle">
+							<a class="btn btn-danger btn-delete" problem_id="{{problem['problem_id']}}"><i class="fas fa-trash"></i></a>
+						</td>
+						{% endif %}
+					</tr>
+					{%endfor%}
+					{%endif%}
+				</tbody>
+				<tr>
+					<td>#</td>
+					<td id="problem-name" colspan="3"><a href="#" id="create-problem" onclick="createProblem()"><b>Add new problem</b></a></td>
 				</tr>
-				{%for content in data%}
-                <tr>
-					<td>{{loop.index}}</td>
-					<td><a href="/source?problem_name={{content['problem_name']}}&contest_name={{contest_name}}">{{content['problem_name']}}</a></td>
-                </tr>
-				{%endfor%}
             </table>
 		  </div>
-		  {%endif%}
           <!-- /.card-body -->
         </div>
-      </div>
-    </div>
-   
-		<div class="row">
-			<div class="col-sm-6">
-				<div class="card card-info">
-					<div class="card-header">
-						<h3 class="card-title">Create problem</h3>
-					</div>
-					<!-- /.card-header -->
-					<div class="card-body">
-						<form action="/problem?contest_name={{contest_name}}" method="POST" class="form-horizontal">
+	  </div>
+	  <div class="col-md-3">
+		<div class="card card-info" style="position:sticky; top: 0;">
+			<div class="card-header">
+				<h3 class="card-title">Run contest</h3>
+			</div>
+			<!-- /.card-header -->
+			<form class="form-horizontal" method="POST" id="contest-run">
+				<div class="card-body">
+					<div class="row">
+						<div class="col-sm-12">
 							<div class="form-group row">
-								<div class="col-sm-3">
-									<label for="problem"><b>Add problem: </b></label>
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="count_operator_check">
+									<label for="count_operator_check" class="custom-control-label"><b>CountOperator: </b></label>        
 								</div>
-								<div class="col-sm-7">
-									<input type="text" class="form-control" name="problem_name" placeholder="Enter problem">
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="count_operator" name="count_operator" min="0" max="100" value="70" disabled>        
 								</div>
-								<div class="col-sm-2">
-									<input type="submit" class="btn btn-primary" value="Submit">
-								</div>
-							</div>		
-						</form>
+							</div>
+						</div>
 					</div>
-				</div>	
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="set_operator_check">
+									<label for="set_operator_check" class="custom-control-label"><b>SetOperator: </b></label>  
+								</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="set_operator" name="set_operator" min="0" max="100" value="70" disabled> 
+								</div>
+							</div>
+						</div>		
+					</div>
+	
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="hash_operator_check">
+									<label for="hash_operator_check" class="custom-control-label"><b>HashOperator: </b></label>									</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="hash_operator" name="hash_operator" min="0" max="100" value="70" disabled>	
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group row">
+								<div class="custom-control custom-checkbox col-sm-8">
+									<input class="custom-control-input" type="checkbox" id="moss_score_check">
+									<label for="moss_score_check" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+								</div>
+								<div class="col-sm-4">
+									<input type="number" class="form-control" id="moss_score" name="moss_score" min="0" max="100" value="70" disabled>
+								</div>
+							</div>
+						</div>		
+					</div>
+				</div>
+			</form>
+			<div class="card-footer">	
+				<button type="submit" class="btn btn-primary" id="run" form="contest-run">
+					Run
+				</button>
+				<button class="btn btn-info" id="reset" dtype="contest">
+					Reset
+				</button>
 			</div>
 		</div>
+	  </div>
+    </div>
+{% endblock %}
 
-{% include "footer.html" %}
+{% block js %}
+<script>
+	contest_id = '{{contest_id}}'
+	metrics = {{contest_data.metrics|tojson}}
+	
+	p = $('#problem-table').DataTable({
+        "columnDefs": [ {
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        }],
+    })
+
+    p.on( 'order.dt search.dt', function () {
+        p.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1;
+        } );
+    } ).draw()
+</script>
+<script src="{{ url_for('static', filename = 'main.js') }}"></script>
+<script src="{{ url_for('static', filename = 'problem.js') }}"></script>
+{% endblock %}

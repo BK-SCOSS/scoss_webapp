@@ -1,19 +1,33 @@
-# A Source Code Similarity System - SCOSS
+# scoss_webapp
+A Web application for [SCOSS](https://github.com/ngocjr7/scoss) - Source Code Similarity System - using to
 
+* Upload problems or contests (multi-problem) of source-codes and check plagiarism.
+* Able to handle multi-requests using task queue (RQ)
+* You can deploy it on server and distribute your results to students.
 
-## TODO
-* Output
-	* Framework, python package mà người khác có thể sử dụng trong code của họ đc. ( giống sctokenizer )
-	* Webapp, front-end đơn giản, và có thể deploy và test được.
-		* Functions: Up file .zip lên và check trùng trong file zip
-		* Cung cấp API để ct khác có thể tương tác được. POST, GET
-	* Command-line 
+## How it looks
 
-* 3 similarities. --> tương lai cần các độ do mới. vd xây dựng cây (papers)
-* Yêu cầu thiết kế: 
-	* Thêm độ đo là dễ dàng.
-	* Có 1 cái ngưỡng. x, y, z: (80, 90, 95)  
-	* Hỗ trợ stateness. (đưa x file .cpp vào) + đưa thêm 1 file .cpp. Thiết kế transaction.
-		* Kịch bản: Trước đó người dùng A đưa x file .cpp -> 12315
-		* POST add_file/12315
-		* GET results/12315
+![alt tag](https://github.com/ngocjr7/scoss_webapp/blob/master/docs/demo.png?raw=true)
+
+## How to run
+
+Clone this project:
+```sh
+git clone https://github.com/ngocjr7/scoss_webapp
+cd scoss_webapp
+```
+
+You can easyly run this webapp on docker by:
+```sh
+docker-compose build
+docker-compose up
+```
+
+## Issues
+This project is in development, if you find any issues, please create an issue [here](https://github.com/ngocjr7/scoss_webapp/issues).
+
+## Contributors
+[Ngoc Bui](https://github.com/ngocjr7), [Linh Le](https://github.com/Lelinh698), [Vien Tran](https://github.com/tranvien98)
+
+## Acknowledgements
+This project is sponsored and led by Prof. Do Phan Thuan, Hanoi University of Science and Technology. 

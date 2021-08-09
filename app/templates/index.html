@@ -1,29 +1,56 @@
-{% include "header.html" %}
+{% extends "base.html" %}
 
-<h2>What is SCOSS?</h2>
-<p>
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum arcu metus, commodo a sagittis sit amet, fermentum ac quam. Curabitur lobortis eu diam vitae posuere. Aliquam in quam ac quam dignissim finibus at a dui. Vivamus consectetur neque ut erat finibus bibendum. Suspendisse pulvinar condimentum bibendum. Suspendisse et posuere odio. Etiam tincidunt dui vel ante rhoncus, et cursus ante tempus. Nulla aliquam diam eu purus laoreet, feugiat commodo augue condimentum. Duis eleifend mollis ante. Phasellus nibh orci, bibendum ut mi eget, pretium euismod mi. Aliquam ipsum nisi, convallis quis turpis ut, lobortis facilisis justo. Ut ultricies eros erat, a imperdiet nisi luctus vel. Donec eu efficitur odio.
-</p>
+{% block title %}SCOSS{% endblock %}
 
-<h2>What is SCOSS not?</h2>
-<p>
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum arcu metus, commodo a sagittis sit amet, fermentum ac quam. Curabitur lobortis eu diam vitae posuere. Aliquam in quam ac quam dignissim finibus at a dui. Vivamus consectetur neque ut erat finibus bibendum. Suspendisse pulvinar condimentum bibendum. Suspendisse et posuere odio. Etiam tincidunt dui vel ante rhoncus, et cursus ante tempus. Nulla aliquam diam eu purus laoreet, feugiat commodo augue condimentum. Duis eleifend mollis ante. Phasellus nibh orci, bibendum ut mi eget, pretium euismod mi. Aliquam ipsum nisi, convallis quis turpis ut, lobortis facilisis justo. Ut ultricies eros erat, a imperdiet nisi luctus vel. Donec eu efficitur odio.
-</p>
+{% block titlle %}SCOSS{% endblock %}
 
-<h2>Measures</h2>
-<p>
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum arcu metus, commodo a sagittis sit amet, fermentum ac quam. Curabitur lobortis eu diam vitae posuere. Aliquam in quam ac quam dignissim finibus at a dui. Vivamus consectetur neque ut erat finibus bibendum. Suspendisse pulvinar condimentum bibendum. Suspendisse et posuere odio. Etiam tincidunt dui vel ante rhoncus, et cursus ante tempus. Nulla aliquam diam eu purus laoreet, feugiat commodo augue condimentum. Duis eleifend mollis ante. Phasellus nibh orci, bibendum ut mi eget, pretium euismod mi. Aliquam ipsum nisi, convallis quis turpis ut, lobortis facilisis justo. Ut ultricies eros erat, a imperdiet nisi luctus vel. Donec eu efficitur odio.
-</p>
+{% block content %}
+<div class='card'>
+  <div class="card-body">     
+      <zero-md>
+        <zero-md>
+          <!-- Write your markdown inside a `<script type="text/markdown">` tag -->
+          <script type="text/markdown">         
+        # What is SCoSS?
+SCoSS (Source Code Similarity System) is an automatic system for determining the similarity of source codes. The main application of SCoSS has been in detecting plagiarism in programming classes. Unlike Moss (Stanford), our system is developed focusing on the application in competitive programming contests.
 
-<h2>Usage</h2>
-<p>
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum arcu metus, commodo a sagittis sit amet, fermentum ac quam. Curabitur lobortis eu diam vitae posuere. Aliquam in quam ac quam dignissim finibus at a dui. Vivamus consectetur neque ut erat finibus bibendum. Suspendisse pulvinar condimentum bibendum. Suspendisse et posuere odio. Etiam tincidunt dui vel ante rhoncus, et cursus ante tempus. Nulla aliquam diam eu purus laoreet, feugiat commodo augue condimentum. Duis eleifend mollis ante. Phasellus nibh orci, bibendum ut mi eget, pretium euismod mi. Aliquam ipsum nisi, convallis quis turpis ut, lobortis facilisis justo. Ut ultricies eros erat, a imperdiet nisi luctus vel. Donec eu efficitur odio.
-</p>
+# Languages
+Four languages are supported including:
 
-<h2>Members</h2>
+* C++
+* Python
+* Java
+* PHP
 
-<p>
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum arcu metus, commodo a sagittis sit amet, fermentum ac quam. Curabitur lobortis eu diam vitae posuere. Aliquam in quam ac quam dignissim finibus at a dui. Vivamus consectetur neque ut erat finibus bibendum. Suspendisse pulvinar condimentum bibendum. Suspendisse et posuere odio. Etiam tincidunt dui vel ante rhoncus, et cursus ante tempus. Nulla aliquam diam eu purus laoreet, feugiat commodo augue condimentum. Duis eleifend mollis ante. Phasellus nibh orci, bibendum ut mi eget, pretium euismod mi. Aliquam ipsum nisi, convallis quis turpis ut, lobortis facilisis justo. Ut ultricies eros erat, a imperdiet nisi luctus vel. Donec eu efficitur odio.
-</p>
+The others (Pascal, Javascript, Matlab,..) are in our list of development.
 
-{% include "footer.html" %}
+# Metrics
+
+Four Metrics are currently supported including:
+{% if 'logged_in' in session %}
+* CountOperator
+* SetOperator
+* HashOperator
+* Moss
+{% else %}
+* (Login to see)
+
+{% endif %}
+
+# Usage
+
+SCoSS is for non-commercial use. If you want to use SCoSS for academic purposes, you can send an email to [thuandp@soict.hust.edu.vn](mailto:thuandp@soict.hust.edu.vn).
+
+# Issues
+
+* If you have any technical issues, please report to ngocjr7@gmail.com. 
+* If you have disagreed with our results, please send an email to thuandp@soict.hust.edu.vn.
+
+# Credits
+Hanoi University of Science and Technology.
+
+</script>
+</zero-md>
+  </div>
+</div>
+{% endblock %}

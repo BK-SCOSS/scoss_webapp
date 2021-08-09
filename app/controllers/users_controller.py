@@ -4,55 +4,89 @@ import json
 import time
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import shutil
 from models.models import *
 
 users_controller = Blueprint('users_controller', __name__)
 
 
-@users_controller.route('/api/user', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def create_user():
-    if request.method == "GET":
-        # get username password
-        try:
-            username = request.args.get('username')
-            data_user = User.objects.get(username=username)
-            user_id = data_user.user_id
-            password = data_user.password
-            role = data_user.role # 0-root 1-user
-        except Exception:
-            return jsonify({'info': "Account information is not correct"}), 400
-        return jsonify({'user_id': user_id, 'username': username, 'password': password, 'role': role})
-    if request.method == "POST":
-        # create account
-        try:
-            user_id = str(int(time.time()) * 1000)
-            username = request.form['username']
-            password = request.form['password']
-            role = request.form['role'] #0- admin , 1-user
-            User(user_id=user_id, username=username, password=password, role=role).save()
-        except Exception:
-            return jsonify({'info': "The account name may already exist"}), 400
-        return jsonify({'user_id': user_id})
-    if request.method == "PUT":
-        try:
-            user_id = request.form['user_id']
-            username = request.form['username']
-            password = request.form['password']
-            role = role
-            data_user = User.objects(user_id=user_id).update(username=username, password=password, role=role)
-        except Exception:
-            return jsonify({'info': "Can't update infomation"}), 400
-        return jsonify({'user_id': user_id})
-    if request.method == "DELETE":
-        try:
-            user_id = request.form['user_id']
-            data_user = User.objects(user_id=user_id).delete()
-            info = 'Delete user_id:' + user_id
-        except Exception:
-            return jsonify({'info': "Can't delete"}), 400
-        return jsonify({'info': info}),200
-    return jsonify({'info': "API not found"}),400
+@users_controller.route('/api/users', methods=['GET'])
+def user():
+    try:
+        data_users = User.objects()
+        res = []
+        for data_user in data_users:
+            temp = data_user.to_mongo()
+            del temp['_id']
+            res.append(temp)
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'users': res})
 
+@users_controller.route('/api/users/username', methods=['GET'])
+def username():
+    try:
+        username = request.args.get('username')
+        data_users = User.objects.get(username=username)
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'user_id':data_users.user_id, 'username': data_users.username, 'password': data_users.password, 'role':data_users.role})
 
+@users_controller.route('/api/users/add', methods=['POST'])
+def add_user():
+    # create account
+    try:
+        if len(Counter.objects) == 0:
+            user_id = 0
+            Counter(name='count', count_user=0, count_problem=0, count_contest=0).save()
+        else:
+            user_id = Counter.objects.get(name='count').count_user + 1
+            Counter.objects(name='count').update(count_user=user_id)
+            user_id += 1
+        user_id = str(user_id)
+        username = request.json['username']
+        password = request.json['password']
+        role = request.json['role'] #0- admin , 1-user
+        password = generate_password_hash(password)
+        User(user_id=user_id, username=username, password=password, role=role).save()
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'user_id': user_id})
 
+@users_controller.route('/api/users/<user_id>', methods=['GET'])
+def get_user(user_id):
+    try:
+        data_user = User.objects.get(user_id=str(user_id))
+        user_id = data_user.user_id
+        username = data_user.username
+        password = data_user.password
+        role = data_user.role # 0-root 1-user
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'user_id': user_id, 'username': username, 'password': password, 'role': role})
+
+@users_controller.route('/api/users/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    try:
+        old_password = request.json['old_password']
+        new_password = generate_password_hash(request.json['new_password'])
+        check_password = User.objects.get(user_id=str(user_id)).password
+        if check_password_hash(check_password, old_password):
+            User.objects(user_id=str(user_id)).update(password=new_password)
+            info = 'Update infomation for user_id:' + user_id
+        else:
+            info = "Wrong password!"
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'info': info})
+
+@users_controller.route('/api/users/<user_id>', methods=['DELETE'])
+def delete_user(user_id):  
+    try:
+        User.objects(user_id=user_id).delete()
+        info = 'Delete user_id:' + user_id
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'info': info}),200
+    

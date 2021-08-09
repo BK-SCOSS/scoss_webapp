@@ -1,16 +1,19 @@
 # Byte-compiled / optimized / DLL files
+.vscode/
+mongo_volume/
 __pycache__/
 *.py[cod]
 *$py.class
 #virtualenv
 .venv
 .envg
+.env
 # C extensions
 *.so
-
+.idea
 .vim/*
 *.DS_Store
-
+app/config.py
 # Distribution / packaging
 .Python
 build/
@@ -107,7 +110,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
