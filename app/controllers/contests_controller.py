@@ -63,6 +63,7 @@ def get_contest_user(user_id):
 def contest():
     try:
         data_contests = Contest.objects()
+        print(data_contests.count())
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()

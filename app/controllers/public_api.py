@@ -1,4 +1,4 @@
-from app.controllers.users_controller import user
+from controllers.users_controller import user
 from flask import config, request, jsonify, Blueprint, Response
 import time
 from zipfile import ZipFile
@@ -21,7 +21,7 @@ def create_token(user_id):
 
 @public_api.route("/api/users/<user_id>/token")
 @jwt_required()
-def create_token(user_id):
+def get_token(user_id):
     data_user = User.objects(user_id=user_id).first()
     public_token = data_user.public_token
     if public_token != None and public_token != "delete":
