@@ -185,6 +185,6 @@
         } );
     } ).draw()
 </script>
-<script src="{{ url_for('static', filename = 'main.js') }}"></script>
-<script src="{{ url_for('static', filename = 'problem.js') }}"></script>
+<script id="token" src="{{ url_for('static', filename = 'main.js', token=session['token']) }}"></script>
+<script src="{{ url_for('static', filename = 'problem.js', token=session['token']) }}"></script>
 {% endblock %}

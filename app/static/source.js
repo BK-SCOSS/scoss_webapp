@@ -1,3 +1,11 @@
+params = new URL(document.getElementById("token").src).searchParams;
+var token = params.get('token')
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+});
 $(function() {
     $.ajaxSetup({
         headers: {
@@ -5,41 +13,79 @@ $(function() {
         }
     });
 
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000
-    });
+
 
     // $('#source-table').DataTable();
-
-    $.get("/api/problems/"+ problem_id + "/status", function(data){
-		problem_status = data['problem_status']
-		if (problem_status == checked) {
-            $.get("/api/problems/"+ problem_id + "/results", function(data){
-                // if (data['results'].length > 0) {
-                   
-                // }
-                create_result(data)
-                $("#run").removeClass("btn-primary")
-                $("#run").addClass("btn-danger")
-                $("#run").text("Rerun")
-            })
-		} else if (problem_status == running) {
-            var source = new EventSource('/problems/' + problem_id + '/status');
-			source.onmessage = function(event) {
-				if (event.data == checked) {
-					$("#run").removeClass("btn-primary")
+    $.ajax({
+		type: "GET",
+		contentType: 'application/json',
+		url: "/api/problems/"+ problem_id + "/status",
+		headers: {
+			Authorization: 'Bearer '+token
+		},
+		success: function (data) {
+            // console.log('wqw')
+            problem_status = data['problem_status']
+            if (problem_status == checked) {
+                $.get("/api/problems/"+ problem_id + "/results", function(data){
+                    // if (data['results'].length > 0) {
+                       
+                    // }
+                    create_result(data)
+                    $("#run").removeClass("btn-primary")
                     $("#run").addClass("btn-danger")
                     $("#run").text("Rerun")
-					source.close()
-				}
-			}
-			$("#run").text("Running")
-			$("#run").prop("disabled", true)
+                })
+            } else if (problem_status == running) {
+                var source = new EventSource('/problems/' + problem_id + '/status');
+                source.onmessage = function(event) {
+                    if (event.data == checked) {
+                        $("#run").removeClass("btn-primary")
+                        $("#run").addClass("btn-danger")
+                        $("#run").text("Rerun")
+                        source.close()
+                    }
+                }
+                $("#run").text("Running")
+                $("#run").prop("disabled", true)
+            }
+			// location.reload();
+		},
+		error: function (data) {
+            // console.log("123")
+			Toast.fire({
+				icon: 'error',
+                // console.log("qwqw"),
+				title: data.responseText
+			})
 		}
-	})
+	});
+    // $.get("/api/problems/"+ problem_id + "/status", function(data){
+	// 	problem_status = data['problem_status']
+	// 	if (problem_status == checked) {
+    //         $.get("/api/problems/"+ problem_id + "/results", function(data){
+    //             // if (data['results'].length > 0) {
+                   
+    //             // }
+    //             create_result(data)
+    //             $("#run").removeClass("btn-primary")
+    //             $("#run").addClass("btn-danger")
+    //             $("#run").text("Rerun")
+    //         })
+	// 	} else if (problem_status == running) {
+    //         var source = new EventSource('/problems/' + problem_id + '/status');
+	// 		source.onmessage = function(event) {
+	// 			if (event.data == checked) {
+	// 				$("#run").removeClass("btn-primary")
+    //                 $("#run").addClass("btn-danger")
+    //                 $("#run").text("Rerun")
+	// 				source.close()
+	// 			}
+	// 		}
+	// 		$("#run").text("Running")
+	// 		$("#run").prop("disabled", true)
+	// 	}
+	// })
 
     function create_row_result(score_metric, a) {
         td = $("<td>")
@@ -74,6 +120,9 @@ $(function() {
                 type: "POST",
                 url: "/api/problems/"+ problem_id + "/run",
                 contentType: 'application/json',
+                headers: {
+                    Authorization: 'Bearer '+token
+                },
                 data: JSON.stringify(data_form),
                 success: function()
                 {   
@@ -101,7 +150,7 @@ $(function() {
                 },
                 error: function(data)
                 {
-                    alert(data['error'])
+                    alert(data.responseText)
                 }
             });
             // location.reload()
@@ -180,18 +229,21 @@ $(document).on("click","#delete-all",function(){
       }).then((result) => {
           if (result.isConfirmed) {
               $.ajax({
-                  type: "DELETE",
-                  contentType: 'application/json',
-                  url: '/api/problems/'+problem_id+'/sources/delete_all',
-                  success: function () {
-                          location.reload();
-                  },
-                  error: function (data) {
-                      Toast.fire({
-                          icon: 'error',
-                          title: data['error']
-                      })
-                  }
+                    type: "DELETE",
+                    contentType: 'application/json',
+                    url: '/api/problems/'+problem_id+'/sources/delete_all',
+                    headers: {
+                    Authorization: 'Bearer '+token
+                    },
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function (data) {
+                        Toast.fire({
+                            icon: 'error',
+                            title: data.responseText
+                        })
+                    }
               });
           }
       })

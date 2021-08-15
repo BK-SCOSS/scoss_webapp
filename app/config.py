@@ -26,3 +26,4 @@ API_URI_SR = f'http://{APP_SELF_REF}:{APP_PORT}'
 
 JOB_TIMEOUT = 1000
 
+LANGUAGE_SUPPORT = ["cpp", "py", "php", "c"]
