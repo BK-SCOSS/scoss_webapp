@@ -12,6 +12,8 @@ $(function() {
         timer: 3000
     });
 
+    // $('#source-table').DataTable();
+
     $.get("/api/problems/"+ problem_id + "/status", function(data){
 		problem_status = data['problem_status']
 		if (problem_status == checked) {
@@ -52,68 +54,12 @@ $(function() {
         item.append(td)
     }
 
-    function create_result(data) {
-        var heads = []
-        heads.push('source1')
-        heads.push('source2')
-        for(metric in data['results'][0]['scores']) {
-            if (metric == 'mean') {
-                continue
-            }
-            heads.push(metric)
-        }
-        heads.push('mean')
-
-        row = $("<div>", {id: "result", "class": "row"})
-        col = $("<div>", {"class": "col-12"})
-        card = $("<div>", {"class": "card"})
-        card_header = $("<div>", {"class": "card-header"})
-        card_body = $("<div>", {"class": "card-body table-responsive p-0"})
-        table = $("<table>", {"id": "usersTable", "class": "table table-hover table-bordered"})
-        header = $("<tr>")
-        
-        for (head in heads) {
-            header.append("<th>" + heads[head] + "<i class='fa fa-sort'></i></th>")
-        }
-
-        tbody = $("<tbody>")
-        tbody.append(header)
-        
-        links = data['results']
-        for (link of links) {
-            source1 = link['source1']
-            source2 = link['source2']
-            item = $("<tr>", {"class": "item"})
-            item.append("<td>" + source1 + "</a></td>")
-            item.append("<td>" + source2 + "</a></td>")
-            for (metric in link['scores']) {
-                if (metric == 'mean') {
-                    continue
-                }
-                a = $("<a>", {"href": `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metrics=${metric}`, 
-                    "target": "_blank"})
-                create_row_result(link['scores'][metric], a)
-            }
-            create_row_result(link['scores']['mean'], $("<a>"))
-            tbody.append(item)
-        }
-        table.append(tbody)
-        card_body.append(table)
-        card_header.append("<h3 class='card-title'>Result</h3>")
-        card.append(card_header)
-        card.append(card_body)
-        col.append(card)
-        row.append(col)
-        $(".content .container").append(row)
-    }
-
     $("#problem-run").submit(function(e){
         e.preventDefault(); // avoid to execute the actual submit of the form.
         $("#result").remove()
 
         var form = $(this);
         var list_operator = form.serializeArray()
-        console.log(list_operator)
         if (list_operator.length > 0) {
             var send_data = []
             list_operator.forEach(element => {
@@ -158,6 +104,7 @@ $(function() {
                     alert(data['error'])
                 }
             });
+            // location.reload()
         } else {
             Toast.fire({
                 icon: 'warning',

@@ -13,6 +13,8 @@ class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
     password = db.StringField()
+    email = db.StringField()
+    public_token = db.StringField()
     role = db.IntField()
 
 class Contest(db.Document):
@@ -21,6 +23,8 @@ class Contest(db.Document):
     metrics = db.ListField()
     user_id = db.StringField(required=True)
     contest_status = db.IntField(required=True)
+    results = db.ListField()
+    
 class Problem(db.Document):
     problem_id = db.StringField(required=True, unique=True)
     problem_name = db.StringField(required=True)

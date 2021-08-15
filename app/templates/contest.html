@@ -4,102 +4,124 @@
 
 {% block header %}
 <div class="container">
-  <div class="row mb-2">
-    <div class="col-sm-6">
-      <h1 class="m-0 text-dark">Contests</small></h1>
-    </div><!-- /.col -->
-    <div class="col-sm-6">
-      <ol class="breadcrumb float-sm-right">
-        <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
-      </ol>
-    </div><!-- /.col -->
-  </div><!-- /.row -->
+	<div class="row mb-2">
+		<div class="col-sm-6">
+			<h1 class="m-0 text-dark">Contests</small></h1>
+		</div><!-- /.col -->
+		<div class="col-sm-6">
+			<ol class="breadcrumb float-sm-right">
+				<li class="breadcrumb-item"><a href="/contest">Contests</a></li>
+			</ol>
+		</div><!-- /.col -->
+	</div><!-- /.row -->
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-  <div class="col-12">
-    <div class="card">
-      {%if info == 'wrong'%}
-      <div class="alert alert-danger" role="alert">
-        {{ error }}
-      </div>
-      {%endif%}
-      <div class="card-header">
-        <h3 class="card-title">Contest</h3>
-        <div class="card-tools">
-          <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-contest">Create</a>
-        </div>
-      </div>
+	<div class="col-12">
+		<div class="card">
+			{%if info == 'wrong'%}
+			<div class="alert alert-danger" role="alert">
+				{{ error }}
+			</div>
+			{%endif%}
+			<div class="card-header">
+				<h3 class="card-title">Contest</h3>
+				<div class="card-tools">
+					<a href="#" class="btn btn-success" data-toggle="modal"
+						data-target="#modal-create-contest">Create</a>
+				</div>
+			</div>
 
-      <!-- /.card-header -->
-      {% if data|length > 0 %}
-      <div class="card-body table-responsive p-0">
-        <table class="table table-hover table-bordered">
-          <tr>
-            <th style="width: 4em;">#</th>
-            <th>Name</th>
-            <th style="text-align: center; width: 15%;">Author</th>
-            <th style="text-align: center; width: 15%;">Status</th>
-            {% if session['role'] == 0 or session['user_id'] %}
-            <th style="text-align: center; width: 15%;">Actions</th>
-            {% endif %}
-          </tr>
-          {%for context in data %}
-          <tr>
-            <td>{{loop.index}}</td>
-            <td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a></td>
-            <td class="text-center"><i>{{context['username']}}</i></td>
-            <td class="text-center project-state">
-              <span class="status badge">{{context['contest_status']}}</span>
-            </td>
-            <td class="text-center py-0 align-middle">
-              {% if session['role'] == 0 or session['user_id'] == context['user_id'] %}
-              <a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i class="fas fa-trash"></i></a>
-              {% endif %}
-            </td>
-          </tr>
-          {%endfor%}
-        </table>
-      </div>
-      {%endif%}
-    </div>
-  </div>
+			<!-- /.card-header -->
+			{% if data|length > 0 %}
+			<div class="card-body table-responsive p-0">
+				<table class="display" id="contest-table">
+					<thead>
+						<tr>
+							<th style="width: 4em;">#</th>
+							<th>Name</th>
+							<th style="text-align: center; width: 15%;">Author</th>
+							<th style="text-align: center; width: 15%;">Status</th>
+							{% if session['role'] == 0 or session['user_id'] %}
+							<th style="text-align: center; width: 15%;">Actions</th>
+							{% endif %}
+						</tr>
+					</thead>
+					<tbody>
+						{%for context in data %}
+						<tr>
+							<td>{{loop.index}}</td>
+							<td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a>
+							</td>
+							<td class="text-center"><i>{{context['username']}}</i></td>
+							<td class="text-center project-state">
+								<span class="status badge">{{context['contest_status']}}</span>
+							</td>
+							<td class="text-center py-0 align-middle">
+								{% if session['role'] == 0 or session['user_id'] == context['user_id'] %}
+								<a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i
+										class="fas fa-trash"></i></a>
+								{% endif %}
+							</td>
+						</tr>
+						{%endfor%}
+					</tbody>
+				</table>
+			</div>
+			{%endif%}
+		</div>
+	</div>
 </div>
 
 <div class="modal fade" id="modal-create-contest" style="display: none;" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Create contest</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form action="/contest" class="form-horizontal" method="POST" id="create-contest-form">
-          <div class="form-group row">
-            <div class="col-sm-3">
-              <label for="cname"><b>Contest name: </b></label>
-            </div>
-            <div class="col-sm-7">
-              <input type="text" placeholder="Enter contest name" name="contest_name" required>						
-            </div>
-          </div>		
-        </form>
-      </div>
-      <div class="modal-footer justify-content-between">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary" value="Create" form="create-contest-form">Create</button>
-      </div>
-    </div>
-    <!-- /.modal-content -->
-  </div>
-  <!-- /.modal-dialog -->
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Create contest</h4>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form action="/contest" class="form-horizontal" method="POST" id="create-contest-form">
+					<div class="form-group row">
+						<div class="col-sm-3">
+							<label for="cname"><b>Contest name: </b></label>
+						</div>
+						<div class="col-sm-7">
+							<input type="text" placeholder="Enter contest name" name="contest_name" required>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="submit" class="btn btn-primary" value="Create" form="create-contest-form">Create</button>
+			</div>
+		</div>
+		<!-- /.modal-content -->
+	</div>
+	<!-- /.modal-dialog -->
 </div>
 {% endblock %}
 
 {% block js %}
+<script>
+	c = $('#contest-table').DataTable({
+		"columnDefs": [{
+			"searchable": false,
+			"orderable": false,
+			"targets": 0
+		}],
+	})
+
+	c.on('order.dt search.dt', function () {
+		c.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+			cell.innerHTML = i + 1;
+		});
+	}).draw()
+</script>
 <script src="{{ url_for('static', filename = 'contest.js') }}"></script>
 {% endblock %}

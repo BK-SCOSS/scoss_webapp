@@ -133,12 +133,16 @@ def add_zip(problem_id):
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             for file in zfile:
+                try:
+                    source_str = zf.read(file).decode('utf-8')
+                except:
+                    source_str = zf.read(file).decode('cp437')
                 if len(file.split('/')) > 1 and file.split('/')[-1] != '':
                     data_doc = {
                         "pathfile": file.split('/')[-1],
                         "lang": file.split('.')[-1],
                         'mask': '',
-                        'source_str': zf.read(file).decode('utf-8')
+                        'source_str': source_str
                     }
                     sources.append(data_doc)
         Problem.objects(problem_id=problem_id).update(sources=sources)
@@ -185,37 +189,30 @@ def get_results(problem_id):
         metrics = data_problem.metrics
         metric_list = []
         res = {}
+        moss_threshold = 0
         for metric in metrics:
             metric_list.append(metric['name'])
+            if metric['name'] == 'moss_score':
+                moss_threshold = metric['threshold']
+
         if 'moss_score' in metric_list:
-            if len(metric_list) == 1:
-                for simi in similarity_smoss_list:
-                    key = hash(simi['source1']) ^ hash(simi['source2'])
-                    temp_list = simi
+            for simi_smoss in similarity_smoss_list:
+                key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
+                if simi_smoss['scores']['moss_score'] > moss_threshold:
+                    temp_list = simi_smoss
                     res[key] = temp_list
-            else:
+                
+            if len(metric_list) > 1:
                 for simi in similarity_list:
                     key = hash(simi['source1']) ^ hash(simi['source2'])
-                    temp_list = simi
-                    temp_list['scores']['moss_score'] = 0
-                    res[key] = temp_list
-                for simi_smoss in similarity_smoss_list:
-                    key = hash(simi_smoss['source1']) ^ hash(
-                        simi_smoss['source2'])
                     if key in res.keys():
-                        temp_list = simi_smoss
                         for metric in metric_list:
-                            if metric not in res[key]['scores'].keys():
-                                res[key]['scores'][metric] = 0
-                        res[key]['scores']['moss_score'] = simi_smoss['scores']['moss_score']
-                for simi in similarity_list:
-                    for simi_smoss in similarity_smoss_list:
-                        if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\
-                                or (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2']):
-                            key = hash(simi['source1']) ^ hash(simi['source2'])
-                            temp_list = simi
-                            temp_list['scores']['moss_score'] = simi_smoss['scores']['moss_score']
-                            res[key] = temp_list
+                            if metric != 'moss_score':
+                                res[key]['scores'][metric] = simi['scores'][metric]
+            for k in list(res):
+                if len(res[k]['scores']) == 1:
+                    if 'moss_score' in res[k]['scores'].keys():
+                        del res[k]
         else:
             for simi in similarity_list:
                 key = hash(simi['source1']) ^ hash(simi['source2'])
@@ -288,10 +285,9 @@ def update_result_smoss(problem_id):
 
 @problems_controller.route('/api/problems/<problem_id>/run', methods=['POST'])
 def run_source(problem_id):
-    print(request.json, flush=True)
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
-        metrics = request.json
+        metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
         if len(data_problem) > 0:
             if data_problem.problem_status not in [Status.running, Status.waiting]:
@@ -325,7 +321,6 @@ def get_source(problem_id):
                 'source_str': data_source[0]['sources'][0]['source_str'],
             }
             sources.append(temp)
-        # print(sources, flush=True)
 
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
@@ -336,6 +331,8 @@ def reset(problem_id):
     try:
         Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
             similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
+        contest_id = Problem.objects.get(problem_id=problem_id).contest_id
+        requests.get(url="{}/api/contests/{}/check_status".format(config.API_URI_SR, contest_id))
         info = 'Reset all!'
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400

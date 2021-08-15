@@ -25,8 +25,6 @@ def login_page():
 		params = {'username': username}
 		url = URL + '/api/users/username'
 		req = requests.get(url=url, params=params)
-		print(req.json(), flush=True)
-		print( check_password_hash(req.json()['password'], password))
 		if 'password' in req.json().keys():
 			if check_password_hash(req.json()['password'], password):
 				session['user_id'] = req.json()['user_id']
@@ -41,7 +39,8 @@ def login_page():
 @login.route('/logout')
 def logout():
 	session.clear()
-	return render_template('login.html', info='')
+	return redirect(url_for('home_page.index'))
+
 
 @login.route('/signup', methods=["GET", "POST"])
 def signup():

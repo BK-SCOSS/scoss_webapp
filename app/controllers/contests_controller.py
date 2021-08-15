@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from models.models import *
 from config import URL
 import requests
+import io
 
 contests_controller = Blueprint('contests_controller', __name__)
 
@@ -129,29 +130,37 @@ def add_zip(contest_id):
         ----file2.cpp
         ----file3.cpp
     """
+    # print("hello")
     try: 
         contest_list = {}
+        # print(request.files['file'], flush=True)
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
+            # print(zfile)
+
             for file in zfile:
                 if len(file.split('/')) > 2 and file.split('/')[-1] != '':
-                    if file.split('/')[1] in contest_list:
+                    try:
+                        source_str = zf.read(file).decode('utf-8')
+                    except:
+                        source_str = zf.read(file).decode('cp437')
+                    if file.split('/')[-2] in contest_list:
                         data_doc = {
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': source_str
                         }
-                        contest_list[file.split('/')[1]].append(data_doc)
+                        contest_list[file.split('/')[-2]].append(data_doc)
                     else:
-                        contest_list[file.split('/')[1]] = []
+                        contest_list[file.split('/')[-2]] = []
                         data_doc = {
                             "pathfile": file.split('/')[-1],
                             "lang": file.split('.')[-1],
                             'mask': '',
-                            'source_str': zf.read(file).decode('utf-8')
+                            'source_str': source_str
                         }
-                        contest_list[file.split('/')[1]].append(data_doc)
+                        contest_list[file.split('/')[-2]].append(data_doc)
         url_contest = URL + '/api/contests/'+contest_id+'/problems/add'
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key})
@@ -170,11 +179,10 @@ def add_zip(contest_id):
 
 @contests_controller.route('/api/contests/<contest_id>/run', methods = ['POST'])
 def run_contest(contest_id):
-    print(request.json, flush=True)
     try:
         url_contest = URL + '/api/contests/' + str(contest_id)
-        metrics = request.json
-        Contest.objects(contest_id=contest_id).update(metrics=metrics)
+        metrics = request.json        
+        Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest)
         doc_status = {
             "contest_status": Status.running
@@ -214,7 +222,6 @@ def check_status(contest_id):
             temp = data_problem.to_mongo()
             res.append(temp['problem_status'])
         status = min(res)
-        print(status, flush=True)
         doc_status = {
             "contest_status": status
         }
@@ -243,5 +250,74 @@ def status(contest_id):
 	def check_status(contest_id):
 		data_contest = Contest.objects.get(contest_id=contest_id)
 		yield 'data: {}\n\n'.format(data_contest.contest_status)
-    
 	return Response(check_status(contest_id), mimetype="text/event-stream")
+
+@contests_controller.route('/api/contests/<contest_id>/table_results', methods = ['GET'])
+def get_data(contest_id):
+    try:
+        query = Problem.objects(contest_id=contest_id)
+        
+        total_filtered = query.similarity_list.count()
+
+        # pagination
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+
+        data_problems = query.fields(slice__similarity_list=[start, length])
+        results = []
+        for data_problem in data_problems:
+            problem_name = data_problem.problem_name
+            similarity_list = data_problem.similarity_list
+            similarity_smoss_list = data_problem.similarity_smoss_list
+            metrics = data_problem.metrics
+            metric_list = []
+            res = {}
+            moss_threshold = 0
+            for metric in metrics:
+                metric_list.append(metric['name'])
+                if metric['name'] == 'moss_score':
+                    moss_threshold = metric['threshold']
+
+            if 'moss_score' in metric_list:
+                for simi_smoss in similarity_smoss_list:
+                    key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
+                    if simi_smoss['scores']['moss_score'] > moss_threshold:
+                        temp_list = simi_smoss
+                        res[key] = temp_list
+                    
+                if len(metric_list) > 1:
+                    for simi in similarity_list:
+                        key = hash(simi['source1']) ^ hash(simi['source2'])
+                        if key in res.keys():
+                            for metric in metric_list:
+                                if metric != 'moss_score':
+                                    res[key]['scores'][metric] = simi['scores'][metric]
+                for k in list(res):
+                    if len(res[k]['scores']) == 1:
+                        if 'moss_score' in res[k]['scores'].keys():
+                            del res[k]
+            else:
+                for simi in similarity_list:
+                    key = hash(simi['source1']) ^ hash(simi['source2'])
+                    temp_list = simi
+                    res[key] = temp_list
+            check_zero = 0
+            for key in res:
+                total = 0
+                num_of_score = 0
+                if len(res[key]) == 0:
+                    check_zero += 1
+                    continue
+                for score in res[key]['scores']:
+                    total += res[key]['scores'][score]
+                    num_of_score += 1
+                if num_of_score != 0:
+                    res[key]['scores']['mean'] = total/num_of_score
+            if(len(res.keys()) == check_zero): res = {}
+            results.append(res)
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'data': results, 'recordsFiltered': total_filtered,
+                    'recordsTotal': Problem.objects(contest_id=contest_id).similarity_list.count(),
+                    'draw': request.args.get('draw', type=int)}), 200
+    

@@ -95,6 +95,7 @@ $(document).ready(function() {
 					alert(data['error'])
 				}
 			});
+            // location.reload()
 		} else {
 			Toast.fire({
 				icon: 'warning',

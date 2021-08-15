@@ -55,9 +55,12 @@ def add_zip_file(contest_id):
 					zip_file = request.files['file'].read()					
 					url = URL + '/api/contests/{}/from_zip'.format(contest_id)
 					req = requests.post(url=url, files={'file': zip_file})
-					return redirect(url_for('problems_page.problem', contest_id= contest_id))
+					if 'error' in req.json():
+						return redirect(url_for('problems_page.problem', contest_id= contest_id, error=req.json()['error']))
+					else:	
+						return redirect(url_for('problems_page.problem', contest_id= contest_id))
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))
 
 @contests.route('/contests/<contest_id>/results', methods=['GET'])
 def results(contest_id):
@@ -69,10 +72,15 @@ def results(contest_id):
 			heads.append('source1')
 			heads.append('source2')
 			if len(results[0]['results']) > 0:
+				i = 0
 				for metric in results[0]['results'][0]['scores']:
 					if (metric == 'mean'):
 						continue
-					heads.append(metric)
+					if session:
+						heads.append(metric)
+					else:
+						heads.append("Metric " + str(i))	
+					i += 1
 				heads.append('mean')
 
 			for problem in results:
@@ -87,7 +95,7 @@ def results(contest_id):
 						span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'								
 						prob_res['scores'][metric] = span
 
-			return render_template('result.html', heads=heads, data=results)
+			return render_template('result.html',contest_id=contest_id ,heads=heads, data=results)
 		else:
 			return render_template('result.html', error="No result in database!")
-	return redirect(url_for('login'))
+	return redirect(url_for('login_page.login_page'))

@@ -20,7 +20,10 @@ def index():
 
 @home.route('/document')
 def document():
-	return render_template('document.html')
+	if 'logged_in' in session:
+		return render_template('document.html')
+	else:
+		return redirect(url_for('login_page.login_page'))
 
 @home.route('/api')
 def api():

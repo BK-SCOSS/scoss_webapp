@@ -68,10 +68,9 @@ def cal_smoss(sources, metrics):
 
 
 def run_problem_with_timeout(problem_id, timeout=510):
-    @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
+    # @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
     def run_problem(problem_id, _timeout):
         logs = {'str': '', 'exception': []}
-        print(f"running problem {problem_id} in {_timeout}", flush=True)
         logs['str'] += f"Running problem {problem_id}\n"
         url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
         url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))

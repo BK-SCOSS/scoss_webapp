@@ -1,3 +1,4 @@
+from models.models import User
 import os
 import sys
 from werkzeug.utils import secure_filename
@@ -18,32 +19,51 @@ user = Blueprint('users_page', __name__)
 def admin():
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
-			if request.method == 'GET':
-				url = URL + '/api/users'
-				data = requests.get(url=url)
-				mongo_url = config.MONGO_EXPRESS_URL
-				redis_url = config.REDIS_MONITOR_URL
-				return render_template('admin.html', data=data.json()['users'], mongo_url=mongo_url, redis_url=redis_url)
-			else: 
-				username = request.form['username']
-				password = '12345'
-				role = 1
-				data_form = {'username': username, 'role': role, 'password': password}
-				url = URL + '/api/users/add'
-				req = requests.post(url=url,json=data_form)
-				if 'user_id' in req.json().keys():
-					return redirect(url_for('users_page.admin'))
-				else:
-					return redirect(url_for('users_page.admin', info='wrong'))
+			if session['role'] == 0:
+				if request.method == 'GET':
+					url = URL + '/api/users'
+					data = requests.get(url=url)
+					return render_template('admin.html', data=data.json()['users'])
+				else: 
+					username = request.form['username']
+					password = '12345'
+					role = 1
+					data_form = {'username': username, 'role': role, 'password': password}
+					url = URL + '/api/users/add'
+					req = requests.post(url=url,json=data_form)
+					if 'user_id' in req.json().keys():
+						return redirect(url_for('users_page.admin'))
+					else:
+						return redirect(url_for('users_page.admin', info='wrong'))
 
-@user.route('/users/<user_id>/update', methods=['POST'])
+@user.route('/admin/redis', methods=['GET'])
+def admin_rq():
+	server_name = request.host.split(":")[0]
+	url = 'http://{}:{}/rq'.format(server_name, config.REDIS_PORT)
+	return redirect(url)
+
+@user.route('/admin/mongo', methods=['GET'])
+def admin_mg():
+	server_name = request.host.split(":")[0]
+	# print("server_name " + server_name, flush=True)
+	url = 'http://{}:{}'.format(server_name, config.MONGO_PORT)
+	return redirect(url)
+
+@user.route('/users/<user_id>/update', methods=['GET', 'POST'])
 def update_password(user_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
+			if request.method == 'GET':
+				data = User.objects.get(user_id=user_id)
+				return render_template('profile.html', data=data)
 			if request.method == 'POST':
+				username = request.form['username']
+				email = request.form['email']
 				old_pass = request.form['old_password']
 				new_pass = request.form['new_password']
 				data_form = {
+					'username': username,
+					'email': email,
 					'old_password': old_pass,
 					'new_password': new_pass
 				}
