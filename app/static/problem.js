@@ -1,3 +1,5 @@
+params = new URL(document.getElementById("token").src).searchParams;
+var token = params.get('token')
 $(document).ready(function() {
 	$.ajaxSetup({
 	  headers: {
@@ -23,30 +25,61 @@ $(document).ready(function() {
 		result.append(a)
 		$(".card-footer").append(result)
 	}
-
-	$.get("/api/contests/"+ contest_id + "/status", function(data){
-		contest_status = data['contest_status']
-		if (contest_status == checked) {
-			updateBtnStatus()
-		} else if (contest_status == running) {
-			$("#run").text("Running")
-			$("#run").prop("disabled", true)
-			var source = new EventSource('/contests/' + contest_id + '/status');
-			source.onmessage = function(event) {
-				if (event.data == checked) {
-					updateBtnStatus()
-					source.close()
+	$.ajax({
+		type: "GET",
+		contentType: 'application/json',
+		url: "/api/contests/"+ contest_id + "/status",
+		headers: {
+			Authorization: 'Bearer '+token
+		},
+		success: function (data) {
+			contest_status = data['contest_status']
+			if (contest_status == checked) {
+				updateBtnStatus()
+			} else if (contest_status == running) {
+				$("#run").text("Running")
+				$("#run").prop("disabled", true)
+				var source = new EventSource('/contests/' + contest_id + '/status');
+				source.onmessage = function(event) {
+					if (event.data == checked) {
+						updateBtnStatus()
+						source.close()
+					}
 				}
 			}
+			// location.reload();
+		},
+		error: function (data) {
+			Toast.fire({
+				icon: 'error',
+				title: data.responseText
+			})
 		}
-	})
+	});
+	// $.get("/api/contests/"+ contest_id + "/status", function(data){
+	// 	console.log(contest_id)
+	// 	contest_status = data['contest_status']
+	// 	if (contest_status == checked) {
+	// 		updateBtnStatus()
+	// 	} else if (contest_status == running) {
+	// 		$("#run").text("Running")
+	// 		$("#run").prop("disabled", true)
+	// 		var source = new EventSource('/contests/' + contest_id + '/status');
+	// 		source.onmessage = function(event) {
+	// 			if (event.data == checked) {
+	// 				updateBtnStatus()
+	// 				source.close()
+	// 			}
+	// 		}
+	// 	}
+	// })
 
 	$("#contest-run").submit(function(e){
 		e.preventDefault(); // avoid to execute the actual submit of the form.
 
 		var form = $(this);
 		var list_operator = form.serializeArray()
-		console.log(list_operator)
+		// console.log(list_operator)
 		if (list_operator.length > 0) {
 			var send_data = []
 			list_operator.forEach(element => {
@@ -62,6 +95,9 @@ $(document).ready(function() {
 				type: "POST",
 				url: "/api/contests/"+contest_id+"/run",
 				contentType: 'application/json',
+				headers: {
+					Authorization: 'Bearer '+token
+				},
 				data: JSON.stringify(data_form),
 				dataType: 'json',
 				success: function()
@@ -92,7 +128,7 @@ $(document).ready(function() {
 				},
 				error: function(data)
 				{
-					alert(data['error'])
+					alert(data.responseText)
 				}
 			});
             // location.reload()
@@ -120,13 +156,16 @@ $(document).ready(function() {
 					type: "DELETE",
 					contentType: 'application/json',
 					url: "/api/problems/" + problem_id,
+					headers: {
+						Authorization: 'Bearer '+token
+					},
 					success: function (data) {
 							location.reload();
 					},
 					error: function (data) {
 						Toast.fire({
 							icon: 'error',
-							title: data['error']
+							title: data.responseText
 						})
 					}
 				});
