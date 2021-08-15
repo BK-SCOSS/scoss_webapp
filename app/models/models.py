@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from flask_mongoengine import MongoEngine
+from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from flask import jsonify
+from functools import wraps
 db = MongoEngine()
+
 
 class Status():
     init = 1
@@ -13,7 +17,8 @@ class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
     password = db.StringField()
-    role = db.IntField()
+    public_token = db.StringField()
+    role = db.IntField() # 0- admin, 1-user
 
 class Contest(db.Document):
     contest_id = db.StringField(required=True, unique=True)
@@ -42,3 +47,17 @@ class Counter(db.Document):
     count_problem = db.IntField()
     count_contest = db.IntField()
 
+class TokenBlocklist(db.Document):
+    jti = db.StringField()
+    created_at = db.DateTimeField()
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt()
+        if int(claims['sub']['role']) != 0:
+            return jsonify(error='Yêu cầu quyền admin.'), 403
+        else:
+            return fn(*args, **kwargs)
+    return wrapper

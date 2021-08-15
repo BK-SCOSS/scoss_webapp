@@ -3,6 +3,8 @@ const failed = 2
 const waiting = 3
 const running = 4
 const checked = 5
+params = new URL(document.getElementById("token").src).searchParams;
+var token = params.get('token')
 
 $(document).ready(function() {
     $.ajaxSetup({
@@ -43,6 +45,7 @@ $(document).ready(function() {
 		}
 	})
 
+    
     $(document).on("click",".btn-delete",function(){
         contest_id = $(this).attr('contest_id');
         Swal.fire({
@@ -58,14 +61,18 @@ $(document).ready(function() {
                 $.ajax({
                 type: "DELETE",
                 contentType: 'application/json',
+                headers: {
+                    Authorization: 'Bearer '+token
+                },
                 url: "/api/contests/" + contest_id,
                 success: function (data) {
                     location.reload();
                 },
                 error: function (data) {
+                   
                     Toast.fire({
                     icon: 'error',
-                    title: data['error']
+                    title: data.responseText
                     })
                 }
             });
