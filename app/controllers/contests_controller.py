@@ -67,7 +67,10 @@ def contest():
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
-            data_user = User.objects.get(user_id=temp['user_id'])
+            # print(temp['user_id'])
+            if User.objects(user_id=temp['user_id']).count() == 0:
+                continue
+            data_user = User.objects(user_id=temp['user_id']).first()
             temp['username'] = data_user.username
             del temp['_id']
             res.append(temp)
