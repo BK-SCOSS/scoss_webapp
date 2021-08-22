@@ -357,6 +357,6 @@ def status(problem_id):
 
     return Response(check_status(problem_id), mimetype="text/event-stream")
 
-@problems_controller.route('/api/test')
-def test():
-    return jsonify({"test": "123"})
+# @problems_controller.route('/api/test')
+# def test():
+#     return jsonify({"test": "123"})

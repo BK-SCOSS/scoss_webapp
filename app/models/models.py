@@ -41,6 +41,18 @@ class Problem(db.Document):
     user_id = db.StringField()
     log = db.StringField()
 
+class Project(db.Document):
+    project_id = db.StringField(required=True, unique=True)
+    public_token = db.StringField(required=True)
+    project_status = db.IntField(required=True)
+    sources = db.ListField()
+    metrics = db.ListField()
+    similarity_list = db.ListField()
+    alignment_list = db.ListField()
+    similarity_smoss_list = db.ListField()
+    alignment_smoss_list = db.ListField()
+    log = db.StringField()
+
 class Counter(db.Document):
     name = db.StringField()
     count_user = db.IntField()

@@ -176,7 +176,7 @@
                   <div class="card-header">
                     <h3 class="card-title">Users list</h3>
                     <div class="card-tools">
-                      <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-user">Create</a>
+                      <button class="btn btn-success" data-toggle="modal" data-target="#modal-create-user">Create</button>
                     </div>
                   </div>
                   <!-- /.card-header -->
@@ -259,13 +259,19 @@
 <!-- AdminLTE App -->
 <script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
 <script>
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 5000
+  })
   $(document).ready(function() {
 	$.ajaxSetup({
 	  headers: {
 		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
 	  }
 	});
-
+  var token ="{{session['token']}}";
 	$(document).on("click",".btn-delete",function(){
 	  user_id = $(this).attr('user_id');
 	  if(confirm("Bạn chắc chắn muốn xóa chứ?")){
@@ -273,13 +279,21 @@
 		  type: "DELETE",
 		  contentType: 'application/json',
 		  url: "/api/users/" + user_id,
+      headers: {
+                Authorization: 'Bearer '+token
+            },
 		  success: function (data) {
-        console.log('success')
-        alert(data['info'])
+        Toast.fire({
+                    icon: 'info',
+                    title: data.responseText
+                })
         location.reload()
 		  },
 		  error: function (data) {
-  			console.log('Error:', data['error']);
+        Toast.fire({
+                    icon: 'error',
+                    title: data.responseText
+                })
 		  }
 		});
 	  }
