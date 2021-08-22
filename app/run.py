@@ -6,14 +6,14 @@ sys.path.append(os.path.join(WORKING_DIR, './'))
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify
 from models.models import db
 import config
-# import rqmonitor
+import rq_dashboard
 
 # config 
 app = Flask(__name__)
 app.config.from_object('config')
-# app.config.from_object(rqmonitor.defaults)
-# app.config['RQ_MONITOR_REDIS_URL'] = 'redis://:{}@rq-server:6379'.format(config.REDIS_SERVER_PASS)
-# app.register_blueprint(rqmonitor.monitor_blueprint, url_prefix="/rq")
+app.config.from_object(rq_dashboard.default_settings)
+app.config['RQ_DASHBOARD_REDIS_URL'] = 'redis://:{}@rq-server:6379'.format(config.REDIS_SERVER_PASS)
+app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq", username=config.RQ_DASHBOARD_LOGIN, password=config.RQ_DASHBOARD_PASS)
 db.init_app(app)
 
 #import controller
