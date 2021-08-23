@@ -3,7 +3,6 @@ from flask import Flask, render_template, url_for, request, redirect, \
 from scoss import Scoss
 from models.models import *
 from zipfile import ZipFile
-from config import URL
 from werkzeug.utils import secure_filename
 from controllers.similarity_checker import do_job
 from controllers.task_queue import tq
@@ -131,8 +130,14 @@ def add_zip(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         sources = data_problem.sources
         with ZipFile(request.files['file'], 'r') as zf:
-            zfile = zf.namelist()
-            for file in zfile:
+            zfiles = zf.namelist()
+            supported_files = [f for f in zfiles if f.endswith(config.SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+            if len(supported_files) != len(zfiles):
+                # zfiles contains some unsupported files: wrong extensions, wrong directories,...
+                # Push some notification in the future
+                unsupported_files = set(zfiles) - set(supported_files)
+                print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+            for file in supported_files:
                 try:
                     source_str = zf.read(file).decode('utf-8')
                 except:
@@ -295,7 +300,7 @@ def run_source(problem_id):
                     "problem_status": Status.waiting
                 }
                 url_status = "{}/api/problems/{}/status".format(
-                    URL, str(problem_id))
+                    config.URL, str(problem_id))
 
                 requests.put(url=url_status, json=doc_status)
                 tq.enqueue(do_job, args=(problem_id, config.JOB_TIMEOUT), job_timeout=1000)

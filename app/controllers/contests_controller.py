@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import shutil
 from zipfile import ZipFile
 from models.models import *
-from config import URL
+from config import URL, SUPPORTED_EXTENSIONS
 import requests
 import io
 
@@ -130,15 +130,18 @@ def add_zip(contest_id):
         ----file2.cpp
         ----file3.cpp
     """
-    # print("hello")
     try: 
         contest_list = {}
         # print(request.files['file'], flush=True)
         with ZipFile(request.files['file'], 'r') as zf:
-            zfile = zf.namelist()
-            # print(zfile)
-
-            for file in zfile:
+            zfiles = zf.namelist()
+            supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+            if len(supported_files) != len(zfiles):
+                # zfiles contains some unsupported files: wrong extensions, wrong directories,...
+                # Push some notification in the future
+                unsupported_files = set(zfiles) - set(supported_files)
+                print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+            for file in supported_files:
                 if len(file.split('/')) > 2 and file.split('/')[-1] != '':
                     try:
                         source_str = zf.read(file).decode('utf-8')
@@ -161,7 +164,7 @@ def add_zip(contest_id):
                             'source_str': source_str
                         }
                         contest_list[file.split('/')[-2]].append(data_doc)
-        url_contest = URL + '/api/contests/'+contest_id+'/problems/add'
+        url_contest = URL + '/api/contests/{}/problems/add'.format(contest_id)
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key})
             if 'problem_id' in req.json().keys():
