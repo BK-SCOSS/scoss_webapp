@@ -69,7 +69,7 @@ def admin_required(fn):
         verify_jwt_in_request()
         claims = get_jwt()
         if int(claims['sub']['role']) != 0:
-            return jsonify(error='Yêu cầu quyền admin.'), 403
+            return jsonify(error='request admin role permission'), 403
         else:
             return fn(*args, **kwargs)
     return wrapper

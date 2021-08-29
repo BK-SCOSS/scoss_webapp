@@ -136,7 +136,7 @@ def add_zip(contest_id):
     try: 
         contest_list = {}
         if ZipFile(request.files["file"], "r").testzip() is not None:
-            return jsonify({"error":"Tệp zip bị hỏng"}),400
+            return jsonify({"error":"The zip file is corrupted"}),400
         with ZipFile(request.files['file'], 'r') as zf:
             zfile = zf.namelist()
             for file in zfile:
