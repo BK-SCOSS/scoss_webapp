@@ -1,13 +1,13 @@
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, flash
 from scoss import smoss
 import requests
 from sctokenizer import Source
 from scoss import Scoss
 from scoss.metrics import all_metrics
-from models.models import db
+from models.models import db, MessageStatus
 from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import Environment
 from config import URL
@@ -55,10 +55,11 @@ def add_zip_file(contest_id):
 					zip_file = request.files['file'].read()					
 					url = URL + '/api/contests/{}/from_zip'.format(contest_id)
 					req = requests.post(url=url, files={'file': zip_file})
-					if 'error' in req.json():
-						return redirect(url_for('problems_page.problem', contest_id= contest_id, error=req.json()['error']))
-					else:	
-						return redirect(url_for('problems_page.problem', contest_id= contest_id))
+					if 'error' in req.json().keys():
+						flash(req.json()['error'], MessageStatus.error)
+					else: 
+						flash("Successfully import!", MessageStatus.success)
+					return redirect(url_for('problems_page.problem', contest_id= contest_id))
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
 	return redirect(url_for('login_page.login_page'))
 

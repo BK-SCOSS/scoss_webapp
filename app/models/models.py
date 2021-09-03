@@ -9,6 +9,11 @@ class Status():
     running = 4
     checked = 5
 
+class MessageStatus():
+    error = 'danger'
+    success = 'success'
+    warning = 'warning'
+
 class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)

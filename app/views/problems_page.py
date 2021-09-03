@@ -3,10 +3,10 @@ import sys
 import requests
 import scoss
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, Response, stream_with_context
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, Response, stream_with_context, flash
 from sctokenizer import Source
 from scoss.metrics import all_metrics
-from models.models import db
+from models.models import db, MessageStatus
 from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import Environment
 from config import URL
@@ -90,6 +90,10 @@ def add_zip_file(problem_id):
 					zip_file = request.files['file'].read()					
 					url = URL + '/api/problems/{}/from_zip'.format(problem_id)
 					req = requests.post(url=url, files={'file': zip_file})
+					if 'error' in req.json().keys():
+						flash(req.json()['error'], MessageStatus.error)
+					else: 
+						flash("Successfully import!", MessageStatus.success)
 					return redirect(url_for('problems_page.source', problem_id= problem_id))
 				return redirect(url_for('problems_page.source', problem_id= problem_id))
 	return redirect(url_for('login_page.login_page'))

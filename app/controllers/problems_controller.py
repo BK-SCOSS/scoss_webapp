@@ -1,5 +1,6 @@
 from flask import Flask, render_template, url_for, request, redirect, \
     session, jsonify, send_file, Blueprint, stream_with_context, Response
+from flask.helpers import flash
 from scoss import Scoss
 from models.models import *
 from zipfile import ZipFile
@@ -136,7 +137,8 @@ def add_zip(problem_id):
                 # zfiles contains some unsupported files: wrong extensions, wrong directories,...
                 # Push some notification in the future
                 unsupported_files = set(zfiles) - set(supported_files)
-                print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+                message = 'Your zip file contains some unexpected files: ' + unsupported_files
+                flash(message, MessageStatus.warning)
             for file in supported_files:
                 try:
                     source_str = zf.read(file).decode('utf-8')
