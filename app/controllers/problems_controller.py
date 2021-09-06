@@ -1,9 +1,9 @@
 from flask import Flask, render_template, url_for, request, redirect, \
     session, jsonify, send_file, Blueprint, stream_with_context, Response
-from flask.helpers import flash
 from scoss import Scoss
 from models.models import *
 from zipfile import ZipFile
+from config import URL
 from werkzeug.utils import secure_filename
 from controllers.similarity_checker import do_job
 from controllers.task_queue import tq
@@ -131,15 +131,8 @@ def add_zip(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         sources = data_problem.sources
         with ZipFile(request.files['file'], 'r') as zf:
-            zfiles = zf.namelist()
-            supported_files = [f for f in zfiles if f.endswith(config.SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
-            if len(supported_files) != len(zfiles):
-                # zfiles contains some unsupported files: wrong extensions, wrong directories,...
-                # Push some notification in the future
-                unsupported_files = set(zfiles) - set(supported_files)
-                message = 'Your zip file contains some unexpected files: ' + unsupported_files
-                flash(message, MessageStatus.warning)
-            for file in supported_files:
+            zfile = zf.namelist()
+            for file in zfile:
                 try:
                     source_str = zf.read(file).decode('utf-8')
                 except:
@@ -191,6 +184,7 @@ def get_results(problem_id):
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
         problem_name = data_problem.problem_name
+        contest_id = data_problem.contest_id
         similarity_list = data_problem.similarity_list
         similarity_smoss_list = data_problem.similarity_smoss_list
         metrics = data_problem.metrics
@@ -241,7 +235,8 @@ def get_results(problem_id):
             return jsonify({'problem_id': problem_id, 'results': [], 'problem_name': problem_name}), 200
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id, 'results': list(res.values()), 'problem_name': problem_name}), 200
+    return jsonify({'problem_id': problem_id, 'results': list(res.values()), 
+                    'problem_name': problem_name, 'contest_id': contest_id}), 200
 
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods=['GET'])
@@ -302,7 +297,7 @@ def run_source(problem_id):
                     "problem_status": Status.waiting
                 }
                 url_status = "{}/api/problems/{}/status".format(
-                    config.URL, str(problem_id))
+                    URL, str(problem_id))
 
                 requests.put(url=url_status, json=doc_status)
                 tq.enqueue(do_job, args=(problem_id, config.JOB_TIMEOUT), job_timeout=1000)

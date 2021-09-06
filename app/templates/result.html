@@ -58,11 +58,11 @@
 <script>
    var indexLastColumn = $("#resultTable").find('tr')[0].cells.length-1;
   $('#resultTable').DataTable({
-        columnDefs: [ {
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
-        }],
+        processing: true,
+        serverSide: true,
+        ajax: {
+          url: '/api/contests/<contest_id>/results/dataTable'
+        },
         pageLength: 50,
         "dom": 'Bfrtip',
         "buttons": [
@@ -70,5 +70,18 @@
         ],
         order: [[indexLastColumn, "desc"]]
     })
+    // $('#resultTable').DataTable({
+    //     columnDefs: [ {
+    //         "searchable": false,
+    //         "orderable": false,
+    //         "targets": 0
+    //     }],
+    //     pageLength: 50,
+    //     "dom": 'Bfrtip',
+    //     "buttons": [
+    //       'csv'
+    //     ],
+    //     order: [[indexLastColumn, "desc"]]
+    // })
 </script>
 {% endblock %}

@@ -4,7 +4,7 @@ from scoss import Scoss
 from scoss import SMoss
 from scoss.metrics import all_metrics
 from sctokenizer import Source
-from models.models import Status
+from models.models import *
 import config
 import timeout_decorator
 
@@ -144,6 +144,27 @@ def do_job(problem_id, timeout=510):
 
     try:
         logs = run_problem_with_timeout(problem_id, timeout=timeout)
+        url_problem_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
+        res = requests.get(url=url_problem_result)
+        if(len(res.json()['results']) > 0):
+            contest_id = res.json()['contest_id']
+            problem_id = res.json()['problem_id']
+            problem_name = res.json()['problem_name']
+            data = []
+            for result in res.json()['results']:
+                doc = {
+                    "source1": result['source1'],
+                    "source2": result['source2'],
+                    "scores": result['scores'],
+                    "problem_id": problem_id,
+                    "problem_name": problem_name
+                }
+                data.append(doc)
+            doc_result = {
+                "data": data
+            }
+            url_contest_result = "{}/api/contests/{}/results".format(config.API_URI_SR, str(contest_id))
+            requests.put(url=url_contest_result, json=doc_result)
         if len(logs['exception']) > 0:
             update_status_failed(problem_id)
             raise Exception

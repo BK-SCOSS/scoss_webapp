@@ -215,6 +215,15 @@ def get_result(contest_id):
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
 
+@contests_controller.route('/api/contests/<contest_id>/results', methods = ['PUT'])
+def update_result(contest_id):
+    try:
+        data = request.json['data']
+        Contest.objects(contest_id=contest_id).update(results=data)
+        return jsonify({'contest_id': contest_id, 'status': 'Success'}), 200
+    except Exception as e:
+        return jsonify({"error": "Exception: {}".format(e)}), 400
+
 @contests_controller.route('/api/contests/<contest_id>/check_status', methods = ['GET'])
 def check_status(contest_id):
     try:
