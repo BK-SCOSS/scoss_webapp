@@ -216,8 +216,8 @@
     var problem_id = '{{problem_id}}'
     var metrics = {{ metrics| tojson }}
 </script>
-<script src="{{ url_for('static', filename = 'main.js') }}"></script>
-<script src="{{ url_for('static', filename = 'source.js') }}"></script>
+<script id="token" src="{{ url_for('static', filename = 'main.js', token=session['token']) }}"></script>
+<script src="{{ url_for('static', filename = 'source.js', token=session['token']) }}"></script>
 <script>
     t = $('#source-table').DataTable({
         "columnDefs": [ {

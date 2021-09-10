@@ -1,17 +1,14 @@
 from flask import Flask, render_template, url_for, request, redirect, \
     session, jsonify, send_file, Blueprint, stream_with_context, Response
-from scoss import Scoss
 from models.models import *
 from zipfile import ZipFile
-from werkzeug.utils import secure_filename
+from config import API_URI, API_URI_SR, URL
 from controllers.similarity_checker import do_job
 from controllers.task_queue import tq
-from models.models import Status
-
-import json
+# from models.models import Status
+from flask_jwt_extended import jwt_required
+from utils import make_unique
 import time
-import os
-import shutil
 import requests
 import config
 
@@ -19,17 +16,11 @@ problems_controller = Blueprint('problems_controller', __name__)
 
 
 @problems_controller.route('/api/contests/<contest_id>/problems/add', methods=['POST'])
+@jwt_required()
 def add_problem(contest_id):
     try:
-        if len(Counter.objects) == 0:
-            problem_id = 0
-            Counter(name='count', count_user=0,
-                    count_problem=0, count_contest=0).save()
-        else:
-            problem_id = Counter.objects.get(name='count').count_problem + 1
-            Counter.objects(name='count').update(count_problem=problem_id)
-            problem_id += 1
-        problem_id = str(problem_id)
+        timestamp = str(int(time.time()))
+        problem_id = make_unique(timestamp)
         problem_name = request.json['problem_name']
         if problem_name == '':
             return jsonify({'error': "Problem name must not be empty"}), 400
@@ -40,19 +31,20 @@ def add_problem(contest_id):
         data_problem = Problem.objects(
             user_id=user_id, contest_id=contest_id, problem_name=problem_name)
         if len(data_problem) > 0:
-            return jsonify({'error': "The problem name already exists"}), 400
+            return jsonify({'error': "The problem name may already exist"}), 400
         Problem(problem_id=problem_id, problem_name=problem_name,
-                problem_status=problem_status, contest_id=contest_id, user_id=user_id).save()
+                problem_status=problem_status, contest_id=contest_id, user_id=user_id, metrics=list([])).save()
         return jsonify({'problem_id': problem_id}), 200
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
 
 
 @problems_controller.route('/api/contests/<contest_id>/problems', methods=['GET'])
+@jwt_required()
 def problems(contest_id):
     try:
         data_problems = Problem.objects(contest_id=contest_id)
-        metrics = Contest.objects(contest_id=contest_id).metrics
+        metrics = Contest.objects(contest_id=contest_id).first().metrics
         res = []
         for data_problem in data_problems:
             temp = data_problem.to_mongo()
@@ -64,6 +56,7 @@ def problems(contest_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>', methods=['GET'])
+@jwt_required()
 def get_problem(problem_id):
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
@@ -85,6 +78,7 @@ def get_problem(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>', methods=['DELETE'])
+@jwt_required()
 def delete_problem(problem_id):
     try:
         Problem.objects(problem_id=problem_id).delete()
@@ -94,19 +88,22 @@ def delete_problem(problem_id):
     return jsonify({'info': info})
 
 @problems_controller.route('/api/problems/<problem_id>/status', methods=['PUT'])
+@jwt_required()
 def updata_status(problem_id):
     try:
         problem_status = request.json['problem_status']
         Problem.objects(problem_id=problem_id).update(
             problem_status=problem_status)
         contest_id = Problem.objects.get(problem_id=problem_id).contest_id
-        requests.get(url="{}/api/contests/{}/check_status".format(config.API_URI_SR, contest_id))
+        requests.get(url="{}/api/contests/{}/check_status".format(API_URI_SR, contest_id),
+        headers={'Authorization': request.headers['Authorization']})
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
 
 
 @problems_controller.route('/api/problems/<problem_id>/status', methods=['GET'])
+@jwt_required()
 def get_status(problem_id):
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
@@ -121,6 +118,7 @@ def get_status(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>/from_zip', methods=['POST'])
+@jwt_required()
 def add_zip(problem_id):
     """
     folder:
@@ -167,6 +165,7 @@ def add_zip(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>/sources/add', methods=['POST'])
+@jwt_required()
 def add_source(problem_id):
     try:
         mask = request.form['mask']
@@ -203,6 +202,7 @@ def add_source(problem_id):
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/sources/delete_all', methods=['DELETE'])
+@jwt_required()
 def delete_all_sources(problem_id):
     try:
         Problem.objects(problem_id=problem_id).update(sources=[])
@@ -292,6 +292,7 @@ def get_result_smoss(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods=['PUT'])
+@jwt_required()
 def update_result_scoss(problem_id):
     try:
         similarity_list = request.json['similarity_list']
@@ -304,6 +305,7 @@ def update_result_scoss(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>/results/smoss', methods=['PUT'])
+@jwt_required()
 def update_result_smoss(problem_id):
     try:
         similarity_smoss_list = request.json['similarity_smoss_list']
@@ -316,8 +318,10 @@ def update_result_smoss(problem_id):
 
 
 @problems_controller.route('/api/problems/<problem_id>/run', methods=['POST'])
+@jwt_required()
 def run_source(problem_id):
     try:
+        # print(problem_id)
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
@@ -326,17 +330,20 @@ def run_source(problem_id):
                 doc_status = {
                     "problem_status": Status.waiting
                 }
-                url_status = "{}/api/problems/{}/status".format(
-                    config.URL, str(problem_id))
-
-                requests.put(url=url_status, json=doc_status)
-                tq.enqueue(do_job, args=(problem_id, config.JOB_TIMEOUT), job_timeout=1000)
+                url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
+                req = requests.put(url=url_status, json=doc_status,\
+                    headers={'Authorization': request.headers['Authorization']})
+                if req.status_code != 200: 
+                    return jsonify(req.json()), 400
+                # print(tq.count)
+                # tq.empty()
+                tq.enqueue(do_job, args=(problem_id, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
     except Exception as e:
         raise e
-        return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/sources', methods=['GET'])
+@jwt_required()
 def get_source(problem_id):
     try:
         source1 = request.args.get('source1')
@@ -359,22 +366,29 @@ def get_source(problem_id):
     return jsonify({'problem_id': problem_id, 'sources': sources}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/reset', methods=['PUT'])
+@jwt_required()
 def reset(problem_id):
     try:
         Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
             similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
         contest_id = Problem.objects.get(problem_id=problem_id).contest_id
-        requests.get(url="{}/api/contests/{}/check_status".format(config.API_URI_SR, contest_id))
+        requests.get(url="{}/api/contests/{}/check_status".format(API_URI_SR, contest_id),
+        headers={'Authorization': request.headers['Authorization']})
         info = 'Reset all!'
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'info': info}), 200
 
 @problems_controller.route('/problems/<problem_id>/status')
+# @jwt_required()
 def status(problem_id):
     def check_status(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
+        # print(data_problem.to_mongo())
         yield 'data: {}\n\n'.format(data_problem.problem_status)
 
     return Response(check_status(problem_id), mimetype="text/event-stream")
 
+# @problems_controller.route('/api/test')
+# def test():
+#     return jsonify({"test": "123"})

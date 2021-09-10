@@ -3,7 +3,8 @@ const failed = 2
 const waiting = 3
 const running = 4
 const checked = 5
-
+params = new URL(document.getElementById("token").src).searchParams;
+var token = params.get('token')
 $(document).ready(function() {
     $.ajaxSetup({
     headers: {
@@ -67,6 +68,9 @@ $(document).ready(function() {
             type: "PUT",
             contentType: 'application/json',
             url: url,
+            headers: {
+                Authorization: 'Bearer '+token
+            },
             success: function (data) {
                 console.log(data['info'])
                 location.reload();
@@ -74,7 +78,7 @@ $(document).ready(function() {
             error: function (data) {
                 Toast.fire({
                     icon: 'error',
-                    title: data['error']
+                    title: data.responseText
                 })
             }
         });

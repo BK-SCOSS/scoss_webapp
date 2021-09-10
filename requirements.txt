@@ -53,3 +53,4 @@ rq-dashboard
 rq
 tqdm
 python-dotenv
+flask_jwt_extended

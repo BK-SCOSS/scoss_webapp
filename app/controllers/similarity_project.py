@@ -67,30 +67,26 @@ def cal_smoss(sources, metrics):
     return matches, comparisons
 
 
-def run_problem_with_timeout(problem_id, header, timeout=510):
+def run_project_with_timeout(project_id, timeout=510):
     # @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
-    def run_problem(problem_id, header, _timeout):
+    def run_project(project_id, _timeout):
         logs = {'str': '', 'exception': []}
-        logs['str'] += f"Running problem {problem_id}\n"
-        url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
-        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
-        url_scoss = "{}/api/problems/{}/results/scoss".format(config.API_URI_SR, str(problem_id))
-        url_smoss = "{}/api/problems/{}/results/smoss".format(config.API_URI_SR, str(problem_id))
+        logs['str'] += f"Running project {project_id}\n"
+        url = "{}/api/project/{}".format(config.API_URI_SR, str(project_id))
+        url_status = "{}/api/project/{}/status".format(config.API_URI_SR, str(project_id))
+        url_scoss = "{}/api/project/{}/results/scoss".format(config.API_URI_SR, str(project_id))
+        url_smoss = "{}/api/project/{}/results/smoss".format(config.API_URI_SR, str(project_id))
 
-        req = requests.get(url, headers={'Authorization': header})
-        data_problem = req.json()
-        contest_id = data_problem['contest_id']
-
-        req_status = requests.get(url=url_status, headers={'Authorization': header})
-            
+        req = requests.get(url)
+        data_project = req.json()
         doc_status = {
-            "problem_status": Status.running
+            "project_status": Status.running
         }
-        requests.put(url=url_status, json=doc_status, headers={'Authorization': header})
+        requests.put(url=url_status, json=doc_status )
 
         metric_list = []
         scoss_metrics = []
-        for met in data_problem['metrics']:
+        for met in data_project['metrics']:
             metric_list.append(met['name'])
             if met['name'] in all_scoss_metric_names:
                 scoss_metrics.append(met)
@@ -98,7 +94,7 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
         # run scoss
         logs['str'] += f"Running scoss\n"
         if len(scoss_metrics) > 0:
-            similarity_list = cal_scoss(data_problem['sources'], scoss_metrics)
+            similarity_list = cal_scoss(data_project['sources'], scoss_metrics)
         else:
             similarity_list = []
         logs['str'] += "Done scoss\n"
@@ -107,12 +103,12 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
             "similarity_list": similarity_list,
             "alignment_list": []
         }
-        req = requests.put(url=url_scoss, json=doc_scoss, headers={'Authorization': header})
+        req = requests.put(url=url_scoss, json=doc_scoss)
 
         # run smoss
         logs['str'] += f"Running smoss\n"
         if 'moss_score' in metric_list:
-            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
+            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_project['sources'], data_project['metrics'])
         else:
             similarity_smoss_list, alignment_smoss_list = [], []
         logs['str'] += "Done smoss\n"
@@ -121,33 +117,31 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
             "similarity_smoss_list": similarity_smoss_list,
             "alignment_smoss_list": alignment_smoss_list
         }
-        requests.put(url=url_smoss, json=doc_smoss, headers={'Authorization': header})
+        requests.put(url=url_smoss, json=doc_smoss)
 
         # update status
         doc_status = {
-            "problem_status": Status.checked
+            "project_status": Status.checked
         }
-        requests.put(url=url_status, json=doc_status, headers={'Authorization': header})       
+        requests.put(url=url_status, json=doc_status)       
         # requests.get(url="{}/api/contests/{}/check_status".format(config.API_URI_SR, contest_id))
         return logs
-    return run_problem(problem_id, header,_timeout=timeout-5)
+    return run_project(project_id,_timeout=timeout-5)
 
-def do_job(problem_id, header, timeout=510):
-    def update_status_failed(problem_id, header):
-        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
+def do_project(project_id, timeout=510):
+    def update_status_failed(project_id):
+        url_status = "{}/api/project/{}/status".format(config.API_URI_SR, str(project_id))
         # update status
         doc_status = {
-            "problem_status": Status.failed
+            "project_status": Status.failed
         }
-        requests.put(url=url_status, json=doc_status, headers={'Authorization': header})       
-        requests.get(url="{}/api/contests/check_status".format(config.API_URI_SR),\
-            headers={'Authorization': header})
+        requests.put(url=url_status, json=doc_status)       
 
     try:
-        logs = run_problem_with_timeout(problem_id, header, timeout)
+        logs = run_project_with_timeout(project_id, timeout)
         if len(logs['exception']) > 0:
-            update_status_failed(problem_id, header)
+            update_status_failed(project_id)
             raise Exception
     except Exception as e:
-        update_status_failed(problem_id, header)
+        update_status_failed(project_id)
         raise e
