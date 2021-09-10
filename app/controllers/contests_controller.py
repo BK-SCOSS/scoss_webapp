@@ -25,10 +25,12 @@ def add_contest(user_id):
             contest_id += 1
         contest_id = str(contest_id)
         contest_name = request.json['contest_name']
+        if contest_name == '':
+            return jsonify({'error': "Contest name must not be empty"}),400
         contest_status = Status.init
         data = Contest.objects(user_id=user_id, contest_name=contest_name)
         if len(data) > 0:
-            return jsonify({'error': "The contest name may already exist"}), 400
+            return jsonify({'error': "The contest name already exists"}), 400
         Contest(contest_id=contest_id, user_id=user_id, contest_name=contest_name, contest_status=contest_status).save()
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
@@ -141,29 +143,35 @@ def add_zip(contest_id):
                 # Push some notification in the future
                 unsupported_files = set(zfiles) - set(supported_files)
                 print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+            list_name_contain_space = []
             for file in supported_files:
-                if len(file.split('/')) > 2 and file.split('/')[-1] != '':
+                file_parts = file.split('/')
+                filename = file_parts[-1]
+                if ' ' in filename:
+                    list_name_contain_space.append(filename)
+                    filename = filename.replace(' ', '_')
+                if len(file_parts) > 2 and filename != '':
                     try:
                         source_str = zf.read(file).decode('utf-8')
                     except:
                         source_str = zf.read(file).decode('cp437')
-                    if file.split('/')[-2] in contest_list:
+                    if file_parts[-2] in contest_list:
                         data_doc = {
-                            "pathfile": file.split('/')[-1],
-                            "lang": file.split('.')[-1],
-                            'mask': '',
+                            "pathfile": filename,
+                            "lang": filename.split('.')[-1],
+                            'mask': filename,
                             'source_str': source_str
                         }
-                        contest_list[file.split('/')[-2]].append(data_doc)
+                        contest_list[file_parts[-2]].append(data_doc)
                     else:
-                        contest_list[file.split('/')[-2]] = []
-                        data_doc = {
-                            "pathfile": file.split('/')[-1],
-                            "lang": file.split('.')[-1],
-                            'mask': '',
-                            'source_str': source_str
-                        }
-                        contest_list[file.split('/')[-2]].append(data_doc)
+                        contest_list[file_parts[-2]] = [
+                            {
+                                "pathfile": filename,
+                                "lang": filename.split('.')[-1],
+                                'mask': filename,
+                                'source_str': source_str
+                            }
+                        ]
         url_contest = URL + '/api/contests/{}/problems/add'.format(contest_id)
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key})

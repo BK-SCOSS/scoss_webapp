@@ -31,6 +31,8 @@ def add_problem(contest_id):
             problem_id += 1
         problem_id = str(problem_id)
         problem_name = request.json['problem_name']
+        if problem_name == '':
+            return jsonify({'error': "Problem name must not be empty"}), 400
         problem_status = Status.init
         req = Contest.objects.get(contest_id=contest_id)
         contest_id = contest_id
@@ -38,7 +40,7 @@ def add_problem(contest_id):
         data_problem = Problem.objects(
             user_id=user_id, contest_id=contest_id, problem_name=problem_name)
         if len(data_problem) > 0:
-            return jsonify({'error': "The problem name may already exist"}), 400
+            return jsonify({'error': "The problem name already exists"}), 400
         Problem(problem_id=problem_id, problem_name=problem_name,
                 problem_status=problem_status, contest_id=contest_id, user_id=user_id).save()
         return jsonify({'problem_id': problem_id}), 200
@@ -137,19 +139,27 @@ def add_zip(problem_id):
                 # Push some notification in the future
                 unsupported_files = set(zfiles) - set(supported_files)
                 print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+            list_name_contain_space = []
             for file in supported_files:
                 try:
                     source_str = zf.read(file).decode('utf-8')
                 except:
                     source_str = zf.read(file).decode('cp437')
-                if len(file.split('/')) > 1 and file.split('/')[-1] != '':
+                file_parts = file.split('/')
+                filename = file_parts[-1]
+                if ' ' in filename:
+                    list_name_contain_space.append(filename)
+                    filename = filename.replace(' ', '_')
+                if len(file_parts) > 1 and filename != '':
                     data_doc = {
-                        "pathfile": file.split('/')[-1],
-                        "lang": file.split('.')[-1],
-                        'mask': '',
+                        "pathfile": filename,
+                        "lang": filename.split('.')[-1],
+                        'mask': filename,
                         'source_str': source_str
                     }
                     sources.append(data_doc)
+            if list_name_contain_space:
+                print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
         Problem.objects(problem_id=problem_id).update(sources=sources)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
@@ -159,13 +169,30 @@ def add_zip(problem_id):
 @problems_controller.route('/api/problems/<problem_id>/sources/add', methods=['POST'])
 def add_source(problem_id):
     try:
-        data_problem = Problem.objects.get(problem_id=problem_id)
-        sources = data_problem.sources
         mask = request.form['mask']
         file = request.files['files']
+        filename = file.filename
+        extension = filename.split('.')[-1]
+        if mask == '':
+            return jsonify({'error': "Source name must not be empty"}), 400
+
+        if '.{}'.format(extension) not in config.SUPPORTED_EXTENSIONS:
+            return jsonify({'error': "'{}' extension is not supported yet".format(extension)}), 400
+
+        data_problem = Problem.objects.get(problem_id=problem_id)
+        sources = data_problem.sources
+        exist_masks = set([source['mask'] for source in sources])
+        
+        if ' ' in mask:
+            print('These are spaces in your filename, we replace them with "_"', flush=True)
+            mask = mask.replace(' ', '_')
+
+        if mask in exist_masks:
+            return jsonify({'error': "Source name '{}' already exists".format(mask)}), 400
+        
         data_doc = {
-            "pathfile": file.filename,
-            "lang": file.filename.split('.')[-1],
+            "pathfile": filename,
+            "lang": extension,
             'mask': mask,
             'source_str': file.read().decode('UTF-8')
         }
