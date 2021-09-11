@@ -11,6 +11,7 @@ from utils import make_unique
 import time
 import requests
 import config
+import copy
 
 problems_controller = Blueprint('problems_controller', __name__)
 
@@ -218,38 +219,28 @@ def get_results(problem_id):
         problem_name = data_problem.problem_name
         similarity_list = data_problem.similarity_list
         similarity_smoss_list = data_problem.similarity_smoss_list
-        metrics = data_problem.metrics
-        metric_list = []
+        metric_list = [metric['name'] for metric in data_problem.metrics]
+        scoss_res = {}
+        smoss_res = {}
         res = {}
-        moss_threshold = 0
-        for metric in metrics:
-            metric_list.append(metric['name'])
-            if metric['name'] == 'moss_score':
-                moss_threshold = metric['threshold']
+        
+        for simi_scoss in similarity_list:
+            key = hash(simi_scoss['source1']) ^ hash(simi_scoss['source2'])
+            scoss_res[key] = simi_scoss
 
-        if 'moss_score' in metric_list:
-            for simi_smoss in similarity_smoss_list:
-                key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
-                if simi_smoss['scores']['moss_score'] > moss_threshold:
-                    temp_list = simi_smoss
-                    res[key] = temp_list
-                
-            if len(metric_list) > 1:
-                for simi in similarity_list:
-                    key = hash(simi['source1']) ^ hash(simi['source2'])
-                    if key in res.keys():
-                        for metric in metric_list:
-                            if metric != 'moss_score':
-                                res[key]['scores'][metric] = simi['scores'][metric]
-            for k in list(res):
-                if len(res[k]['scores']) == 1:
-                    if 'moss_score' in res[k]['scores'].keys():
-                        del res[k]
+        for simi_smoss in similarity_smoss_list:
+            key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
+            smoss_res[key] = simi_smoss
+
+        if 'moss_score' in metric_list and len(metric_list) > 1:
+            res = copy.deepcopy(scoss_res)
+            for key in scoss_res:
+                if key in smoss_res.keys():
+                    res[key]['scores']['moss_score'] = smoss_res[key]['scores']['moss_score']
+                else: 
+                    del res[key]
         else:
-            for simi in similarity_list:
-                key = hash(simi['source1']) ^ hash(simi['source2'])
-                temp_list = simi
-                res[key] = temp_list
+            res = {**scoss_res, **smoss_res}
         check_zero = 0
         for key in res:
             total = 0
@@ -321,7 +312,6 @@ def update_result_smoss(problem_id):
 @jwt_required()
 def run_source(problem_id):
     try:
-        # print(problem_id)
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)

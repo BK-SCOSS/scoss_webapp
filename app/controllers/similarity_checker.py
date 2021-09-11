@@ -51,6 +51,7 @@ def cal_smoss(sources, metrics):
         lang = source['lang']
         if lang not in smosses:
             smoss = SMoss(lang=lang)
+            smoss.set_threshold(metrics[0]['threshold'])
             smosses[lang] = smoss
 
         mask = source['mask'] if source['mask'] != '' else source['pathfile']
@@ -79,9 +80,9 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
 
         req = requests.get(url, headers={'Authorization': header})
         data_problem = req.json()
-        contest_id = data_problem['contest_id']
+        # contest_id = data_problem['contest_id']
 
-        req_status = requests.get(url=url_status, headers={'Authorization': header})
+        # req_status = requests.get(url=url_status, headers={'Authorization': header})
             
         doc_status = {
             "problem_status": Status.running
@@ -90,14 +91,17 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
 
         metric_list = []
         scoss_metrics = []
+        smoss_metrics = []
         for met in data_problem['metrics']:
             metric_list.append(met['name'])
             if met['name'] in all_scoss_metric_names:
                 scoss_metrics.append(met)
+            elif met['name'] == 'moss_score':
+                smoss_metrics.append(met)
 
         # run scoss
         logs['str'] += f"Running scoss\n"
-        if len(scoss_metrics) > 0:
+        if scoss_metrics:
             similarity_list = cal_scoss(data_problem['sources'], scoss_metrics)
         else:
             similarity_list = []
@@ -108,11 +112,10 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
             "alignment_list": []
         }
         req = requests.put(url=url_scoss, json=doc_scoss, headers={'Authorization': header})
-
         # run smoss
         logs['str'] += f"Running smoss\n"
-        if 'moss_score' in metric_list:
-            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], data_problem['metrics'])
+        if smoss_metrics:
+            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], smoss_metrics)
         else:
             similarity_smoss_list, alignment_smoss_list = [], []
         logs['str'] += "Done smoss\n"
