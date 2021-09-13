@@ -1,3 +1,4 @@
+from models.models import User
 import os
 import sys
 from werkzeug.utils import secure_filename
@@ -55,14 +56,21 @@ def admin_mg():
 	url = 'http://{}:{}'.format(config.server_name, config.MONGO_PORT)
 	return redirect(url)
 
-@user.route('/users/<user_id>/update', methods=['POST'])
+@user.route('/users/<user_id>/update', methods=['GET', 'POST'])
 def update_password(user_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
+			if request.method == 'GET':
+				data = User.objects.get(user_id=user_id)
+				return render_template('profile.html', data=data)
 			if request.method == 'POST':
+				username = request.form['username']
+				email = request.form['email']
 				old_pass = request.form['old_password']
 				new_pass = request.form['new_password']
 				data_form = {
+					'username': username,
+					'email': email,
 					'old_password': old_pass,
 					'new_password': new_pass
 				}

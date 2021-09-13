@@ -6,6 +6,7 @@ from flask import jsonify
 from functools import wraps
 db = MongoEngine()
 
+
 class Status():
     init = 1
     failed = 2
@@ -22,6 +23,7 @@ class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
     password = db.StringField()
+    email = db.StringField()
     public_token = db.StringField()
     role = db.IntField() # 0- admin, 1-user
 

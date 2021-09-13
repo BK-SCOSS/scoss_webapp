@@ -45,6 +45,7 @@ $(document).ready(function() {
 		}
 	})
 
+    
     $(document).on("click",".btn-delete",function(){
         contest_id = $(this).attr('contest_id');
         Swal.fire({
@@ -68,6 +69,7 @@ $(document).ready(function() {
                     location.reload();
                 },
                 error: function (data) {
+                   
                     Toast.fire({
                     icon: 'error',
                     title: data.responseText

@@ -322,6 +322,7 @@ def update_result_smoss(problem_id):
 @jwt_required()
 def run_source(problem_id):
     try:
+        # print(problem_id)
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
