@@ -21,7 +21,12 @@ def admin():
 			if session['role'] == 0:
 				if request.method == 'GET':
 					url = URL + '/api/users'
-					data = requests.get(url=url)
+					headers = {'Authorization': "Bearer {}".format(session['token'])}		
+					data = requests.get(url=url, headers=headers)
+					print(data.json())
+					if data.status_code != 200 and 'msg' in data.json():
+						session.clear()
+						return redirect(url_for('login_page.login_page'))
 					return render_template('admin.html', data=data.json()['users'])
 				else: 
 					username = request.form['username']
@@ -29,7 +34,11 @@ def admin():
 					role = 1
 					data_form = {'username': username, 'role': role, 'password': password}
 					url = URL + '/api/users/add'
-					req = requests.post(url=url,json=data_form)
+					headers = {'Authorization': "Bearer {}".format(session['token'])}	
+					req = requests.post(url=url,json=data_form, headers=headers)
+					if req.status_code != 200 and 'msg' in req.json():
+						session.clear()
+						return redirect(url_for('login_page.login_page'))
 					if 'user_id' in req.json().keys():
 						return redirect(url_for('users_page.admin'))
 					else:
@@ -37,15 +46,13 @@ def admin():
 
 @user.route('/admin/redis', methods=['GET'])
 def admin_rq():
-	server_name = request.host.split(":")[0]
-	url = 'http://{}:{}/rq'.format(server_name, config.REDIS_PORT)
-	return redirect(url)
+	return redirect('/rq')
 
 @user.route('/admin/mongo', methods=['GET'])
 def admin_mg():
-	server_name = request.host.split(":")[0]
-	# print("server_name " + server_name, flush=True)
-	url = 'http://{}:{}'.format(server_name, config.MONGO_PORT)
+	if not config.server_name:
+		config.server_name = request.host.split(":")[0]
+	url = 'http://{}:{}'.format(config.server_name, config.MONGO_PORT)
 	return redirect(url)
 
 @user.route('/users/<user_id>/update', methods=['POST'])
@@ -61,7 +68,11 @@ def update_password(user_id):
 				}
 				base_url = request.referrer
 				url = URL + '/api/users/{}'.format(user_id)
-				req = requests.put(url=url, json=data_form)
+				headers = {'Authorization': "Bearer {}".format(session['token'])}	
+				req = requests.put(url=url, json=data_form, headers=headers)
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				if 'info' in req.json().keys():
 					return redirect(base_url)
 	else:

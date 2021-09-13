@@ -33,7 +33,6 @@
 						data-target="#modal-create-contest">Create</a>
 				</div>
 			</div>
-
 			<!-- /.card-header -->
 			{% if data|length > 0 %}
 			<div class="card-body table-responsive p-0">
@@ -125,5 +124,5 @@
 		});
 	}).draw()
 </script>
-<script src="{{ url_for('static', filename = 'contest.js') }}"></script>
+<script id="token" src="{{ url_for('static', filename = 'contest.js', token=session['token']) }}"></script>
 {% endblock %}

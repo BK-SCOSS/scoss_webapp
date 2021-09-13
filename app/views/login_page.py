@@ -22,22 +22,24 @@ def login_page():
 		session['logged_in'] = False 
 		username = request.form['username']
 		password = request.form['password']
-		params = {'username': username}
-		url = URL + '/api/users/username'
-		req = requests.get(url=url, params=params)
-		if 'password' in req.json().keys():
-			if check_password_hash(req.json()['password'], password):
-				session['user_id'] = req.json()['user_id']
-				session['username'] = username
-				session['role'] = req.json()['role']
-				session['logged_in'] = True
-				return redirect(url_for('home_page.index'))
-			else:
-				return render_template('login.html', info='wrong_pass')
-		return render_template('login.html', info='wrong_user')
+		url = URL + '/api/login'
+		payload = {"username": username, "password": password}
+		req = requests.post(url=url, json=payload)
+		if req.status_code == 200:
+			session['user_id'] = req.json()['user_id']
+			session['username'] = req.json()['username']
+			session['role'] = req.json()['role']
+			session['token'] = req.json()['token']
+			session['logged_in'] = True
+			return redirect(url_for('home_page.index'))
+		return render_template('login.html', info='wrong_pass')
 
 @login.route('/logout')
 def logout():
+	url = "{}/api/logout".format(URL)
+	token = session['token']
+	headers = {'Authorization': "Bearer {}".format(token)}
+	requests.get(url, headers=headers)
 	session.clear()
 	return redirect(url_for('home_page.index'))
 

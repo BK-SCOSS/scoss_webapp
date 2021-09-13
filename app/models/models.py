@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from flask_mongoengine import MongoEngine
 import datetime
+from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from flask import jsonify
+from functools import wraps
 db = MongoEngine()
 
 class Status():
@@ -19,7 +22,8 @@ class User(db.Document):
     user_id = db.StringField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
     password = db.StringField()
-    role = db.IntField()
+    public_token = db.StringField()
+    role = db.IntField() # 0- admin, 1-user
 
 class Contest(db.Document):
     contest_id = db.StringField(required=True, unique=True)
@@ -44,12 +48,35 @@ class Problem(db.Document):
     log = db.StringField()
     results = db.ListField()
 
+class Project(db.Document):
+    project_id = db.StringField(required=True, unique=True)
+    public_token = db.StringField(required=True)
+    project_status = db.IntField(required=True)
+    sources = db.ListField()
+    metrics = db.ListField()
+    similarity_list = db.ListField()
+    alignment_list = db.ListField()
+    similarity_smoss_list = db.ListField()
+    alignment_smoss_list = db.ListField()
+    log = db.StringField()
+
 class Counter(db.Document):
     name = db.StringField()
     count_user = db.IntField()
     count_problem = db.IntField()
     count_contest = db.IntField()
 
-# class Result(db.EmbeddedDocument):
-#     source1 = db.StringField()
-#     source2 = db.StringField()
+class TokenBlocklist(db.Document):
+    jti = db.StringField()
+    created_at = db.DateTimeField()
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt()
+        if int(claims['sub']['role']) != 0:
+            return jsonify(error='request admin role permission'), 403
+        else:
+            return fn(*args, **kwargs)
+    return wrapper

@@ -32,3 +32,5 @@ API_URI_SR = f'http://{APP_SELF_REF}:{APP_PORT}'
 JOB_TIMEOUT = 1000
 
 SUPPORTED_EXTENSIONS = ('.c', '.cc', '.cpp', '.py', '.java', '.php')
+
+server_name = None

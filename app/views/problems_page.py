@@ -18,8 +18,13 @@ def problem(contest_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
+				# error = request.args.get("error")
 				url = URL + '/api/contests/' + contest_id
-				req = requests.get(url=url)
+				headers = {'Authorization': "Bearer {}".format(session['token'])}		
+				req = requests.get(url=url, headers=headers)
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				if 'error' in req.json().keys():
 					flash(req.json()['error'], MessageStatus.error)
 				elif 'contest_id' in req.json().keys():
@@ -34,11 +39,18 @@ def problem(contest_id):
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
 				data = {'problem_name': problem_name}
+				headers = {'Authorization': "Bearer {}".format(session['token'])}		
 				url = URL + '/api/contests/' + contest_id +'/problems/add'
-				req = requests.post(url=url, json=data)
+				req = requests.post(url=url, json=data, headers=headers)
 				if 'error' in req.json().keys():
 					flash(req.json()['error'], MessageStatus.error)
-				return redirect(url_for('problems_page.problem', contest_id=contest_id))
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
+				if 'problem_id' in req.json().keys():
+					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
+				else:
+					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
@@ -47,7 +59,11 @@ def source(problem_id):
 		if session['logged_in'] == True:
 			if request.method == 'GET':
 				url = URL + '/api/problems/' + problem_id
-				req = requests.get(url=url)
+				headers = {'Authorization': "Bearer {}".format(session['token'])}		
+				req = requests.get(url=url, headers=headers)
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				if 'problem_id' in req.json().keys():
 					return render_template('source.html', data=req.json()['sources'], \
 						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'], \
@@ -57,10 +73,17 @@ def source(problem_id):
 				source_name = request.form['source_name']
 				data_form = {'source_name': source_name}
 				url = URL + '/api/problems/' + problem_id + '/sources/add'
-				req = requests.post(url=url,json=data_form)
+				headers = {'Authorization': "Bearer {}".format(session['token'])}
+				req = requests.post(url=url,json=data_form, headers=headers)
 				if 'error' in req.json().keys():
 					flash(req.json()['error'], MessageStatus.error)
-				return redirect(url_for('contest_page.contest'))
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
+				if 'contest_id' in req.json().keys():
+					return redirect(url_for('contest_page.contest'))
+				else:
+					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/add_file', methods=['POST'])
@@ -73,10 +96,17 @@ def add_file(problem_id):
 				filename = request.files['file'].filename
 				data_form ={'mask': mask}
 				url = URL + '/api/problems/{}/sources/add'.format(problem_id)
-				req = requests.post(url=url, data=data_form, files={'files': (filename, sourceFile)})
+				headers = {'Authorization': "Bearer {}".format(session['token'])}		
+				req = requests.post(url=url, data=data_form, files={'files': (filename, sourceFile)}, headers=headers)
 				if 'error' in req.json().keys():
 					flash(req.json()['error'], MessageStatus.error)
-				return redirect(url_for('problems_page.source', problem_id=problem_id))
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
+				if 'problem_id' in req.json().keys():
+					return redirect(url_for('problems_page.source', problem_id=problem_id))
+				else:
+					return redirect(url_for('problems_page.source', problem_id=problem_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/from_zip', methods=['POST'])
@@ -87,11 +117,15 @@ def add_zip_file(problem_id):
 				if request.files:
 					zip_file = request.files['file'].read()					
 					url = URL + '/api/problems/{}/from_zip'.format(problem_id)
-					req = requests.post(url=url, files={'file': zip_file})
+					headers = {'Authorization': "Bearer {}".format(session['token'])}		
+					req = requests.post(url=url, files={'file': zip_file}, headers=headers)
 					if 'error' in req.json().keys():
 						flash(req.json()['error'], MessageStatus.error)
 					else: 
 						flash("Successfully import!", MessageStatus.success)
+					if req.status_code != 200 and 'msg' in req.json():
+						session.clear()
+						return redirect(url_for('login_page.login_page'))
 					return redirect(url_for('problems_page.source', problem_id= problem_id))
 				return redirect(url_for('problems_page.source', problem_id= problem_id))
 	return redirect(url_for('login_page.login_page'))
@@ -128,8 +162,11 @@ def compare(problem_id):
 				# 	if simi['source1'] == source1 and simi['source2'] == source2:
 				# 		score_alignment = simi['scores'][metrics]
 				# 		break
-
-				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id), params=payload)
+				headers = {'Authorization': "Bearer {}".format(session['token'])}		
+				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id), params=payload, headers=headers)
+				if req_source.status_code != 200 and 'msg' in req_source.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				sources = req_source.json()['sources']
 				lang = sources[0]['lang']
 				

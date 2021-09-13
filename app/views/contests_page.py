@@ -22,24 +22,33 @@ def contest():
 			if request.method == 'GET':
 				user_id = session['user_id']
 				role = session['role']
+				headers = {'Authorization': "Bearer {}".format(session['token'])}
 				if int(role) == 0:
 					url = URL + '/api/contests'
-					data = requests.get(url=url)
+					data = requests.get(url=url, headers=headers)
 				else:	
 					url = URL + '/api/users/' + user_id + '/contests'
-					data = requests.get(url=url)
-	
+					data = requests.get(url=url, headers=headers)
+				print(data.json())
+				if data.status_code != 200 and 'msg' in data.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				return render_template('contest.html', data=data.json()['contests'])
 			else: 
 				# print(request.form['contest_name'])
 				user_id = session['user_id']
 				contest_name = request.form['contest_name']
+				headers = {'Authorization': "Bearer {}".format(session['token'])}
 				data_form = {'contest_name': contest_name}
 				url = URL + '/api/users/' + user_id + '/contests/add'
-				req = requests.post(url=url,json=data_form)
+				req = requests.post(url=url,json=data_form, headers=headers)
+				if req.status_code != 200 and 'msg' in req.json():
+					session.clear()
+					return redirect(url_for('login_page.login_page'))
 				if 'error' in req.json().keys():
 					flash(req.json()['error'], MessageStatus.error)
 				return redirect(url_for('contest_page.contest'))
+				
 		else:
 			return redirect(url_for('login_page.login_page'))
 	else:
@@ -51,9 +60,13 @@ def add_zip_file(contest_id):
 		if session['logged_in'] == True:
 			if request.method == 'POST':
 				if request.files:
-					zip_file = request.files['file'].read()					
+					zip_file = request.files['file'].read()		
+					headers = {'Authorization': "Bearer {}".format(session['token'])}			
 					url = URL + '/api/contests/{}/from_zip'.format(contest_id)
-					req = requests.post(url=url, files={'file': zip_file})
+					req = requests.post(url=url, files={'file': zip_file}, headers=headers)
+					if req.status_code != 200 and 'msg' in req.json():
+						session.clear()
+						return redirect(url_for('login_page.login_page'))
 					if 'error' in req.json().keys():
 						flash(req.json()['error'], MessageStatus.error)
 					else: 
