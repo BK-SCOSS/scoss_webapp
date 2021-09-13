@@ -20,7 +20,9 @@ def problem(contest_id):
 			if request.method == 'GET':
 				url = URL + '/api/contests/' + contest_id
 				req = requests.get(url=url)
-				if 'contest_id' in req.json().keys():
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
+				elif 'contest_id' in req.json().keys():
 					if len(req.json()['problems']) > 0:
 						author = req.json()['problems'][0]['user_id']
 						return render_template('problem.html', data=req.json()['problems'], \
@@ -28,17 +30,15 @@ def problem(contest_id):
 					else:
 						return render_template('problem.html', contest_id=contest_id, \
 							contest_data=req.json()['contest_data'])
-				else:
-					return render_template('problem.html', contest_id=contest_id, error=req.json()['error'])
+				return render_template('problem.html')
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
 				data = {'problem_name': problem_name}
 				url = URL + '/api/contests/' + contest_id +'/problems/add'
 				req = requests.post(url=url, json=data)
-				if 'problem_id' in req.json().keys():
-					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
-				else:
-					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
+				return redirect(url_for('problems_page.problem', contest_id=contest_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
@@ -58,10 +58,9 @@ def source(problem_id):
 				data_form = {'source_name': source_name}
 				url = URL + '/api/problems/' + problem_id + '/sources/add'
 				req = requests.post(url=url,json=data_form)
-				if 'contest_id' in req.json().keys():
-					return redirect(url_for('contest_page.contest'))
-				else:
-					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
+				return redirect(url_for('contest_page.contest'))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/add_file', methods=['POST'])
@@ -75,10 +74,9 @@ def add_file(problem_id):
 				data_form ={'mask': mask}
 				url = URL + '/api/problems/{}/sources/add'.format(problem_id)
 				req = requests.post(url=url, data=data_form, files={'files': (filename, sourceFile)})
-				if 'problem_id' in req.json().keys():
-					return redirect(url_for('problems_page.source', problem_id=problem_id))
-				else:
-					return redirect(url_for('problems_page.source', problem_id=problem_id))
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
+				return redirect(url_for('problems_page.source', problem_id=problem_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/from_zip', methods=['POST'])

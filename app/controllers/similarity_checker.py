@@ -163,8 +163,8 @@ def do_job(problem_id, timeout=510):
             doc_result = {
                 "data": data
             }
-            url_contest_result = "{}/api/contests/{}/results".format(config.API_URI_SR, str(contest_id))
-            requests.put(url=url_contest_result, json=doc_result)
+            url_problem_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
+            requests.put(url=url_problem_result, json=doc_result)
         if len(logs['exception']) > 0:
             update_status_failed(problem_id)
             raise Exception

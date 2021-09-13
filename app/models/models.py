@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from flask_mongoengine import MongoEngine
+import datetime
 db = MongoEngine()
 
 class Status():
@@ -26,7 +27,7 @@ class Contest(db.Document):
     metrics = db.ListField()
     user_id = db.StringField(required=True)
     contest_status = db.IntField(required=True)
-    results = db.ListField()
+    created_at = db.DateTimeField(required=True, default=datetime.datetime.utcnow)
     
 class Problem(db.Document):
     problem_id = db.StringField(required=True, unique=True)
@@ -41,6 +42,7 @@ class Problem(db.Document):
     contest_id = db.StringField()
     user_id = db.StringField()
     log = db.StringField()
+    results = db.ListField()
 
 class Counter(db.Document):
     name = db.StringField()
@@ -48,3 +50,6 @@ class Counter(db.Document):
     count_problem = db.IntField()
     count_contest = db.IntField()
 
+# class Result(db.EmbeddedDocument):
+#     source1 = db.StringField()
+#     source2 = db.StringField()

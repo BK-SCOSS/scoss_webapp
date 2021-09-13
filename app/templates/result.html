@@ -3,7 +3,6 @@
 {% block title %}SCOSS - Results{% endblock %}
 
 {% block content %}
-  {%if data|length > 0%}
     <div class="row">
       <div class="col-12">
         <div class="card">
@@ -25,25 +24,7 @@
                   </tr>
               </thead>
               <tbody>
-                {%for problem in data %}
-                {%for link in problem['results']%}
-                <tr class="item">
-                <td>{{problem['problem_name']}}</td>
-                <td>{{link['source1']}}</a></td>
-                <td>{{link['source2']}}</a></td>
-                {%for metric in link['scores'] %}
-                {% if metric != 'mean' %}
-                <td>
-                  <a href="/problems/{{problem['problem_id']}}/compare?source1={{link['source1']}}&source2={{link['source2']}}&metrics={{metric}}" target="_blank">
-                    {{link['scores'][metric] | safe}}
-                  </a>
-                </td>
-                {%endif%}
-                {%endfor%}
-                <td><a>{{link['scores']['mean'] | safe}}</a></td>
-                </tr>
-                {%endfor%}
-                {%endfor%}
+                
               </tbody>  
             </table>
           </div>
@@ -51,37 +32,51 @@
         </div>
       </div>
     </div>
-  {%endif%}
 {% endblock %}
 
 {% block js%}
 <script>
-   var indexLastColumn = $("#resultTable").find('tr')[0].cells.length-1;
-  $('#resultTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-          url: '/api/contests/<contest_id>/results/dataTable'
-        },
-        pageLength: 50,
-        "dom": 'Bfrtip',
-        "buttons": [
-          'csv'
-        ],
-        order: [[indexLastColumn, "desc"]]
-    })
-    // $('#resultTable').DataTable({
-    //     columnDefs: [ {
-    //         "searchable": false,
-    //         "orderable": false,
-    //         "targets": 0
-    //     }],
-    //     pageLength: 50,
-    //     "dom": 'Bfrtip',
-    //     "buttons": [
-    //       'csv'
-    //     ],
-    //     order: [[indexLastColumn, "desc"]]
-    // })
+   var dataUrl = '/api/contests/{{contest_id}}/results/dataTable'
+   metrics = {{heads|tojson}}
+   var columns = []
+   columns.push({"data": 'problem_name'})
+   metrics.forEach(function(value) {
+      if (value=='source1' || value=='source2') {
+        columns.push({"data": value})
+      } else {
+        columns.push({"data": 'scores.' + value})
+      }
+   })
+   console.log(columns)
+   $(document).ready(function() {
+    $('#resultTable').DataTable({
+          processing: true,
+          serverSide: true,
+          paging: true,
+          ajax: {
+            url: dataUrl,
+            type: "POST"
+          },
+          columns: columns,
+          pageLength: 10,
+          "dom": 'Bfrtip',
+          "buttons": [
+            'csv'
+          ],
+      })
+  });
+  // $('#resultTable').DataTable({
+      //     columnDefs: [ {
+      //         "searchable": false,
+      //         "orderable": false,
+      //         "targets": 0
+      //     }],
+      //     pageLength: 50,
+      //     "dom": 'Bfrtip',
+      //     "buttons": [
+      //       'csv'
+      //     ],
+      //     order: [[indexLastColumn, "desc"]]
+      // })
 </script>
 {% endblock %}

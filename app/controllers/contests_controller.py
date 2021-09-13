@@ -263,3 +263,36 @@ def status(contest_id):
 		data_contest = Contest.objects.get(contest_id=contest_id)
 		yield 'data: {}\n\n'.format(data_contest.contest_status)
 	return Response(check_status(contest_id), mimetype="text/event-stream")
+
+
+@contests_controller.route('/api/contests/<contest_id>/results/dataTable', methods = ['POST'])
+def get_table_result(contest_id):
+    try:
+        data_problems = Problem.objects(contest_id=contest_id)
+
+         # search filter
+        search = request.args.get('search[value]')
+        # if search:
+        #     data_problems = data_problems.filter(
+        #         Problem.results.like(f'%{search}%')
+        #     )
+        # print(Problem.results)
+        data = []
+        for problem in data_problems:
+            data = data + problem.results
+        
+        # pagination
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+
+        result = data[start:start+length]
+
+        # results = query.fields(slice__results=[start, length])       
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({
+        'data': result, 
+        'recordsFiltered': len(result),
+        'recordsTotal': len(data),
+        'draw': 1
+    })

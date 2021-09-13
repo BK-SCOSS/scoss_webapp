@@ -238,6 +238,14 @@ def get_results(problem_id):
     return jsonify({'problem_id': problem_id, 'results': list(res.values()), 
                     'problem_name': problem_name, 'contest_id': contest_id}), 200
 
+@problems_controller.route('/api/problems/<problem_id>/results', methods=['PUT'])
+def update_result(problem_id):
+    try:
+        data = request.json['data']
+        Problem.objects(problem_id=problem_id).update(results=data)
+        return jsonify({'problem_id': problem_id, 'status': 'Success'}), 200
+    except Exception as e:
+        return jsonify({"error": "Exception: {}".format(e)}), 400
 
 @problems_controller.route('/api/problems/<problem_id>/results/scoss', methods=['GET'])
 def get_result_scoss(problem_id):
