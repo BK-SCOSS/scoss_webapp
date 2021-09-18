@@ -65,7 +65,7 @@ def get_contest_user(user_id):
 def contest():
     try:
         data_contests = Contest.objects()
-        print(data_contests.count())
+        # print(data_contests.count())
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
@@ -142,6 +142,8 @@ def add_zip(contest_id):
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
             supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+            if not supported_files:
+                return jsonify({"error": "Wrong zip file's format"}), 400
             if len(supported_files) != len(zfiles):
                 # zfiles contains some unsupported files: wrong extensions, wrong directories,...
                 # Push some notification in the future
@@ -203,7 +205,11 @@ def run_contest(contest_id):
         metrics = request.json        
         Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest, 
-        headers={'Authorization': request.headers['Authorization']})
+            headers={'Authorization': request.headers['Authorization']})
+        # print('data_problems:', data_problems.json(), flush=True)
+        problems = data_problems.json()['problems']
+        if not problems:
+            return jsonify({"error": "No problems to run"}), 400
         doc_status = {
             "contest_status": Status.running
         }
@@ -213,7 +219,7 @@ def run_contest(contest_id):
             headers={'Authorization': request.headers['Authorization']})
         if req.status_code != 200:
             return jsonify(req.json()), 200
-        for problem in data_problems.json()['problems']:
+        for problem in problems:
             problem_id = problem['problem_id']
             url_run = '{}/api/problems/{}/run'.format(API_URI_SR, problem_id)
             req = requests.post(url=url_run, json=metrics,\

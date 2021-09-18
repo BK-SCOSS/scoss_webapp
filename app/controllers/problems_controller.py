@@ -133,6 +133,8 @@ def add_zip(problem_id):
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
             supported_files = [f for f in zfiles if f.endswith(config.SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+            if not supported_files:
+                return jsonify({"error": "Wrong zip file's format"}), 400
             if len(supported_files) != len(zfiles):
                 # zfiles contains some unsupported files: wrong extensions, wrong directories,...
                 # Push some notification in the future
@@ -315,21 +317,24 @@ def run_source(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
-        if len(data_problem) > 0:
-            if data_problem.problem_status not in [Status.running, Status.waiting]:
-                doc_status = {
-                    "problem_status": Status.waiting
-                }
-                url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
-                req = requests.put(url=url_status, json=doc_status,\
-                    headers={'Authorization': request.headers['Authorization']})
-                if req.status_code != 200: 
-                    return jsonify(req.json()), 400
-                # print(tq.count)
-                # tq.empty()
-                tq.enqueue(do_job, args=(problem_id, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
+        if not data_problem.sources:
+            return jsonify({"error": "No sources to run"}), 400
+        if data_problem.problem_status not in [Status.running, Status.waiting]:
+            doc_status = {
+                "problem_status": Status.waiting
+            }
+            url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
+            req = requests.put(url=url_status, json=doc_status,\
+                headers={'Authorization': request.headers['Authorization']})
+            if req.status_code != 200: 
+                return jsonify(req.json()), 400
+            # print(tq.count)
+            # tq.empty()
+            tq.enqueue(do_job, args=(problem_id, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
+        
     except Exception as e:
-        raise e
+        # raise e
+        return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/sources', methods=['GET'])
