@@ -57,8 +57,14 @@
               </li>
               <!-- Chỉ admin mới thấy -->
               {% if session['role'] == 0 %}
-              <li class="nav-item d-sm-inline-block">
-                <a href="/admin" class="nav-link">Admin</a>
+              <li class="nav-item dropdown">
+                <!-- <a id="admin-dropdown" href="/admin" class="nav-link">Admin</a> -->
+                <a id="admin-dropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Admin</a>
+                <ul aria-labelledby="admin-dropdown" class="dropdown-menu border-0 shadow">
+                  <li><a href="/admin" class="dropdown-item">User management </a></li>
+                  <li><a href="/admin/redis" class="dropdown-item">Redis management </a></li>
+                  <li><a href="/admin/mongo" class="dropdown-item">Mongo management</a></li>
+                </ul>
               </li>
               {% endif %}
             </ul>
