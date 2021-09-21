@@ -1,74 +1,63 @@
-{% extends "base.html" %}
+<!doctype html>
+<html>
+<head>
+<title>Contest id {{contest_id}}'s Result</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />	
+<link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 
-{% block title %}SCOSS - Results{% endblock %}
+<style>
+  div.dataTables_wrapper {
+    width: 900px;
+    margin: 0 auto;
+    float: left;
+  }
+</style>
 
-{% block content %}
-  {%if data|length > 0%}
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Results</h3>
-            <!-- <div class="card-tools">
-              <button class="btn btn-default" id="export" title="Save as CSV"><i class="fas fa-download"></i></button>
-            </div> -->
-          </div>
-          <!-- /.card-header -->
-          <div class="card-body table-responsive p-0">
-            <table id="resultTable" class="display">
-              <thead>
-                <tr>
-                      <th>Problem</th>
-                      {%for head in heads%}
-                      <th>{{head}} <i class="fa fa-sort"></i></th>
-                      {%endfor%}
-                  </tr>
-              </thead>
-              <tbody>
-                {%for problem in data %}
-                {%for link in problem['results']%}
-                <tr class="item">
-                <td>{{problem['problem_name']}}</td>
-                <td>{{link['source1']}}</a></td>
-                <td>{{link['source2']}}</a></td>
-                {%for metric in link['scores'] %}
-                {% if metric != 'mean' %}
-                <td>
-                  <a href="/problems/{{problem['problem_id']}}/compare?source1={{link['source1']}}&source2={{link['source2']}}&metric={{metric}}" target="_blank">
-                    {{link['scores'][metric] | safe}}
-                  </a>
-                </td>
-                {%endif%}
-                {%endfor%}
-                <td><a>{{link['scores']['mean'] | safe}}</a></td>
-                </tr>
-                {%endfor%}
-                {%endfor%}
-              </tbody>  
+</head>
+<body >
+<div class="container">
+    <div class="row" style="padding:50px;" >
+		<p><h1>Contest id {{contest_id}}'s Result</h1></p>
+        <div>
+            <table id='empTable' class='dt-left' width='150%'>
             </table>
-          </div>
-          <!-- /.card-body -->
         </div>
-      </div>
-    </div>
-  {%endif%}
-{% endblock %}
+   </div>
+</div>
 
-{% block js%}
+
+
 <script>
-   var indexLastColumn = $("#resultTable").find('tr')[0].cells.length-1;
-  $('#resultTable').DataTable({
-        columnDefs: [ {
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
-        }],
-        pageLength: 50,
-        "dom": 'Bfrtip',
-        "buttons": [
-          'csv'
+$(document).ready(function() {
+    var empDataTable = $('#empTable').DataTable({
+        order: [[7, "desc"]],
+        'processing': true,
+        'serverSide': true,
+        'serverMethod': 'post',
+        'ajax': {
+            'url':'/ajax/contests/{{contest_id}}/results'
+        },
+        searching: true,
+        sort: true,
+        columns: [
+            {title: 'problem_id (problem_name)', data: 'problem_id (problem_name)'},
+            {title: 'source1', data: 'source1'},
+            {title: 'source2', data: 'source2'},
+            {title: 'count_operator', data: 'count_operator'},
+            {title: 'hash_operator', data: 'hash_operator'},
+            {title: 'set_operator', data: 'set_operator'},
+            {title: 'moss_score', data: 'moss_score'},
+            {title: 'mean', data: 'mean'}
         ],
-        order: [[indexLastColumn, "desc"]]
-    })
+        columnDefs: [{
+            "defaultContent": "-",
+            "targets": "_all"
+        }],
+    });
+});
+
 </script>
-{% endblock %}
+</body>
+</html>

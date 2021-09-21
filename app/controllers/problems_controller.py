@@ -1,6 +1,7 @@
 from flask import Flask, render_template, url_for, request, redirect, \
     session, jsonify, send_file, Blueprint, stream_with_context, Response
 from models.models import *
+from mongoengine.queryset.visitor import Q
 from zipfile import ZipFile
 from config import API_URI, API_URI_SR, URL
 from controllers.similarity_checker import do_job
@@ -12,6 +13,7 @@ import time
 import requests
 import config
 import copy
+import re
 
 problems_controller = Blueprint('problems_controller', __name__)
 
@@ -225,46 +227,81 @@ def delete_all_sources(problem_id):
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'info': info})
 
-@problems_controller.route('/api/problems/<problem_id>/results', methods=['GET'])
-def get_results(problem_id):
-    try:
-        data_problem = Problem.objects.get(problem_id=problem_id)
-        problem_name = data_problem.problem_name
-        similarity_list = Result.objects(problem_id=problem_id)
-        result_list= []
-        for sim in similarity_list:
-            total = 0
-            num_of_score = 0
-            for score in sim['scores'].values():
-                total += score
-                num_of_score += 1
-            a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores']}
-            if num_of_score != 0:
-                a_result['scores']['mean'] = total/num_of_score
-            result_list.append(a_result)
-    except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400 
-    return jsonify({'problem_id': problem_id, 'results': result_list, 'problem_name': problem_name}), 200
+# @problems_controller.route('/api/problems/<problem_id>/results', methods=['GET'])
+# def get_results(problem_id):
+#     try:
+#         data_problem = Problem.objects.get(problem_id=problem_id)
+#         problem_name = data_problem.problem_name
+#         similarity_list = Result.objects(problem_id=problem_id)
+#         result_list= []
+#         for sim in similarity_list:
+#             total = 0
+#             num_of_score = 0
+#             for score in sim['scores'].values():
+#                 total += score
+#                 num_of_score += 1
+#             a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores']}
+#             if num_of_score != 0:
+#                 a_result['scores']['mean'] = total/num_of_score
+#             result_list.append(a_result)
+#     except Exception as e:
+#         return jsonify({"error": "Exception: {}".format(e)}), 400 
+#     return jsonify({'problem_id': problem_id, 'results': result_list, 'problem_name': problem_name}), 200
+
+@problems_controller.route('/ajax/problems/<problem_id>/results', methods=['POST'])
+def get_ajax_problem_results(problem_id):
+    order_columns = ['source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
+        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    draw = request.form['draw'] 
+    start = int(request.form['start'])
+    length = int(request.form['length'])
+    searchValue = request.form["search[value]"]
+    orderDirection = request.form["order[0][dir]"]
+    orderColumn = request.form["order[0][column]"]
+
+    totalRecords = Result.objects(problem_id=problem_id).count()
+
+    regex = re.compile('.*{}.*'.format(searchValue), re.IGNORECASE)
+    totalRecordwithFilter = Result.objects.filter(Q(problem_id=problem_id) & (Q(source1=regex)|Q(source2=regex))).count()
+
+    order = order_columns[int(orderColumn)]
+    if orderDirection == 'desc':
+        order = '-' + order
+    similarity_list = Result.objects.filter(Q(problem_id=problem_id) & (Q(source1=regex)|Q(source2=regex))).\
+        order_by(order).skip(start).limit(length)
+
+    score_span = '<a href="/problems/{}/compare?source1={}&source2={}&metric={}" target="_blank"><span style="color:rgb({}, 0, 0);">{}%</span></a>'
+    data = []
+    for sim in similarity_list:
+        a_result = {'source1':sim['source1'], 'source2':sim['source2']}
+        for metric, score in sim['scores'].items():
+            if metric != 'mean':
+                a_result[metric] = score_span.format(problem_id, sim['source1'], sim['source2'], metric, int(score*255), round(score*100, 2))
+            else:
+                a_result[metric] = '<span style="color:rgb({}, 0, 0);">{}%</span>'.format(int(score*255), round(score*100, 2))
+        data.append(a_result)
+    return jsonify({'draw': draw, 'iTotalRecords': totalRecords, 'iTotalDisplayRecords': totalRecordwithFilter, 'data':data}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/results', methods=['PUT'])
 @jwt_required()
 def update_result(problem_id):
     try:
         result_list = request.json['result_list']
-        # print('update result_list:', result_list, flush=True)
         for result in result_list:
             result_id = problem_id + '_' + result['source1'] + '_' + result['source1']
+            scores = result['scores']
+            scores['mean'] = sum(list(scores.values()))/len(scores)
             Result.objects(result_id=result_id).update_one(
                 set__problem_id=problem_id, 
                 set__source1=result['source1'], 
                 set__source2=result['source2'], 
-                set__scores=result['scores'], 
+                set__scores=scores, 
                 set__smoss_alignment=result['smoss_alignment'], 
                 upsert=True)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
-    
+
 @problems_controller.route('/api/problems/<problem_id>/run', methods=['POST'])
 @jwt_required()
 def run_source(problem_id):

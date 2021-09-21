@@ -2,10 +2,13 @@ from flask import config, request, jsonify, Blueprint, Response
 import time
 from zipfile import ZipFile
 from models.models import *
+from mongoengine.queryset.visitor import Q
 from config import URL, API_URI_SR, SUPPORTED_EXTENSIONS
 import requests
 from utils import make_unique
 from flask_jwt_extended import jwt_required
+import re
+
 contests_controller = Blueprint('contests_controller', __name__)
 
 @contests_controller.route('/api/users/<user_id>/contests/add', methods=['POST'])
@@ -229,19 +232,59 @@ def run_contest(contest_id):
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
 
-@contests_controller.route('/api/contests/<contest_id>/results', methods = ['GET'])
-def get_result(contest_id):
-    try:
-        data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
-        contest_res = []
-        for problem in data_problems:
-            problem_id = problem.problem_id
-            url_res =  '{}/api/problems/{}/results'.format(API_URI_SR, problem_id)
-            res = requests.get(url=url_res)
-            contest_res.append(res.json())
-        return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
-    except Exception as e:
-        return jsonify({"error":"Exception: {}".format(e)}),400
+# @contests_controller.route('/api/contests/<contest_id>/results', methods = ['GET'])
+# def get_result(contest_id):
+#     try:
+#         data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
+#         contest_res = []
+#         for problem in data_problems:
+#             problem_id = problem.problem_id
+#             url_res =  '{}/api/problems/{}/results'.format(API_URI_SR, problem_id)
+#             res = requests.get(url=url_res)
+#             contest_res.append(res.json())
+#         return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
+#     except Exception as e:
+#         return jsonify({"error":"Exception: {}".format(e)}),400
+
+@contests_controller.route('/ajax/contests/<contest_id>/results', methods=['POST'])
+def get_ajax_contest_results(contest_id):
+    order_columns = ['problem_id', 'source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
+        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    draw = request.form['draw'] 
+    start = int(request.form['start'])
+    length = int(request.form['length'])
+    searchValue = request.form["search[value]"]
+    orderDirection = request.form["order[0][dir]"]
+    orderColumn = request.form["order[0][column]"]
+    data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
+    problem_dict = {}
+    for problem in data_problems:
+        problem_dict[problem.problem_id] = problem.problem_name
+
+    totalRecords = Result.objects(problem_id__in=list(problem_dict.keys())).count()
+
+    regex = re.compile('.*{}.*'.format(searchValue), re.IGNORECASE)
+    totalRecordwithFilter = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).count()
+
+    order = order_columns[int(orderColumn)]
+    if orderDirection == 'desc':
+        order = '-' + order
+    similarity_list = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).\
+        order_by(order).skip(start).limit(length)
+
+    score_span = '<a href="/problems/{}/compare?source1={}&source2={}&metric={}" target="_blank"><span style="color:rgb({}, 0, 0);">{}%</span></a>'
+    data = []
+    for sim in similarity_list:
+        problem_id = sim['problem_id']
+        a_result = {'problem_id (problem_name)':'{} ({})'.format(problem_id, problem_dict[problem_id]), 
+            'source1':sim['source1'], 'source2':sim['source2']}
+        for metric, score in sim['scores'].items():
+            if metric != 'mean':
+                a_result[metric] = score_span.format(sim['problem_id'], sim['source1'], sim['source2'], metric, int(score*255), round(score*100, 2))
+            else:
+                a_result[metric] = '<span style="color:rgb({}, 0, 0);">{}%</span>'.format(int(score*255), round(score*100, 2))
+        data.append(a_result)
+    return jsonify({'draw': draw, 'iTotalRecords': totalRecords, 'iTotalDisplayRecords': totalRecordwithFilter, 'data':data}), 200
 
 @contests_controller.route('/api/contests/<contest_id>/check_status', methods = ['GET'])
 @jwt_required()
