@@ -65,11 +65,9 @@ def get_contest_user(user_id):
 def contest():
     try:
         data_contests = Contest.objects()
-        # print(data_contests.count())
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
-            # print(temp['user_id'])
             if User.objects(user_id=temp['user_id']).count() == 0:
                 continue
             data_user = User.objects(user_id=temp['user_id']).first()
@@ -138,11 +136,12 @@ def add_zip(contest_id):
     try: 
         contest_list = {}
         if ZipFile(request.files["file"], "r").testzip() is not None:
-            return jsonify({"error":"The zip file is corrupted"}),400
+            return jsonify({"error":"The zip file is corrupted"}), 400
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
             supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
-            if not supported_files:
+            if not supported_files or len(supported_files[0].split('/')) <= 2:
+                print("Contest: Wrong zip file's format", flush=True)
                 return jsonify({"error": "Wrong zip file's format"}), 400
             if len(supported_files) != len(zfiles):
                 # zfiles contains some unsupported files: wrong extensions, wrong directories,...
@@ -206,10 +205,10 @@ def run_contest(contest_id):
         Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest, 
             headers={'Authorization': request.headers['Authorization']})
-        # print('data_problems:', data_problems.json(), flush=True)
         problems = data_problems.json()['problems']
         if not problems:
             return jsonify({"error": "No problems to run"}), 400
+
         doc_status = {
             "contest_status": Status.running
         }
@@ -267,8 +266,8 @@ def reset(contest_id):
         problem_list = Problem.objects(contest_id=contest_id).only('problem_id')
         for problem in problem_list:
             problem_id = problem.problem_id
-            Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
-                        similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
+            Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[])
+            Result.objects(problem_id=problem_id).delete()
         Contest.objects(contest_id=contest_id).update(contest_status=1, metrics=[])
         info = 'Reset all!'
     except Exception as e:

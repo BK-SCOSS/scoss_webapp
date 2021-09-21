@@ -5,6 +5,7 @@ import scoss
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, Response, stream_with_context
 from sctokenizer import Source
+from scoss import align_source
 from scoss.metrics import all_metrics
 from models.models import db
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -128,103 +129,76 @@ def summary(problem_id):
 				return render_template('all.html')
 	return redirect(url_for('login_page.login_page'))
 
+def scoss_alignment(source1, source2, src_str1, src_str2, metric, score, lang):
+	score_metric = round(score, 4)
+	score_alignment = align_source(metric, src_str1, src_str2, lang)
+	data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in src_str1.split('\n')]
+	data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in src_str2.split('\n')]
+	html1 = ''
+	html2 = ''
+	for line in score_alignment:
+		if line[0] == -1 :
+			html1 += '<pre >  </pre>'
+			temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+			html2 += temp2
+		elif line[1] == -1 :
+			html2 += '<pre >  </pre>'
+			temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+			html1 += temp1
+		elif line[0] != -1 and line[0] != -1:
+			if line[2] >=0.25 and line[2] <0.75:
+				temp1 = '<pre style="color: #ffb600">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: #ffb600">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
+			elif line[2] >= 0.75:
+				temp1 = '<pre style="color: red">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
+			else:
+				temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
+	C = int(score_metric*255)
+	R = C
+	G = 0
+	B = 0
+	span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'
+	with open('app/templates/comparison.html', 'r') as f:
+		HTML2 = f.read()
+	return Environment().from_string(HTML2).render(file1=source1, file2=source2, \
+					metric=metric, score=span, data1=html1, data2=html2)
+
 @problems.route('/problems/<problem_id>/compare', methods=['GET'])
 def compare(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			source1 = request.args.get('source1')
 			source2 = request.args.get('source2')
-			metrics = request.args.get('metrics')
-			payload = {'source1': source1, 'source2': source2}
+			metric = request.args.get('metric')
+			headers = {'Authorization': "Bearer {}".format(session['token'])}		
 
-			if metrics != 'moss_score':
-				# scoss.align_source('count_operator', src_str_1, src_str_2, 'cpp')
-				
-				req_list = requests.get(url = "{}/api/problems/{}/results/scoss".format(URL, problem_id))
-				for simi in req_list.json()['similarity_list']:
-					if simi['source1'] == source1 and simi['source2'] == source2\
-						or simi['source1'] == source2 and simi['source2'] == source1:
-						print(2, flush=True)
-						score_metric = round(simi['scores'][metrics],4)
-						break
-				# for simi in req_list.json()['alignment_list']:
-				# 	if simi['source1'] == source1 and simi['source2'] == source2:
-				# 		score_alignment = simi['scores'][metrics]
-				# 		break
-				headers = {'Authorization': "Bearer {}".format(session['token'])}		
-				req_source = requests.get(url="{}/api/problems/{}/sources".format(URL, problem_id), params=payload, headers=headers)
-				if req_source.status_code != 200 and 'msg' in req_source.json():
-					session.clear()
-					return redirect(url_for('login_page.login_page'))
-				sources = req_source.json()['sources']
-				lang = sources[0]['lang']
-				
-				for source in sources:
-					if source['mask'] == '':
-						if source['pathfile'] == source1:
-							data1 = source['source_str']
-							break
-					elif source['mask'] == source1:
-						data1 = source['source_str']
-						break
-				for source in sources:
-					if source['mask'] == '':
-						if source['pathfile'] == source2:
-							data2 = source['source_str']
-							break
-					elif source['mask'] == source2:
-						data2 = source['source_str']
-						break
+			url_get_alignment = URL + '/api/problems/{}/get_alignment'.format(problem_id)
+			result = requests.post(url=url_get_alignment, json={'source1':source1, 'source2':source2}, headers=headers).json()
+			
+			if metric == 'moss_score':
+				return result['result'][0]['smoss_alignment']
+			
+			url_get_problem = URL + '/api/problems/{}'.format(problem_id)
+			problem = requests.get(url=url_get_problem, headers=headers).json()
+			sources = problem['sources']
+			source1_dict = {}
+			source2_dict = {}
+			for src in sources:
+				if src['mask'] == source1:
+					source1_dict = src
+				if src['mask'] == source2:
+					source2_dict = src
+				if source1_dict and source2_dict:
+					break
 
-				score_alignment = scoss.align_source(metrics, data1, data2, lang)
-
-				data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in data1.split('\n')]
-				data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in data2.split('\n')]
-				html1 = ''
-				html2 = ''
-				for line in score_alignment:
-					if line[0] == -1 :
-						html1 += '<pre >  </pre>'
-						temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
-						html2 += temp2
-					elif line[1] == -1 :
-						html2 += '<pre >  </pre>'
-						temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
-						html1 += temp1
-					elif line[0] != -1 and line[0] != -1:
-						index1 = line[0]
-						index2 = line[1]
-						if line[2] >=0.25 and line[2] <0.75:
-							temp1 = '<pre style="color: #ffb600">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
-							html1 += temp1
-							temp2 = '<pre style="color: #ffb600">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
-							html2 += temp2
-						elif line[2] >= 0.75:
-							temp1 = '<pre style="color: red">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
-							html1 += temp1
-							temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
-							html2 += temp2
-						else:
-							temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
-							html1 += temp1
-							temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
-							html2 += temp2
-				C = int(score_metric*255)
-				R = C
-				G = 0
-				B = 0
-				span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'
-				with open('app/templates/comparison.html', 'r') as f:
-					HTML2 = f.read()
-				compe = Environment().from_string(HTML2).render(file1=source1, file2=source2, \
-								metric=metrics, score=span, \
-								data1=html1, data2=html2)
-				return compe
-			if metrics == 'moss_score':
-				req_list = requests.get(url = "{}/api/problems/{}/results/smoss".format(URL, problem_id))
-				alignment_list = req_list.json()['alignment_smoss_list']
-				for alignment in alignment_list:
-					if alignment['source1'] == source1 and alignment['source2'] == source2\
-					or alignment['source1'] == source2 and alignment['source2'] == source1:
-						return alignment['scores']
+			score = result['result'][0]['scores'][metric]
+			return scoss_alignment(source1, source2, source1_dict['source_str'], source2_dict['source_str'], metric, score, source1_dict['lang'])
 	return redirect(url_for('login_page.login_page'))

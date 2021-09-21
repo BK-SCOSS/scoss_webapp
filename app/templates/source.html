@@ -259,7 +259,7 @@
                             B = 0
                             var title = $('#result-table').DataTable().columns(colIndex).header(); 
                             var columnName = $(title).html();
-                            var url = `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metrics=${columnName}`;
+                            var url = `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metric=${columnName}`;
                             text = `<span style='color:rgb(${R}, ${G}, ${B});'>` + (cellData*100).toFixed(2) + "%</span>"
                             $(cell).html("<a href='" + url + "' target='_blank'>"+ text + "</a>");
                         }

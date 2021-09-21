@@ -34,7 +34,7 @@
                 {%for metric in link['scores'] %}
                 {% if metric != 'mean' %}
                 <td>
-                  <a href="/problems/{{problem['problem_id']}}/compare?source1={{link['source1']}}&source2={{link['source2']}}&metrics={{metric}}" target="_blank">
+                  <a href="/problems/{{problem['problem_id']}}/compare?source1={{link['source1']}}&source2={{link['source2']}}&metric={{metric}}" target="_blank">
                     {{link['scores'][metric] | safe}}
                   </a>
                 </td>

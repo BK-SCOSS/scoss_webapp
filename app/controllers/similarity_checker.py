@@ -7,6 +7,9 @@ from sctokenizer import Source
 from models.models import Status
 import config
 import timeout_decorator
+from jinja2 import Environment
+
+# from random import randint
 
 all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
 
@@ -20,12 +23,10 @@ def flatten_dict(alignment_list):
             match['source2'] = other_name
             match['scores'] = scores
             match_dict[key] = match
-    matches_alignment = list(match_dict.values())
-    return matches_alignment
+    return list(match_dict.values())
 
 def cal_scoss(sources, metrics):
     scosses = {}
-
     for source in sources:
         lang = source['lang']
         if lang not in scosses:
@@ -33,40 +34,50 @@ def cal_scoss(sources, metrics):
             for metric in metrics:
                 scoss.add_metric(metric['name'], metric['threshold'])
             scosses[lang] = scoss
-
         mask = source['mask'] if source['mask'] != '' else source['pathfile']
         scosses[lang].add_source_str(source['source_str'], mask)
 
-    matches = []
+    scoss_similarity_dict = {}
     for lang, scoss in scosses.items():
         scoss.run()
         sc_matches = scoss.get_matches(and_thresholds=True)
-        matches.extend(sc_matches)
-    return matches
+        for sc_match in sc_matches:
+            if sc_match['source1'] > sc_match['source2']:
+                key = sc_match['source2'] + '_' + sc_match['source1']
+            else:
+                key = sc_match['source1'] + '_' + sc_match['source2']
+
+            scoss_similarity_dict[key] = sc_match
+            scoss_similarity_dict[key]['smoss_alignment'] = ''
+    return scoss_similarity_dict
 
 def cal_smoss(sources, metrics):
     smosses = {}
-
     for source in sources:
         lang = source['lang']
         if lang not in smosses:
             smoss = SMoss(lang=lang)
+            # smoss = SMoss(lang=lang, userid=randint(20000, 90000))
             smoss.set_threshold(metrics[0]['threshold'])
             smosses[lang] = smoss
 
         mask = source['mask'] if source['mask'] != '' else source['pathfile']
         smosses[lang].add_source_str(source['source_str'], mask)
 
-    matches = []
-    comparisons = []
+    smoss_similarity_dict = {}
     for lang, smoss in smosses.items():
         smoss.run()
         sm_matches = smoss.get_matches()
         sm_comparisons = flatten_dict(smoss.get_matches_file())
-        matches.extend(sm_matches)
-        comparisons.extend(sm_comparisons)
-    return matches, comparisons
+        for i, sm_match in enumerate(sm_matches):
+            if sm_match['source1'] > sm_match['source2']:
+                key = sm_match['source2'] + '_' + sm_match['source1']
+            else:
+                key = sm_match['source1'] + '_' + sm_match['source2']
 
+            smoss_similarity_dict[key] = sm_match
+            smoss_similarity_dict[key]['smoss_alignment'] = sm_comparisons[i]['scores']
+    return smoss_similarity_dict
 
 def run_problem_with_timeout(problem_id, header, timeout=510):
     # @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
@@ -74,15 +85,11 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
         logs = {'str': '', 'exception': []}
         logs['str'] += f"Running problem {problem_id}\n"
         url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
+        url_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
         url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
-        url_scoss = "{}/api/problems/{}/results/scoss".format(config.API_URI_SR, str(problem_id))
-        url_smoss = "{}/api/problems/{}/results/smoss".format(config.API_URI_SR, str(problem_id))
 
         req = requests.get(url, headers={'Authorization': header})
         data_problem = req.json()
-        # contest_id = data_problem['contest_id']
-
-        # req_status = requests.get(url=url_status, headers={'Authorization': header})
             
         doc_status = {
             "problem_status": Status.running
@@ -99,33 +106,21 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
             elif met['name'] == 'moss_score':
                 smoss_metrics.append(met)
 
-        # run scoss
-        logs['str'] += f"Running scoss\n"
-        if scoss_metrics:
-            similarity_list = cal_scoss(data_problem['sources'], scoss_metrics)
-        else:
-            similarity_list = []
-        logs['str'] += "Done scoss\n"
-
-        doc_scoss = {
-            "similarity_list": similarity_list,
-            "alignment_list": []
-        }
-        req = requests.put(url=url_scoss, json=doc_scoss, headers={'Authorization': header})
-        # run smoss
-        logs['str'] += f"Running smoss\n"
-        if smoss_metrics:
-            similarity_smoss_list, alignment_smoss_list = cal_smoss(data_problem['sources'], smoss_metrics)
-        else:
-            similarity_smoss_list, alignment_smoss_list = [], []
-        logs['str'] += "Done smoss\n"
-
-        doc_smoss = {
-            "similarity_smoss_list": similarity_smoss_list,
-            "alignment_smoss_list": alignment_smoss_list
-        }
-        requests.put(url=url_smoss, json=doc_smoss, headers={'Authorization': header})
-
+        logs['str'] += f"Running..."
+        if scoss_metrics and smoss_metrics:
+            scoss_similarity_dict = cal_scoss(data_problem['sources'], scoss_metrics)
+            smoss_similarity_dict = cal_smoss(data_problem['sources'], smoss_metrics)
+            for key in list(scoss_similarity_dict):
+                if key in smoss_similarity_dict:
+                    scoss_similarity_dict[key]['smoss_alignment'] = smoss_similarity_dict[key]['smoss_alignment']
+                    for metric in list(smoss_similarity_dict[key]['scores']):
+                        scoss_similarity_dict[key]['scores'][metric] = smoss_similarity_dict[key]['scores'][metric]
+            similarity_dict = scoss_similarity_dict
+        elif scoss_metrics:
+            similarity_dict = cal_scoss(data_problem['sources'], scoss_metrics)
+        elif smoss_metrics:
+            similarity_dict = cal_smoss(data_problem['sources'], smoss_metrics)
+        requests.put(url=url_result, json={'result_list':list(similarity_dict.values())}, headers={'Authorization': header})
         # update status
         doc_status = {
             "problem_status": Status.checked

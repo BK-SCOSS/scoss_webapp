@@ -71,12 +71,20 @@ def get_problem(problem_id):
             'contest_name': contest_name,
             'user_id': data_problem.user_id,
             'sources': data_problem.sources,
-            'metrics': data_problem.metrics
+            'metrics': data_problem.metrics,
         }
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify(data_doc), 200
 
+@problems_controller.route('/api/problems/<problem_id>/get_alignment', methods=['POST'])
+@jwt_required()
+def get_alignment(problem_id):
+    source1 = request.json['source1']
+    source2 = request.json['source2']
+    # metric = request.json['metric']
+    result = Result.objects(problem_id=problem_id, source1=source1, source2=source2)
+    return jsonify({'result':result}), 200
 
 @problems_controller.route('/api/problems/<problem_id>', methods=['DELETE'])
 @jwt_required()
@@ -128,12 +136,15 @@ def add_zip(problem_id):
     ----file3.cpp
     """
     try:
+        if ZipFile(request.files["file"], "r").testzip() is not None:
+            return jsonify({"error":"The zip file is corrupted"}), 400
         data_problem = Problem.objects.get(problem_id=problem_id)
         sources = data_problem.sources
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
             supported_files = [f for f in zfiles if f.endswith(config.SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
             if not supported_files:
+                print("Problems: Wrong zip file's format", flush=True)
                 return jsonify({"error": "Wrong zip file's format"}), 400
             if len(supported_files) != len(zfiles):
                 # zfiles contains some unsupported files: wrong extensions, wrong directories,...
@@ -219,97 +230,41 @@ def get_results(problem_id):
     try:
         data_problem = Problem.objects.get(problem_id=problem_id)
         problem_name = data_problem.problem_name
-        similarity_list = data_problem.similarity_list
-        similarity_smoss_list = data_problem.similarity_smoss_list
-        metric_list = [metric['name'] for metric in data_problem.metrics]
-        scoss_res = {}
-        smoss_res = {}
-        res = {}
-        
-        for simi_scoss in similarity_list:
-            key = hash(simi_scoss['source1']) ^ hash(simi_scoss['source2'])
-            scoss_res[key] = simi_scoss
-
-        for simi_smoss in similarity_smoss_list:
-            key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
-            smoss_res[key] = simi_smoss
-
-        if 'moss_score' in metric_list and len(metric_list) > 1:
-            res = copy.deepcopy(scoss_res)
-            for key in scoss_res:
-                if key in smoss_res.keys():
-                    res[key]['scores']['moss_score'] = smoss_res[key]['scores']['moss_score']
-                else: 
-                    del res[key]
-        else:
-            res = {**scoss_res, **smoss_res}
-        check_zero = 0
-        for key in res:
+        similarity_list = Result.objects(problem_id=problem_id)
+        result_list= []
+        for sim in similarity_list:
             total = 0
             num_of_score = 0
-            if len(res[key]) == 0:
-                check_zero += 1
-                continue
-            for score in res[key]['scores']:
-                total += res[key]['scores'][score]
+            for score in sim['scores'].values():
+                total += score
                 num_of_score += 1
+            a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores']}
             if num_of_score != 0:
-                res[key]['scores']['mean'] = total/num_of_score
-        if(len(res.keys()) == check_zero):
-            return jsonify({'problem_id': problem_id, 'results': [], 'problem_name': problem_name}), 200
+                a_result['scores']['mean'] = total/num_of_score
+            result_list.append(a_result)
     except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id, 'results': list(res.values()), 'problem_name': problem_name}), 200
+        return jsonify({"error": "Exception: {}".format(e)}), 400 
+    return jsonify({'problem_id': problem_id, 'results': result_list, 'problem_name': problem_name}), 200
 
-
-@problems_controller.route('/api/problems/<problem_id>/results/scoss', methods=['GET'])
-def get_result_scoss(problem_id):
-    try:
-        data_problem = Problem.objects.get(problem_id=problem_id)
-        similarity_list = data_problem.similarity_list
-        alignment_list = data_problem.alignment_list
-    except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id, 'similarity_list': similarity_list, "alignment_list": alignment_list}), 200
-
-
-@problems_controller.route('/api/problems/<problem_id>/results/smoss', methods=['GET'])
-def get_result_smoss(problem_id):
-    try:
-        data_problem = Problem.objects.get(problem_id=problem_id)
-        similarity_smoss_list = data_problem.similarity_smoss_list
-        alignment_smoss_list = data_problem.alignment_smoss_list
-    except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id, 'similarity_smoss_list': similarity_smoss_list, "alignment_smoss_list": alignment_smoss_list}), 200
-
-
-@problems_controller.route('/api/problems/<problem_id>/results/scoss', methods=['PUT'])
+@problems_controller.route('/api/problems/<problem_id>/results', methods=['PUT'])
 @jwt_required()
-def update_result_scoss(problem_id):
+def update_result(problem_id):
     try:
-        similarity_list = request.json['similarity_list']
-        alignment_list = request.json['alignment_list']
-        Problem.objects(problem_id=problem_id).update(
-            similarity_list=similarity_list, alignment_list=alignment_list)
+        result_list = request.json['result_list']
+        # print('update result_list:', result_list, flush=True)
+        for result in result_list:
+            result_id = problem_id + '_' + result['source1'] + '_' + result['source1']
+            Result.objects(result_id=result_id).update_one(
+                set__problem_id=problem_id, 
+                set__source1=result['source1'], 
+                set__source2=result['source2'], 
+                set__scores=result['scores'], 
+                set__smoss_alignment=result['smoss_alignment'], 
+                upsert=True)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
-
-
-@problems_controller.route('/api/problems/<problem_id>/results/smoss', methods=['PUT'])
-@jwt_required()
-def update_result_smoss(problem_id):
-    try:
-        similarity_smoss_list = request.json['similarity_smoss_list']
-        alignment_smoss_list = request.json['alignment_smoss_list']
-        Problem.objects(problem_id=problem_id).update(
-            similarity_smoss_list=similarity_smoss_list, alignment_smoss_list=alignment_smoss_list)
-    except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id}), 200
-
-
+    
 @problems_controller.route('/api/problems/<problem_id>/run', methods=['POST'])
 @jwt_required()
 def run_source(problem_id):
@@ -333,7 +288,6 @@ def run_source(problem_id):
             tq.enqueue(do_job, args=(problem_id, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
         
     except Exception as e:
-        # raise e
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'problem_id': problem_id}), 200
 
@@ -364,8 +318,8 @@ def get_source(problem_id):
 @jwt_required()
 def reset(problem_id):
     try:
-        Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
-            similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
+        Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[])
+        Result.objects(problem_id=problem_id).delete()
         contest_id = Problem.objects.get(problem_id=problem_id).contest_id
         requests.get(url="{}/api/contests/{}/check_status".format(API_URI_SR, contest_id),
         headers={'Authorization': request.headers['Authorization']})
@@ -379,7 +333,6 @@ def reset(problem_id):
 def status(problem_id):
     def check_status(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
-        # print(data_problem.to_mongo())
         yield 'data: {}\n\n'.format(data_problem.problem_status)
 
     return Response(check_status(problem_id), mimetype="text/event-stream")
