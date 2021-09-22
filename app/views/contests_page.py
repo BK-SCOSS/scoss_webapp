@@ -77,15 +77,5 @@ def add_zip_file(contest_id):
 @contests.route('/contests/<contest_id>/results', methods=['GET'])
 def results(contest_id):
 	if request.method == 'GET':
-		headers = {'Authorization': "Bearer {}".format(session['token'])}
-		data = requests.get(url = "{}/api/contests/{}".format(URL, contest_id), headers=headers)
-		metrics = data.json()['contest_data']['metrics']
-		heads = []
-		heads.append('source1')
-		heads.append('source2')
-		for metric in metrics:
-			heads.append(metric['name'])
-		heads.append('mean')
-
-		return render_template('result.html', heads=heads, contest_id=contest_id)
+		return render_template('result.html', contest_id=contest_id)
 	return redirect(url_for('login_page.login_page'))

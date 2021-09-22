@@ -233,64 +233,29 @@
         } );
     } ).draw()
 
-    $.ajax({
-        url: '/api/problems/' + problem_id + '/results',
-        success: function (data) {
-            var thead = []
-            var heads = []
-            thead.push('Source1')
-            thead.push('Source2')
-            heads.push({data: 'source1' })
-            heads.push({data: 'source2' })
-            for (metric in data['results'][0]['scores']) {
-                if (metric == 'mean') {
-                    continue
-                }
-                thead.push(metric)
-                heads.push(
-                    {
-                        title: metric, data: 'scores.' + metric,
-                        createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
-                            source1 = rowData.source1
-                            source2 = rowData.source2
-                            C = parseFloat(cellData)*255
-                            R = parseInt(C)
-                            G = 0
-                            B = 0
-                            var title = $('#result-table').DataTable().columns(colIndex).header(); 
-                            var columnName = $(title).html();
-                            var url = `/problems/${problem_id}/compare?source1=${source1}&source2=${source2}&metrics=${columnName}`;
-                            text = `<span style='color:rgb(${R}, ${G}, ${B});'>` + (cellData*100).toFixed(2) + "%</span>"
-                            $(cell).html("<a href='" + url + "' target='_blank'>"+ text + "</a>");
-                        }
-                    }
-                )
-            }
-            thead.push('mean')
-            heads.push(
-                {
-                    data: 'scores.mean',
-                    createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
-                        source1 = rowData.source1
-                        source2 = rowData.source2
-                        C = parseFloat(cellData)*255
-                        R = parseInt(C)
-                        G = 0
-                        B = 0
-                        text = `<span style='color:rgb(${R}, ${G}, ${B});'>` + (cellData*100).toFixed(2) + "%</span>"
-                        $(cell).html(text);
-                    }
-                }
-            )
-            for (th of thead) {
-                $("#result-table thead tr").append("<th>"+ th +"</>")
-            }
-            $('#result-table').DataTable({
-                data: data.results,
-                columns: heads,
-                order: [[thead.length-1, "desc"]]
-            });
-        }
-    })
+    $('#result-table').DataTable({
+        order: [[6, "desc"]],
+        'processing': true,
+        'serverSide': true,
+        'serverMethod': 'post',
+        'ajax': {
+            'url':'/ajax/problems/'+problem_id+'/results'
+        },
+        searching: true,
+        sort: true,
+        columns: [
+            {title: 'source1', data: 'source1'},
+            {title: 'source2', data: 'source2'},
+            {title: 'count_operator', data: 'count_operator'},
+            {title: 'hash_operator', data: 'hash_operator'},
+            {title: 'set_operator', data: 'set_operator'},
+            {title: 'moss_score', data: 'moss_score'},
+            {title: 'mean', data: 'mean'}
+        ],
+        columnDefs: [{
+            "defaultContent": "-",
+            "targets": "_all"
+        }],
+    });
 </script>
 {% endblock %}

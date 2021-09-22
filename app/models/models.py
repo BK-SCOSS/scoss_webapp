@@ -41,14 +41,18 @@ class Problem(db.Document):
     problem_status = db.IntField(required=True)
     sources = db.ListField()
     metrics = db.ListField()
-    similarity_list = db.ListField()
-    alignment_list = db.ListField()
-    similarity_smoss_list = db.ListField()
-    alignment_smoss_list = db.ListField()
     contest_id = db.StringField()
     user_id = db.StringField()
     log = db.StringField()
     results = db.ListField()
+
+class Result(db.Document):
+    result_id = db.StringField(required=True, unique=True)
+    problem_id = db.StringField(required=True)
+    source1 = db.StringField(required=True)
+    source2 = db.StringField(required=True)
+    scores = db.DictField()
+    smoss_alignment = db.StringField()
 
 class Project(db.Document):
     project_id = db.StringField(required=True, unique=True)

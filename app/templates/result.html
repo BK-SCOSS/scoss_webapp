@@ -1,6 +1,19 @@
-{% extends "base.html" %}
+<!doctype html>
+<html>
+<head>
+<title>Contest id {{contest_id}}'s Result</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />	
+<link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 
-{% block title %}SCOSS - Results{% endblock %}
+<style>
+  div.dataTables_wrapper {
+    width: 900px;
+    margin: 0 auto;
+    float: left;
+  }
+</style>
 
 {% block content %}
     <div class="row">
@@ -17,69 +30,42 @@
           </div>
           <!-- /.card-header -->
           <div class="card-body">
-            <table id="resultTable" class="display">
-              <thead>
-                <tr>
-                      <th>Problem</th>
-                      {%for head in heads%}
-                      <th>{{head}} <i class="fa fa-sort"></i></th>
-                      {%endfor%}
-                  </tr>
-              </thead>
-              <tbody>
-                
-              </tbody>  
+            <table id="empTable" class="display"> 
             </table>
-          </div>
-          <!-- /.card-body -->
         </div>
       </div>
     </div>
 {% endblock %}
 
-{% block js%}
 <script>
-   var dataUrl = '/api/contests/{{contest_id}}/results/dataTable'
-   metrics = {{heads|tojson}}
-   var columns = []
-   columns.push({"data": 'problem_name'})
-   metrics.forEach(function(value) {
-      if (value=='source1' || value=='source2') {
-        columns.push({"data": value})
-      } else {
-        columns.push({"data": 'scores.' + value})
-      }
-   })
-   console.log(columns)
-   $(document).ready(function() {
-    $('#resultTable').DataTable({
-          processing: true,
-          serverSide: true,
-          paging: true,
-          ajax: {
-            url: dataUrl,
-            type: "POST"
-          },
-          columns: columns,
-          pageLength: 10,
-          "dom": 'Bfrtip',
-          "buttons": [
-            'csv'
-          ],
-      })
-  });
-  // $('#resultTable').DataTable({
-      //     columnDefs: [ {
-      //         "searchable": false,
-      //         "orderable": false,
-      //         "targets": 0
-      //     }],
-      //     pageLength: 50,
-      //     "dom": 'Bfrtip',
-      //     "buttons": [
-      //       'csv'
-      //     ],
-      //     order: [[indexLastColumn, "desc"]]
-      // })
+$(document).ready(function() {
+    var empDataTable = $('#empTable').DataTable({
+        order: [[7, "desc"]],
+        'processing': true,
+        'serverSide': true,
+        'serverMethod': 'post',
+        'ajax': {
+            'url':'/ajax/contests/{{contest_id}}/results'
+        },
+        searching: true,
+        sort: true,
+        columns: [
+            {title: 'problem_id (problem_name)', data: 'problem_id (problem_name)'},
+            {title: 'source1', data: 'source1'},
+            {title: 'source2', data: 'source2'},
+            {title: 'count_operator', data: 'count_operator'},
+            {title: 'hash_operator', data: 'hash_operator'},
+            {title: 'set_operator', data: 'set_operator'},
+            {title: 'moss_score', data: 'moss_score'},
+            {title: 'mean', data: 'mean'}
+        ],
+        columnDefs: [{
+            "defaultContent": "-",
+            "targets": "_all"
+        }],
+    });
+});
+
 </script>
-{% endblock %}
+</body>
+</html>
