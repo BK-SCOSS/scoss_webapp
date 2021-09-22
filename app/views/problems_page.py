@@ -19,23 +19,20 @@ def problem(contest_id):
 		if session['logged_in'] == True:
 			if request.method == 'GET':
 				# error = request.args.get("error")
-				url = URL + '/api/contests/' + contest_id
+				url = '/api/contests/' + contest_id
 				headers = {'Authorization': "Bearer {}".format(session['token'])}		
-				req = requests.get(url=url, headers=headers)
-				if req.status_code != 200 and 'msg' in req.json():
-					session.clear()
-					return redirect(url_for('login_page.login_page'))
-				if 'error' in req.json().keys():
-					flash(req.json()['error'], MessageStatus.error)
-				elif 'contest_id' in req.json().keys():
-					if len(req.json()['problems']) > 0:
-						author = req.json()['problems'][0]['user_id']
-						return render_template('problem.html', data=req.json()['problems'], \
-							contest_id=contest_id, author=author, contest_data=req.json()['contest_data'])	
-					else:
-						return render_template('problem.html', contest_id=contest_id, \
-							contest_data=req.json()['contest_data'])
-				return render_template('problem.html')
+				# req = requests.get(url=url, headers=headers)
+				# if req.status_code != 200 and 'msg' in req.json():
+				# 	session.clear()
+				# 	return redirect(url_for('login_page.login_page'))
+				# elif 'error' in req.json().keys():
+				# 	flash(req.json()['error'], MessageStatus.error)
+				# if len(req.json()['problems']) > 0:
+				# 	author = req.json()['problems'][0]['user_id']
+				# 	return render_template('problem.html', data=req.json()['problems'], \
+				# 		contest_id=contest_id, author=author, contest_data=req.json()['contest_data'])	
+				# else:
+				return render_template('problem.html', contest_id=contest_id, url=url, headers=headers)
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
 				data = {'problem_name': problem_name}

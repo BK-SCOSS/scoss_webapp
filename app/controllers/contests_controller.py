@@ -40,6 +40,7 @@ def get_contest_user(user_id):
                 temp = data_contest.to_mongo()
                 data_user = User.objects.get(user_id=user_id)
                 temp['username'] = data_user.username
+                temp['created_at'] = data_contest.created_at.strftime("%d/%m/%Y")
                 del temp['_id']
                 res.append(temp)
         else:
@@ -49,6 +50,7 @@ def get_contest_user(user_id):
                 if temp['user_id'] == user_id:
                     data_user = User.objects.get(user_id=user_id)
                     temp['username'] = data_user.username
+                    temp['created_at'] = data_contest.created_at.strftime("%d/%m/%Y")
                     del temp['_id']
                     res.append(temp)
                 # elif temp['contest_status'] == Status.checked:
@@ -58,7 +60,7 @@ def get_contest_user(user_id):
                 #     res.append(temp)
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
-    return jsonify({'contests': res})
+    return jsonify({'data': res})
 
 @contests_controller.route('/api/contests', methods=['GET'])
 @jwt_required()

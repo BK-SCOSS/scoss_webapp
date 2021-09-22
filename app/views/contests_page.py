@@ -24,21 +24,20 @@ def contest():
 				role = session['role']
 				headers = {'Authorization': "Bearer {}".format(session['token'])}
 				if int(role) == 0:
-					url = URL + '/api/contests'
-					data = requests.get(url=url, headers=headers)
+					url = '/api/contests'
+					# data = requests.get(url=url, headers=headers)
 				else:	
-					url = URL + '/api/users/' + user_id + '/contests'
-					data = requests.get(url=url, headers=headers)
-				print(data.json())
-				if data.status_code != 200 and 'msg' in data.json():
-					session.clear()
-					return redirect(url_for('login_page.login_page'))
-				return render_template('contest.html', data=data.json()['contests'])
+					url = '/api/users/' + user_id + '/contests'
+					# data = requests.get(url=url, headers=headers)
+				# if data.status_code != 200 and 'msg' in data.json():
+				# 	session.clear()
+				# 	return redirect(url_for('login_page.login_page'))
+				return render_template('contest.html', url=url, headers=headers)
 			else: 
 				# print(request.form['contest_name'])
 				user_id = session['user_id']
 				contest_name = request.form['contest_name']
-				headers = {'Authorization': "Bearer {}".format(session['token'])}
+				headers = {"Authorization": "Bearer {}".format(session['token'])}
 				data_form = {'contest_name': contest_name}
 				url = URL + '/api/users/' + user_id + '/contests/add'
 				req = requests.post(url=url,json=data_form, headers=headers)
@@ -78,7 +77,8 @@ def add_zip_file(contest_id):
 @contests.route('/contests/<contest_id>/results', methods=['GET'])
 def results(contest_id):
 	if request.method == 'GET':
-		data = requests.get(url = "{}/api/contests/{}".format(URL, contest_id))
+		headers = {'Authorization': "Bearer {}".format(session['token'])}
+		data = requests.get(url = "{}/api/contests/{}".format(URL, contest_id), headers=headers)
 		metrics = data.json()['contest_data']['metrics']
 		heads = []
 		heads.append('source1')
