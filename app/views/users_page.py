@@ -23,7 +23,7 @@ def admin():
 					url = URL + '/api/users'
 					headers = {'Authorization': "Bearer {}".format(session['token'])}		
 					data = requests.get(url=url, headers=headers)
-					print(data.json())
+					# print(data.json())
 					if data.status_code != 200 and 'msg' in data.json():
 						session.clear()
 						return redirect(url_for('login_page.login_page'))

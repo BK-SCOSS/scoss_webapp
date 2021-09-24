@@ -12,14 +12,22 @@ from flask_jwt_extended import jwt_required
 from controllers.task_queue import tq
 from controllers.similarity_project import do_project
 from uuid import uuid4
+import jwt
+KEY = "scoss_web_2020"
 public_api = Blueprint('public_api', __name__)
 
 @public_api.route("/api/users/<user_id>/create_token")
-# @jwt_required()
+@jwt_required()
 def create_token(user_id):
     timestamp = str(int(time.time()))
-    public_token = uuid4().hex+timestamp
-    print(public_token)
+    data_user = User.objects(user_id=user_id).first()
+    data_encode = {
+        "user_id":  data_user.user_id,
+        "username": data_user.username,
+        "timestamp": timestamp
+    }
+    public_token = jwt.encode(data_encode, KEY, algorithm="HS256")
+    # print(public_token)
     User.objects(user_id=user_id).update(public_token=public_token)
     return jsonify({"success": "True", "public_token": public_token}), 200
 

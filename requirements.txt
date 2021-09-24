@@ -53,3 +53,4 @@ rqmonitor
 rq
 tqdm
 flask_jwt_extended
+PyJWT

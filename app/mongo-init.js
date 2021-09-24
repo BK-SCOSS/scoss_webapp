@@ -19,7 +19,7 @@ db.user.insert(
         {
             "user_id": "1602777811000",
             "username": "admin",
-            "password": "pbkdf2:sha256:150000$Y2765SB3$7efdf6b00543f6bd21c73043f343ea5ba38f8ac1b40171380d8ccd3c69bdb39a",
+            "password": "pbkdf2:sha256:260000$xj3ueJYSRK2crTte$4e961d63ca19129c555a1259078db0c8fc158192d75ed09aec9e5888ba0ec1e6",
             "role": 0
         }
 );
