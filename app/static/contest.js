@@ -19,32 +19,6 @@ $(document).ready(function() {
         showConfirmButton: false,
         timer: 3000
     });
-
-    $(".status").each(function(){
-		switch($(this).text()){
-            case init.toString():
-                $(this).addClass("badge-secondary")
-                $(this).text("init")
-                break
-            case waiting.toString():
-                $(this).addClass("badge-info")
-                $(this).text("waiting")
-                break
-            case running.toString():
-                $(this).addClass("badge-primary")
-                $(this).text("running")
-                break
-			case checked.toString():
-				$(this).addClass("badge-success")
-                $(this).text("checked")
-                break
-			case failed.toString():
-				$(this).addClass("badge-danger")
-                $(this).text("failed")
-                break
-		}
-	})
-
     
     $(document).on("click",".btn-delete",function(){
         contest_id = $(this).attr('contest_id');

@@ -64,12 +64,10 @@ def update_password(user_id):
 				data = User.objects.get(user_id=user_id)
 				return render_template('profile.html', data=data)
 			if request.method == 'POST':
-				username = request.form['username']
 				email = request.form['email']
 				old_pass = request.form['old_password']
 				new_pass = request.form['new_password']
 				data_form = {
-					'username': username,
 					'email': email,
 					'old_password': old_pass,
 					'new_password': new_pass

@@ -56,17 +56,14 @@ def source(problem_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
 			if request.method == 'GET':
-				url = URL + '/api/problems/' + problem_id
+				url = '/api/problems/' + problem_id
 				headers = {'Authorization': "Bearer {}".format(session['token'])}		
-				req = requests.get(url=url, headers=headers)
-				if req.status_code != 200 and 'msg' in req.json():
-					session.clear()
-					return redirect(url_for('login_page.login_page'))
-				if 'problem_id' in req.json().keys():
-					return render_template('source.html', data=req.json()['sources'], \
-						problem_name=req.json()['problem_name'], problem_id=req.json()['problem_id'], \
-						contest_name=req.json()['contest_name'], contest_id=req.json()['contest_id'], \
-						metrics=req.json()['metrics'], problem_status=req.json()['problem_status'])
+				# req = requests.get(url=url, headers=headers)
+				# if req.status_code != 200 and 'msg' in req.json():
+				# 	session.clear()
+				# 	return redirect(url_for('login_page.login_page'))
+				# if 'problem_id' in req.json().keys():
+				return render_template('source.html', problem_id=problem_id, url=url, headers=headers)
 			else:
 				source_name = request.form['source_name']
 				data_form = {'source_name': source_name}

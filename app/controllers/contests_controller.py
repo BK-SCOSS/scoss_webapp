@@ -88,7 +88,7 @@ def contest():
 def get_contest(contest_id):
     try:
         res = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id')
-        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status', 'metrics').first()
+        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status', 'metrics', 'user_id').first()
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'contest_id':contest_id, 'problems': res, 'contest_data': contest_data})
