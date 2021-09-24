@@ -4,7 +4,7 @@ from flask import config, request, jsonify, Blueprint, Response
 import time
 from zipfile import ZipFile
 from models.models import *
-from config import URL, LANGUAGE_SUPPORT, API_URI_SR, JOB_TIMEOUT
+from config import URL, SUPPORTED_EXTENSIONS, API_URI_SR, JOB_TIMEOUT
 import requests
 from utils import make_unique
 # from config import *
@@ -89,21 +89,34 @@ def add_project():
                 sources = []
                 project_status = Status.waiting
                 with ZipFile(request.files['file'], 'r') as zf:
-                    zfile = zf.namelist()
-                    for file in zfile:
-                        if file.split('.')[-1] in LANGUAGE_SUPPORT:
-                            try:
-                                source_str = zf.read(file).decode('utf-8')
-                            except:
-                                source_str = zf.read(file).decode('cp437')
-                            if len(file.split('/')) > 1 and file.split('/')[-1] != '':
-                                data_doc = {
-                                    "pathfile": file.split('/')[-1],
-                                    "lang": file.split('.')[-1],
-                                    'mask': '',
-                                    'source_str': source_str
-                                }
-                                sources.append(data_doc)
+                    zfiles = zf.namelist()
+                    supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+                    if len(supported_files) != len(zfiles):
+                        # zfiles contains some unsupported files: wrong extensions, wrong directories,...
+                        # Push some notification in the future
+                        unsupported_files = set(zfiles) - set(supported_files)
+                        print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+                    list_name_contain_space = []
+                    for file in supported_files:
+                        try:
+                            source_str = zf.read(file).decode('utf-8')
+                        except:
+                            source_str = zf.read(file).decode('cp437')
+                        file_parts = file.split('/')
+                        filename = file_parts[-1]
+                        if ' ' in filename:
+                            list_name_contain_space.append(filename)
+                            filename = filename.replace(' ', '_')
+                        if len(file_parts) > 1 and filename != '':
+                            data_doc = {
+                                "pathfile": filename,
+                                "lang": filename.split('.')[-1],
+                                'mask': filename,
+                                'source_str': source_str
+                            }
+                            sources.append(data_doc)
+                    if list_name_contain_space:
+                        print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
                 Project(project_id=project_id, public_token=public_token,
                     project_status=project_status, metrics=metrics, sources=sources).save()
                 tq.enqueue(do_project, args=(project_id, JOB_TIMEOUT), job_timeout=1000)

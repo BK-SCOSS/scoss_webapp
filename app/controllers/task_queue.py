@@ -4,8 +4,8 @@ import time
 
 from redis import Redis
 from rq import Queue
+from config import REDIS_SERVER_PASS
 
-# r = Redis(host='rq-server', port=6379)
-r = Redis(host='127.0.0.1', port=6379, charset='utf-8')
+r = Redis(host='localhost', port=6379, charset='utf-8')
 tq = Queue(connection=r)
 

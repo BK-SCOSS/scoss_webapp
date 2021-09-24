@@ -68,11 +68,14 @@ def get_user(user_id):
 @jwt_required()
 def update_user(user_id):
     try:
+        current_user = User.objects.get(user_id=str(user_id))
+        username = request.json['username']
+        email = request.json['email']
         old_password = request.json['old_password']
         new_password = generate_password_hash(request.json['new_password'])
-        check_password = User.objects.get(user_id=str(user_id)).password
+        check_password = current_user.password
         if check_password_hash(check_password, old_password):
-            User.objects(user_id=str(user_id)).update(password=new_password)
+            current_user.update(username=username, email=email, password=new_password)
             info = 'Update infomation for user_id:' + user_id
         else:
             info = "Wrong password!"

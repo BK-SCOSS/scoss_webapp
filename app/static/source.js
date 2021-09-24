@@ -13,8 +13,6 @@ $(function() {
         }
     });
 
-
-
     // $('#source-table').DataTable();
     $.ajax({
 		type: "GET",

@@ -1,7 +1,7 @@
 db.createUser(
         {
-            user: "scoss_admin",
-            pwd: "scoss_admin",
+            user: "BKSCOSS_mongodb_user",
+            pwd: "BKSCOSS_mongodb_pass",
             roles: [
                 {
                     role: "readWrite",

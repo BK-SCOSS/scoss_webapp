@@ -57,8 +57,14 @@
               </li>
               <!-- Chỉ admin mới thấy -->
               {% if session['role'] == 0 %}
-              <li class="nav-item d-sm-inline-block">
-                <a href="/admin" class="nav-link">Admin</a>
+              <li class="nav-item dropdown">
+                <!-- <a id="admin-dropdown" href="/admin" class="nav-link">Admin</a> -->
+                <a id="admin-dropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Admin</a>
+                <ul aria-labelledby="admin-dropdown" class="dropdown-menu border-0 shadow">
+                  <li><a href="/admin" class="dropdown-item">User management </a></li>
+                  <li><a href="/admin/redis" class="dropdown-item">Redis management </a></li>
+                  <li><a href="/admin/mongo" class="dropdown-item">Mongo management</a></li>
+                </ul>
               </li>
               {% endif %}
             </ul>
@@ -80,7 +86,7 @@
                     <p style="font-size: 17px;;">Hello <b>{{ session['username'] }}</b></p>
                   </span>
                   <div class="dropdown-divider"></div>
-                  <a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-default">Update password </a>
+                  <a href="/users/{{session['user_id']}}/update" class="dropdown-item" >Update profile</a>
                   <div class="dropdown-divider"></div>
                   <a href="/logout" class="dropdown-item">Logout</a>
                 </div>
@@ -91,47 +97,24 @@
         </nav>
     </div>
     <!-- /.navbar -->
-    {% if session['logged_in'] == True %}
-    <div class="modal fade" id="modal-default" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h4 class="modal-title">Update password</h4>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form action="/users/{{session['user_id']}}/update" method="POST" id="update-password">
-            <div class="form-group row">
-                <label for="password" class="col-sm-2 control-label">Old Password</label>
-                <div class="col-sm-10">
-                <input type="password" class="form-control" name="old_password" placeholder="Old password">
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="newpassword" class="col-sm-2 control-label">New Password</label>
-                <div class="col-sm-10">
-                <input type="password" class="form-control" name="new_password" placeholder="New password">
-                </div>
-            </div>
-            </form>
-        </div>
-        <div class="modal-footer justify-content-between">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary" form="update-password">Save changes</button>
-        </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-    </div>
-    {% endif %}
 
     {% block sidebar %}{% endblock %}
     <div class="content-wrapper">
         <div class="content-header">
             {% block header %}{% endblock %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+              <div class="container">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                  <h5><i class="icon fas fa-check"></i> Alert!</h5>
+                    <p>{{ message }}</p>
+                </div>
+              {% endfor %}
+              </div>
+              {% endif %}
+            {% endwith %}
         </div>
         <div class="content">
             <div class="container">
