@@ -27,7 +27,8 @@ docker-compose up
 This project is in development, if you find any issues, please create an issue [here](https://github.com/ngocjr7/scoss_webapp/issues).
 
 ## Contributors
-[Ngoc Bui](https://github.com/ngocjr7), [Linh Le](https://github.com/Lelinh698), [Vien Tran](https://github.com/tranvien98)
+[Ngoc Bui<sup>*</sup>](https://github.com/ngocjr7), [Linh Le<sup>*</sup>](https://github.com/Lelinh698), [Vien Tran<sup>*</sup>](https://github.com/tranvien98), [Thai Do<sup>*</sup>](https://github.com/dec1mo)
 
+> <sup>*</sup>: Equal contribution
 ## Acknowledgements
 This project is sponsored and led by Prof. Do Phan Thuan, Hanoi University of Science and Technology. 
