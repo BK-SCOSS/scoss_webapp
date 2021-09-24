@@ -68,6 +68,7 @@ $(function() {
 		$("#problem-detail").html(problem_detail)
 
         $("#contest_name").text(data.contest_name)
+        $("#contest_name").attr('href', `/contests/${data.contest_id}/problems`)
 		$("#problem_name").text(data.problem_name)
 		metrics = data.metrics
         

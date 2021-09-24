@@ -1,19 +1,11 @@
-<!doctype html>
-<html>
-<head>
-<title>Contest id {{contest_id}}'s Result</title>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />	
+{% extends "base.html" %}
+
+{% block title %}Contest id {{contest_id}}'s Result{% endblock %}
+{% block css %}
 <link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-
-<!-- <style>
-  div.dataTables_wrapper {
-    width: 900px;
-    margin: 0 auto;
-    float: left;
-  }
-</style> -->
+{% endblock %}
 
 {% block content %}
     <div class="row">
@@ -37,6 +29,7 @@
     </div>
 {% endblock %}
 
+{% block js%}
 <script>
 $(document).ready(function() {
     var empDataTable = $('#empTable').DataTable({
@@ -67,5 +60,4 @@ $(document).ready(function() {
 });
 
 </script>
-</body>
-</html>
+{% endblock %}

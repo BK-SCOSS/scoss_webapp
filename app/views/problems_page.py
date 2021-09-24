@@ -33,7 +33,7 @@ def problem(contest_id):
 				# 	return render_template('problem.html', data=req.json()['problems'], \
 				# 		contest_id=contest_id, author=author, contest_data=req.json()['contest_data'])	
 				# else:
-				return render_template('problem.html', contest_id=contest_id, url=url, headers=headers)
+				return render_template('problem.html', contest_id=contest_id, url=url)
 			if request.method == 'POST':
 				problem_name = request.form['problem_name']
 				data = {'problem_name': problem_name}
@@ -63,7 +63,7 @@ def source(problem_id):
 				# 	session.clear()
 				# 	return redirect(url_for('login_page.login_page'))
 				# if 'problem_id' in req.json().keys():
-				return render_template('source.html', problem_id=problem_id, url=url, headers=headers)
+				return render_template('source.html', problem_id=problem_id, url=url)
 			else:
 				source_name = request.form['source_name']
 				data_form = {'source_name': source_name}
