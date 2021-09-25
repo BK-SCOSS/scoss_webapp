@@ -49,7 +49,7 @@ def login():
             del data['_id']
             token = create_access_token(identity=data)
         else:
-            return jsonify({"error": "Tài khoản mật khẩu không đúng"}), 400
+            return jsonify({"error": "Account password is not correct"}), 400
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'success': 'ok', 'user_id': data['user_id'], "username": data['username'], "role": data["role"], "token": token}), 200
@@ -60,7 +60,7 @@ def login():
 def logout():
     jti = get_jwt()["jti"]
     r.set(jti, "", ex=TTL)
-    return jsonify({'message': 'Bạn đăng xuất thành công'})
+    return jsonify({'message': 'You successfully logged out'})
 
 # @login_controller.route('/api/test')
 # @jwt_required()

@@ -137,3 +137,7 @@ dmypy.json
 
 # thaidd virtual env
 virtual/
+./app/config.py
+./app/mongo-init.js
+config.py
+app/config.py

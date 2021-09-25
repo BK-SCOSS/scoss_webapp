@@ -20,8 +20,8 @@ services:
     container_name: 'scoss_mongodb'
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASS}
       MONGO_INITDB_DATABASE: scoss
     volumes:
       - mongo_volume:/data/db
@@ -35,14 +35,17 @@ services:
     ports:
       - 8081:8081
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_SERVER: scoss_mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASS}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGOEXPRESS_LOGIN}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGOEXPRESS_PASS}
     depends_on:
       - mongo
 
   rq-server:
     image: redis:alpine
-    command: redis-server --requirepass redis_server_pass
+    command: redis-server --requirepass ${REDIS_SERVER_PASS}
     volumes:
       - .:/code
     ports:
@@ -55,11 +58,11 @@ services:
     volumes:
       - .:/code
     image: ngocjr/scoss
-    command: rq worker -u redis://:redis_server_pass@rq-server:6379 --path ${TASK_PATH}
+    command: rq worker -u redis://:${REDIS_SERVER_PASS}@rq-server:6379 --path ${TASK_PATH}
     env_file:
       - .env
     deploy:
-      replicas: 4
+      replicas: ${NO_WORKERS}
     depends_on:
       - rq-server
 
@@ -68,11 +71,13 @@ services:
   #   image: ngocjr/scoss
   #   volumes:
   #     - .:/code
-  #   command: python -m rqmonitor -u redis://rq-server:6379 -p 9181
+  #   command: >
+  #     rqmonitor -u redis://:${REDIS_SERVER_PASS}@rq-server:6379 -p 9181 --url-prefix /rq 
+  #     --username ${RQMONITOR_LOGIN} --password ${RQMONITOR_PASS}
   #   ports:
   #     - 9181:9181
   #   expose:
-  #     - '9181'
+  #     - 9181
   #   depends_on:
   #     - rq-server
 

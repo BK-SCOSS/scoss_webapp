@@ -7,5 +7,5 @@ def load_config(filepath='./config/config.yml'):
     return config
 
 def make_unique(string):
-    ident = uuid4().__str__()[:8]
+    ident = uuid4().__str__()[:2]
     return f"{ident}-{string}"

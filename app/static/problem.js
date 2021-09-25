@@ -25,6 +25,82 @@ $(document).ready(function() {
 		result.append(a)
 		$(".card-footer").append(result)
 	}
+
+	var columns = [
+		{data: null, title: '#', width: '10%'},
+		{
+			data: 'problem_name',
+			title: 'Name',
+			createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+				var problem_name = cellData
+				var problem_id = rowData.problem_id
+				var a = `<a href="/problems/${problem_id}/sources">${problem_name}</a>`
+				$(cell).html(a);
+			}
+		},
+		{
+			data: 'problem_status',
+			title: 'Status',
+			className: 'text-center project-state',
+			createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+				// var badge, status_label;
+				var problem_status = cellData
+				var problem_id = rowData.problem_id
+				var span = getStatusLabel(cellData)
+				$(cell).html(span);
+			}
+		}
+	];
+
+	$.ajax({
+		url: url,
+		headers: {
+			Authorization: 'Bearer '+token
+		}
+	}).done( function(data) {
+		if (session['role'] == 0 || session['user_id'] == data.contest_data.user_id) {
+			columns.push(
+				{
+					data: null,
+					title: "Actions",
+					className: 'text-center py-0 align-middle',
+					createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+						var problem_id = rowData.problem_id
+						var a = `<a class="btn btn-danger btn-delete" problem_id="${problem_id}"><i
+								class="fas fa-trash"></i></a>`
+						$(cell).html(a);
+					}
+				}
+			)
+		}
+		p = $('#problem-table').DataTable({
+			data: data.problems,
+			columns: columns,
+		})
+
+		p.on( 'order.dt search.dt', function () {
+			p.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+				cell.innerHTML = i+1;
+			} );
+		} ).draw()
+
+		contest_status_span = getStatusLabel(data.contest_data.contest_status)
+		var contest_detail = `${data.contest_data.contest_name} - <small>${contest_status_span}</small>`
+		$("#contest-detail").html(contest_detail)
+
+		$("#contest_name").text(data.contest_data.contest_name)
+		metrics = data.contest_data.metrics
+
+		if (metrics.length > 0)  {
+            for (metric of metrics) {
+                metric_name = metric['name']
+                $("#"+metric_name).prop("disabled", false)
+                $("#"+metric_name).val(metric['threshold']  * 100)
+                $("#"+metric_name+"_check").prop("checked", true)
+            }
+        }
+	})
+
 	$.ajax({
 		type: "GET",
 		contentType: 'application/json',

@@ -1,290 +1,279 @@
 <html lang="en" style="height: auto;">
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-  
-    <title>SCOSS - Admin</title>
-  
-    <!-- Theme style -->
-    <link rel="stylesheet" href="{{ url_for('static', filename = 'adminlte.min.css') }}">
-    <!-- Sweetalert -->
-    <link rel="stylesheet" href="{{ url_for('static', filename = 'sweetalert2.min.css') }}">
-    <!-- Google Font: Source Sans Pro -->
-    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <script src="https://kit.fontawesome.com/3089485309.js" crossorigin="anonymous"></script>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+	<title>SCOSS - Admin</title>
+
+	<!-- Theme style -->
+	<link rel="stylesheet" href="{{ url_for('static', filename = 'adminlte.min.css') }}">
+	<!-- Sweetalert -->
+	<link rel="stylesheet" href="{{ url_for('static', filename = 'sweetalert2.min.css') }}">
+	<!-- Google Font: Source Sans Pro -->
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+	<!-- Font Awesome Icons -->
+	<script src="https://kit.fontawesome.com/3089485309.js" crossorigin="anonymous"></script>
 </head>
-<body class="sidebar-mini sidebar-open" style="height: auto;">
-<div class="wrapper">
-      <nav class="main-header navbar navbar-expand-sm navbar-light navbar-white">
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarToggler">
-          <!-- Left navbar links -->
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
-            </li>
-            <li class="nav-item d-sm-inline-block">
-              <a href="/" class="nav-link">Home</a>
-            </li>
-            <li class="nav-item d-sm-inline-block">
-              <a href="/contest" class="nav-link">Contest</a>
-            </li>
-            <li class="nav-item d-sm-inline-block">
-              <a href="/test" class="nav-link">Test</a>
-            </li>
-            <li class="nav-item d-sm-inline-block">
-              <a href="/document" class="nav-link">Documents</a>
-            </li>
-            <li class="nav-item d-sm-inline-block">
-              <a href="/api" class="nav-link">APIS</a>
-            </li>
-            <!-- Chỉ admin mới thấy -->
-            {% if session['role'] == 0 %}
-            <li class="nav-item d-sm-inline-block">
-              <a href="/admin" class="nav-link">Admin</a>
-            </li>
-            {% endif %}
-          </ul>
-    
-          <!-- Right navbar links -->
-          <ul class="navbar-nav ml-auto">
-            {% if session['logged_in'] != True %}
-            <li class="nav-item">
-              <a class="nav-link" href="/login">Login</a>
-            </li>
-            {% endif %}
-            {% if session['logged_in'] == True %}
-            <li class="nav-item dropdown">
-              <a id="user-dropdown" class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
-                <i class="far fa-user"></i>
-              </a>
-              <div aria-labelledby="user-dropdown" class="dropdown-menu dropdown-menu-md dropdown-menu-right">
-                <span class="dropdown-item dropdown-header">
-                  <p style="font-size: 17px;;">Hello <b>{{ session['username'] }}</b></p>
-                </span>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-default">Update password </a>
-                <div class="dropdown-divider"></div>
-                <a href="/logout" class="dropdown-item">Logout</a>
-              </div>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </nav>
-      
-      <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <!-- Brand Logo -->
-        <a href="../../index3.html" class="brand-link">
-          <span class="brand-text font-weight-light">SCOSS</span>
-        </a>
-      
-        <!-- Sidebar -->
-        <div class="sidebar">
-          <!-- Sidebar Menu -->
-          <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-              <li>
-                <a href="#" class="nav-link" id="user-management-tab" data-toggle="pill" href="#user-management" 
-                  role="tab" aria-controls="user-management" aria-selected="false">
-                  <i class="nav-icon fas fa-tachometer-alt"></i>
-                  <p>
-                    Users management
-                  </p>
-                </a>
-              </li>
-              <li>
-                <a href="/admin/mongo" class="nav-link" target="_blank">
-                  <i class="nav-icon fas fa-tachometer-alt"></i>
-                  <p>
-                    Mongodb express
-                  </p>
-                </a>
-              </li>
-              <li>
-                <a href="/admin/redis" class="nav-link" target="_blank">
-                  <i class="nav-icon fas fa-tachometer-alt"></i>
-                  <p>
-                    Redis monitor
-                  </p>
-                </a>
-              </li>
-            </ul>
-          </nav>
-          <!-- /.sidebar-menu -->
-        </div>
-        <!-- /.sidebar -->
-      </aside>
-    <!-- /.navbar -->
-    {% if session['logged_in'] == True %}
-    <div class="modal fade" id="modal-default" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h4 class="modal-title">Update password</h4>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form action="/users/{{session['user_id']}}/update" method="POST" id="update-password">
-            <div class="form-group row">
-                <label for="password" class="col-sm-2 control-label">Old Password</label>
-                <div class="col-sm-10">
-                <input type="password" class="form-control" name="old_password" placeholder="Old password">
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="newpassword" class="col-sm-2 control-label">New Password</label>
-                <div class="col-sm-10">
-                <input type="password" class="form-control" name="new_password" placeholder="New password">
-                </div>
-            </div>
-            </form>
-        </div>
-        <div class="modal-footer justify-content-between">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary" form="update-password">Save changes</button>
-        </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-    </div>
-    {% endif %}
 
-    {% block sidebar %}{% endblock %}
-    <div class="content-wrapper">
-        <div class="content-header">
-            {% block header %}{% endblock %}
-        </div>
-        <div class="content">
-            <div class="container">
-              <div class="row">
-                <div class="col-12">
-                  
-                </div>
-              </div>
-            
-              <div class="tab-pane" id="user-management" role="tabpanel" aria-labelledby="user-management-tab">
-                <div class="card">
-                  <div class="card-header">
-                    <h3 class="card-title">Users list</h3>
-                    <div class="card-tools">
-                      <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-create-user">Create</a>
-                    </div>
-                  </div>
-                  <!-- /.card-header -->
-                  <div class="card-body table-responsive p-0">
-                    <table class="table table-hover table-bordered">
-                      <tr>
-                        <th>#</th>
-                        <th>Username</th>
-                        <th>Role</th>
-                        <th class="text-center" style="width: 150px;">Action</th>
-                      </tr>
-                      {% for user in data %}
-                      <tr>
-                        <td>{{loop.index}}</td>
-                        <td><a>{{ user['username'] }}</a></td>
-                        {% if user.role == 0 %}
-                        <td><a>Admin</a></td>
-                        {% else %}
-                        <td><a>User</a></td>
-                        {%endif%}
-                        {% if user.role != 0 %}
-                        <td class="text-center py-0 align-middle">
-                          <a href="#" class="btn btn-danger btn-delete" user_id="{{user['user_id']}}"><i class="fas fa-trash"></i></a>
-                        </td>
-                        {% endif %}
-                      </tr>
-                      {% endfor %}
-                    </table>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-              </div>
+<body class="layout-top-nav" style="height: auto;">
+	<div class="wrapper">
+		<div class="container">
+		<nav class="main-header navbar navbar-expand-sm navbar-light navbar-white">
+			<a href="/" class="navbar-brand">
+				<img src="{{ url_for('static', filename = 'images/scoss_logo2.png') }}" class="brand-image" >
+			  </a>
+			  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler">
+				<span class="navbar-toggler-icon"></span>
+			  </button>
 
-              <div class="modal fade" id="modal-create-user" style="display: none;" aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h4 class="modal-title">Create user</h4>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <form action="/admin" method="POST" id="create-user">
-                        <div class="form-group row">
-                          <label for="username" class="col-sm-2 control-label">Username</label>
-                          <div class="col-sm-10">
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Username">
-                          </div>
-                        </div>
-                      </form>
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                      <button type="submit" class="btn btn-primary" form="create-user">Create</button>
-                    </div>
-                  </div>
-                  <!-- /.modal-content -->
-                </div>
-                <!-- /.modal-dialog -->
-              </div>
-            </div>
-        </div>
-    </div>
-    <footer class="main-footer">
-        <!-- To the right -->
-        <div class="float-right d-none d-sm-inline">
-          Anything you want
-        </div>
-        <!-- Default to the left -->
-        <strong> 2020 <a>HUST</a>.</strong>
-    </footer>
-</div>
-<!-- jQuery -->
-<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
-<!-- SweetAlert -->
-<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
-<!-- AdminLTE App -->
-<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
-<script>
-  $(document).ready(function() {
-	$.ajaxSetup({
-	  headers: {
-		'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-	  }
-	});
+			<div class="collapse navbar-collapse" id="navbarToggler">
+				<!-- Left navbar links -->
+				<ul class="navbar-nav">
+					<li class="nav-item d-sm-inline-block">
+						<a href="/" class="nav-link">Home</a>
+					</li>
+					<li class="nav-item d-sm-inline-block">
+						<a href="/contest" class="nav-link">Contest</a>
+					</li>
+					<li class="nav-item d-sm-inline-block">
+						<a href="/test" class="nav-link">Test</a>
+					</li>
+					<li class="nav-item d-sm-inline-block">
+						<a href="/document" class="nav-link">Documents</a>
+					</li>
+					<li class="nav-item d-sm-inline-block">
+						<a href="/api" class="nav-link">APIS</a>
+					</li>
+					<!-- Chỉ admin mới thấy -->
+					{% if session['role'] == 0 %}
+					<li class="nav-item dropdown">
+						<!-- <a id="admin-dropdown" href="/admin" class="nav-link">Admin</a> -->
+						<a id="admin-dropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Admin</a>
+						<ul aria-labelledby="admin-dropdown" class="dropdown-menu border-0 shadow">
+							<li><a href="/admin" class="dropdown-item">User management </a></li>
+							<li><a href="/admin/redis" class="dropdown-item">Redis management </a></li>
+                  			<li><a href="/admin/mongo" class="dropdown-item">Mongo management</a></li>
+						</ul>
+					</li>
+					{% endif %}
+				</ul>
 
-	$(document).on("click",".btn-delete",function(){
-	  user_id = $(this).attr('user_id');
-	  if(confirm("Bạn chắc chắn muốn xóa chứ?")){
-		$.ajax({
-		  type: "DELETE",
-		  contentType: 'application/json',
-		  url: "/api/users/" + user_id,
-		  success: function (data) {
-        console.log('success')
-        alert(data['info'])
-        location.reload()
-		  },
-		  error: function (data) {
-  			console.log('Error:', data['error']);
-		  }
-		});
-	  }
-	});
-  })
-</script>
+				<!-- Right navbar links -->
+				<ul class="navbar-nav ml-auto">
+					{% if session['logged_in'] != True %}
+					<li class="nav-item">
+						<a class="nav-link" href="/login">Login</a>
+					</li>
+					{% endif %}
+					{% if session['logged_in'] == True %}
+					<li class="nav-item dropdown">
+						<a id="user-dropdown" class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+							<i class="far fa-user"></i>
+						</a>
+						<div aria-labelledby="user-dropdown" class="dropdown-menu dropdown-menu-md dropdown-menu-right">
+							<span class="dropdown-item dropdown-header">
+								<p style="font-size: 17px;;">Hello <b>{{ session['username'] }}</b></p>
+							</span>
+							<div class="dropdown-divider"></div>
+							<a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-default">Update
+								profile </a>
+							<div class="dropdown-divider"></div>
+							<a href="/logout" class="dropdown-item">Logout</a>
+						</div>
+					</li>
+					{% endif %}
+				</ul>
+			</div>
+		</nav>
+	</div>
+
+		<!-- /.navbar -->
+		{% if session['logged_in'] == True %}
+		<div class="modal fade" id="modal-default" style="display: none;" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Update password</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form action="/users/{{session['user_id']}}/update" method="POST" id="update-password">
+							<div class="form-group row">
+								<label for="password" class="col-sm-2 control-label">Old Password</label>
+								<div class="col-sm-10">
+									<input type="password" class="form-control" name="old_password"
+										placeholder="Old password">
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="newpassword" class="col-sm-2 control-label">New Password</label>
+								<div class="col-sm-10">
+									<input type="password" class="form-control" name="new_password"
+										placeholder="New password">
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary" form="update-password">Save changes</button>
+					</div>
+				</div>
+				<!-- /.modal-content -->
+			</div>
+			<!-- /.modal-dialog -->
+		</div>
+		{% endif %}
+
+		{% block sidebar %}{% endblock %}
+		<div class="content-wrapper">
+			<div class="content-header">
+				{% block header %}{% endblock %}
+			</div>
+			<div class="content">
+				<div class="container">
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header">
+									<h3 class="card-title">User management</h3>
+									<div class="card-tools">
+										<a href="#" class="btn btn-success" data-toggle="modal"
+											data-target="#modal-create-user">Create</a>
+									</div>
+								</div>
+								<!-- /.card-header -->
+								<div class="card-body table-responsive p-0">
+									<table class="table table-hover table-bordered">
+										<tr>
+											<th>#</th>
+											<th>Username</th>
+											<th>Role</th>
+											<th class="text-center" style="width: 150px;">Action</th>
+										</tr>
+										{% for user in data %}
+										<tr>
+											<td>{{loop.index}}</td>
+											<td><a>{{ user['username'] }}</a></td>
+											{% if user.role == 0 %}
+											<td><a>Admin</a></td>
+											{% else %}
+											<td><a>User</a></td>
+											{%endif%}
+											{% if user.role != 0 %}
+											<td class="text-center py-0 align-middle">
+												<a href="#" class="btn btn-danger btn-delete"
+													user_id="{{user['user_id']}}"><i class="fas fa-trash"></i></a>
+											</td>
+											{% endif %}
+										</tr>
+										{% endfor %}
+									</table>
+								</div>
+								<!-- /.card-body -->
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header">
+									<h3 class="card-title">Monitor</h3>
+								</div>
+								<!-- /.card-header -->
+								<div class="card-body p-0">
+									<div class="row">
+									</div>
+								</div>
+								<!-- /.card-body -->
+							</div>
+						</div>
+					</div>
+
+					<div class="modal fade" id="modal-create-user" style="display: none;" aria-hidden="true">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h4 class="modal-title">Create user</h4>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+										<span aria-hidden="true">×</span>
+									</button>
+								</div>
+								<div class="modal-body">
+									<form action="/admin" method="POST" id="create-user">
+										<div class="form-group row">
+											<label for="username" class="col-sm-2 control-label">Username</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="username" name="username"
+													placeholder="Username">
+											</div>
+										</div>
+									</form>
+								</div>
+								<div class="modal-footer justify-content-between">
+									<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+									<button type="submit" class="btn btn-primary" form="create-user">Create</button>
+								</div>
+							</div>
+							<!-- /.modal-content -->
+						</div>
+						<!-- /.modal-dialog -->
+					</div>
+				</div>
+			</div>
+		</div>
+		<footer class="main-footer">
+			<!-- To the right -->
+			<div class="float-right d-none d-sm-inline">
+				Anything you want
+			</div>
+			<!-- Default to the left -->
+			<strong> 2020 <a>HUST</a>.</strong>
+		</footer>
+	</div>
+	<!-- jQuery -->
+	<script src="{{ url_for('static', filename = 'jquery.min.js') }}"></script>
+	<!-- Bootstrap 4 -->
+	<script src="{{ url_for('static', filename = 'bootstrap.bundle.min.js') }}"></script>
+	<!-- SweetAlert -->
+	<script src="{{ url_for('static', filename = 'sweetalert2.all.js') }}"></script>
+	<!-- AdminLTE App -->
+	<script src="{{ url_for('static', filename = 'adminlte.min.js') }}"></script>
+	<script>
+		$(document).ready(function () {
+			$.ajaxSetup({
+				headers: {
+					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+				}
+			});
+
+			$(document).on("click", ".btn-delete", function () {
+				user_id = $(this).attr('user_id');
+				if (confirm("Bạn chắc chắn muốn xóa chứ?")) {
+					$.ajax({
+						type: "DELETE",
+						contentType: 'application/json',
+						headers: {
+							Authorization: 'Bearer '+ '{{session["token"]}}'
+						},
+						url: "/api/users/" + user_id,
+						success: function (data) {
+							console.log('success')
+							alert(data['info'])
+							location.reload()
+						},
+						error: function (data) {
+							console.log('Error:', data['error']);
+						}
+					});
+				}
+			});
+		})
+	</script>
 </body>
+
 </html>

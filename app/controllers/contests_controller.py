@@ -2,10 +2,13 @@ from flask import config, request, jsonify, Blueprint, Response
 import time
 from zipfile import ZipFile
 from models.models import *
-from config import URL, LANGUAGE_SUPPORT, API_URI_SR
+from mongoengine.queryset.visitor import Q
+from config import URL, API_URI_SR, SUPPORTED_EXTENSIONS
 import requests
 from utils import make_unique
 from flask_jwt_extended import jwt_required
+import re
+
 contests_controller = Blueprint('contests_controller', __name__)
 
 @contests_controller.route('/api/users/<user_id>/contests/add', methods=['POST'])
@@ -15,6 +18,8 @@ def add_contest(user_id):
         timestamp = str(int(time.time()))
         contest_id = make_unique(timestamp)
         contest_name = request.json['contest_name']
+        if contest_name == '':
+            return jsonify({'error': "Contest name must not be empty"}),400
         contest_status = Status.init
         data = Contest.objects(user_id=user_id, contest_name=contest_name)
         if len(data) > 0:
@@ -38,6 +43,7 @@ def get_contest_user(user_id):
                 temp = data_contest.to_mongo()
                 data_user = User.objects.get(user_id=user_id)
                 temp['username'] = data_user.username
+                temp['created_at'] = data_contest.created_at.strftime("%d/%m/%Y")
                 del temp['_id']
                 res.append(temp)
         else:
@@ -47,6 +53,7 @@ def get_contest_user(user_id):
                 if temp['user_id'] == user_id:
                     data_user = User.objects.get(user_id=user_id)
                     temp['username'] = data_user.username
+                    temp['created_at'] = data_contest.created_at.strftime("%d/%m/%Y")
                     del temp['_id']
                     res.append(temp)
                 # elif temp['contest_status'] == Status.checked:
@@ -56,18 +63,19 @@ def get_contest_user(user_id):
                 #     res.append(temp)
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
-    return jsonify({'contests': res})
+    return jsonify({'data': res})
 
 @contests_controller.route('/api/contests', methods=['GET'])
 @jwt_required()
 def contest():
     try:
         data_contests = Contest.objects()
-        print(data_contests.count())
         res = []
         for data_contest in data_contests:
             temp = data_contest.to_mongo()
-            data_user = User.objects.get(user_id=temp['user_id'])
+            if User.objects(user_id=temp['user_id']).count() == 0:
+                continue
+            data_user = User.objects(user_id=temp['user_id']).first()
             temp['username'] = data_user.username
             del temp['_id']
             res.append(temp)
@@ -80,7 +88,7 @@ def contest():
 def get_contest(contest_id):
     try:
         res = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id')
-        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status', 'metrics').first()
+        contest_data = Contest.objects(contest_id=contest_id).only('contest_id', 'contest_name', 'contest_status', 'metrics', 'user_id').first()
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'contest_id':contest_id, 'problems': res, 'contest_data': contest_data})
@@ -133,33 +141,47 @@ def add_zip(contest_id):
     try: 
         contest_list = {}
         if ZipFile(request.files["file"], "r").testzip() is not None:
-            return jsonify({"error":"Tệp zip bị hỏng"}),400
+            return jsonify({"error":"The zip file is corrupted"}), 400
         with ZipFile(request.files['file'], 'r') as zf:
-            zfile = zf.namelist()
-            for file in zfile:
-                if file.split('.')[-1] in LANGUAGE_SUPPORT:
-                    if len(file.split('/')) > 2 and file.split('/')[-1] != '':
-                        try:
-                            source_str = zf.read(file).decode('utf-8')
-                        except:
-                            source_str = zf.read(file).decode('cp437')
-                        if file.split('/')[-2] in contest_list:
-                            data_doc = {
-                                "pathfile": file.split('/')[-1],
-                                "lang": file.split('.')[-1],
-                                'mask': '',
+            zfiles = zf.namelist()
+            supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+            if not supported_files or len(supported_files[0].split('/')) <= 2:
+                print("Contest: Wrong zip file's format", flush=True)
+                return jsonify({"error": "Wrong zip file's format"}), 400
+            if len(supported_files) != len(zfiles):
+                # zfiles contains some unsupported files: wrong extensions, wrong directories,...
+                # Push some notification in the future
+                unsupported_files = set(zfiles) - set(supported_files)
+                print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+            list_name_contain_space = []
+            for file in supported_files:
+                file_parts = file.split('/')
+                filename = file_parts[-1]
+                if ' ' in filename:
+                    list_name_contain_space.append(filename)
+                    filename = filename.replace(' ', '_')
+                if len(file_parts) > 2 and filename != '':
+                    try:
+                        source_str = zf.read(file).decode('utf-8')
+                    except:
+                        source_str = zf.read(file).decode('cp437')
+                    if file_parts[-2] in contest_list:
+                        data_doc = {
+                            "pathfile": filename,
+                            "lang": filename.split('.')[-1],
+                            'mask': filename,
+                            'source_str': source_str
+                        }
+                        contest_list[file_parts[-2]].append(data_doc)
+                    else:
+                        contest_list[file_parts[-2]] = [
+                            {
+                                "pathfile": filename,
+                                "lang": filename.split('.')[-1],
+                                'mask': filename,
                                 'source_str': source_str
                             }
-                            contest_list[file.split('/')[-2]].append(data_doc)
-                        else:
-                            contest_list[file.split('/')[-2]] = []
-                            data_doc = {
-                                "pathfile": file.split('/')[-1],
-                                "lang": file.split('.')[-1],
-                                'mask': '',
-                                'source_str': source_str
-                            }
-                            contest_list[file.split('/')[-2]].append(data_doc)
+                        ]
         url_contest = '{}/api/contests/{}/problems/add'.format(URL, contest_id)
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key},\
@@ -187,7 +209,11 @@ def run_contest(contest_id):
         metrics = request.json        
         Contest.objects(contest_id=contest_id).update(metrics=metrics['metrics'])
         data_problems = requests.get(url=url_contest, 
-        headers={'Authorization': request.headers['Authorization']})
+            headers={'Authorization': request.headers['Authorization']})
+        problems = data_problems.json()['problems']
+        if not problems:
+            return jsonify({"error": "No problems to run"}), 400
+
         doc_status = {
             "contest_status": Status.running
         }
@@ -197,7 +223,7 @@ def run_contest(contest_id):
             headers={'Authorization': request.headers['Authorization']})
         if req.status_code != 200:
             return jsonify(req.json()), 200
-        for problem in data_problems.json()['problems']:
+        for problem in problems:
             problem_id = problem['problem_id']
             url_run = '{}/api/problems/{}/run'.format(API_URI_SR, problem_id)
             req = requests.post(url=url_run, json=metrics,\
@@ -208,19 +234,68 @@ def run_contest(contest_id):
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
 
-@contests_controller.route('/api/contests/<contest_id>/results', methods = ['GET'])
-def get_result(contest_id):
+# @contests_controller.route('/api/contests/<contest_id>/results', methods = ['GET'])
+# def get_result(contest_id):
+#     try:
+#         data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
+#         contest_res = []
+#         for problem in data_problems:
+#             problem_id = problem.problem_id
+#             url_res =  '{}/api/problems/{}/results'.format(API_URI_SR, problem_id)
+#             res = requests.get(url=url_res)
+#             contest_res.append(res.json())
+#         return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
+#     except Exception as e:
+#         return jsonify({"error":"Exception: {}".format(e)}),400
+
+@contests_controller.route('/ajax/contests/<contest_id>/results', methods=['POST'])
+def get_ajax_contest_results(contest_id):
+    order_columns = ['problem_id', 'source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
+        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    draw = request.form['draw'] 
+    start = int(request.form['start'])
+    length = int(request.form['length'])
+    searchValue = request.form["search[value]"]
+    orderDirection = request.form["order[0][dir]"]
+    orderColumn = request.form["order[0][column]"]
+    data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
+    problem_dict = {}
+    for problem in data_problems:
+        problem_dict[problem.problem_id] = problem.problem_name
+
+    totalRecords = Result.objects(problem_id__in=list(problem_dict.keys())).count()
+
+    regex = re.compile('.*{}.*'.format(searchValue), re.IGNORECASE)
+    totalRecordwithFilter = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).count()
+
+    order = order_columns[int(orderColumn)]
+    if orderDirection == 'desc':
+        order = '-' + order
+    similarity_list = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).\
+        order_by(order).skip(start).limit(length)
+
+    score_span = '<a href="/problems/{}/compare?source1={}&source2={}&metric={}" target="_blank"><span style="color:rgb({}, 0, 0);">{}%</span></a>'
+    data = []
+    for sim in similarity_list:
+        problem_id = sim['problem_id']
+        a_result = {'problem_id (problem_name)':'{} ({})'.format(problem_id, problem_dict[problem_id]), 
+            'source1':sim['source1'], 'source2':sim['source2']}
+        for metric, score in sim['scores'].items():
+            if metric != 'mean':
+                a_result[metric] = score_span.format(sim['problem_id'], sim['source1'], sim['source2'], metric, int(score*255), round(score*100, 2))
+            else:
+                a_result[metric] = '<span style="color:rgb({}, 0, 0);">{}%</span>'.format(int(score*255), round(score*100, 2))
+        data.append(a_result)
+    return jsonify({'draw': draw, 'iTotalRecords': totalRecords, 'iTotalDisplayRecords': totalRecordwithFilter, 'data':data}), 200
+
+@contests_controller.route('/api/contests/<contest_id>/results', methods = ['PUT'])
+def update_result(contest_id):
     try:
-        data_problems = Problem.objects(contest_id=contest_id).only('problem_id', 'problem_name', 'problem_status', 'user_id').all()
-        contest_res = []
-        for problem in data_problems:
-            problem_id = problem.problem_id
-            url_res =  '{}/api/problems/{}/results'.format(API_URI_SR, problem_id)
-            res = requests.get(url=url_res)
-            contest_res.append(res.json())
-        return jsonify({'contest_id': contest_id, 'results': contest_res}), 200
+        data = request.json['data']
+        Contest.objects(contest_id=contest_id).update(results=data)
+        return jsonify({'contest_id': contest_id, 'status': 'Success'}), 200
     except Exception as e:
-        return jsonify({"error":"Exception: {}".format(e)}),400
+        return jsonify({"error": "Exception: {}".format(e)}), 400
 
 @contests_controller.route('/api/contests/<contest_id>/check_status', methods = ['GET'])
 @jwt_required()
@@ -245,8 +320,8 @@ def reset(contest_id):
         problem_list = Problem.objects(contest_id=contest_id).only('problem_id')
         for problem in problem_list:
             problem_id = problem.problem_id
-            Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[],similarity_list=[],\
-                        similarity_smoss_list=[], alignment_list=[], alignment_smoss_list=[])
+            Problem.objects(problem_id=problem_id).update(problem_status=1, metrics=[])
+            Result.objects(problem_id=problem_id).delete()
         Contest.objects(contest_id=contest_id).update(contest_status=1, metrics=[])
         info = 'Reset all!'
     except Exception as e:

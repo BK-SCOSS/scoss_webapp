@@ -6,14 +6,14 @@
 <div class="container">
   <div class="row mb-2">
     <div class="col-sm-6">
-      	<h1 class="m-0 text-dark">
-			{{contest_data.contest_name}} - <small><span class="badge status">{{contest_data['contest_status']}}</span></small>
+      	<h1 class="m-0 text-dark" id="contest-detail">
+			
 		</h1>
     </div><!-- /.col -->
     <div class="col-sm-6">
       <ol class="breadcrumb float-sm-right">
         <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
-        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_data['contest_name']}}</a></li>
+        <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems" id="contest_name"></a></li>
       </ol>
     </div><!-- /.col -->
   </div><!-- /.row -->
@@ -52,35 +52,11 @@
           </div>
 		  <!-- /.card-header -->
 		  
-          <div class="card-body table-responsive p-0">
+          <div class="card-body">
             <table class="display" id="problem-table">
 				<thead>
-					<tr>
-						<th style="width: 4rem;">#</th>
-						<th>Name</th>
-						<th style="text-align: center; width: 15%;">Status</th>
-						{% if session['role'] == 0 or author == session['user_id'] %}
-						<th style="text-align: center; width: 15%;">Actions</th>
-						{% endif %}
-					</tr>
 				</thead>
 				<tbody>
-					{%if data|length > 0%}
-					{%for problem in data%}
-					<tr>
-						<td>{{loop.index}}</td>
-						<td><a href="/problems/{{problem['problem_id']}}/sources">{{problem['problem_name']}}</a></td>
-						<td class="text-center project-state">
-							<span class="badge status">{{problem['problem_status']}}</span>
-						</td>
-						{% if session['role'] == 0 or author == session['user_id'] %}
-						<td class="text-center py-0 align-middle">
-							<a class="btn btn-danger btn-delete" problem_id="{{problem['problem_id']}}"><i class="fas fa-trash"></i></a>
-						</td>
-						{% endif %}
-					</tr>
-					{%endfor%}
-					{%endif%}
 				</tbody>
 				<tr>
 					<td>#</td>
@@ -168,22 +144,9 @@
 
 {% block js %}
 <script>
-	contest_id = '{{contest_id}}'
-	metrics = {{contest_data.metrics|tojson}}
-	
-	p = $('#problem-table').DataTable({
-        "columnDefs": [ {
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
-        }],
-    })
-
-    p.on( 'order.dt search.dt', function () {
-        p.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
-            cell.innerHTML = i+1;
-        } );
-    } ).draw()
+	session = {{session|tojson}};
+	url = "{{url}}"
+	contest_id = '{{contest_id}}';
 </script>
 <script id="token" src="{{ url_for('static', filename = 'main.js', token=session['token']) }}"></script>
 <script src="{{ url_for('static', filename = 'problem.js', token=session['token']) }}"></script>

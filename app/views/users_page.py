@@ -1,3 +1,4 @@
+from models.models import User
 import os
 import sys
 from werkzeug.utils import secure_filename
@@ -23,7 +24,7 @@ def admin():
 					url = URL + '/api/users'
 					headers = {'Authorization': "Bearer {}".format(session['token'])}		
 					data = requests.get(url=url, headers=headers)
-					print(data.json())
+					# print(data.json())
 					if data.status_code != 200 and 'msg' in data.json():
 						session.clear()
 						return redirect(url_for('login_page.login_page'))
@@ -46,25 +47,28 @@ def admin():
 
 @user.route('/admin/redis', methods=['GET'])
 def admin_rq():
-	server_name = request.host.split(":")[0]
-	url = 'http://{}:{}/rq'.format(server_name, config.REDIS_PORT)
-	return redirect(url)
+	return redirect('/rq')
 
 @user.route('/admin/mongo', methods=['GET'])
 def admin_mg():
-	server_name = request.host.split(":")[0]
-	# print("server_name " + server_name, flush=True)
-	url = 'http://{}:{}'.format(server_name, config.MONGO_PORT)
+	if not config.server_name:
+		config.server_name = request.host.split(":")[0]
+	url = 'http://{}:{}'.format(config.server_name, config.MONGO_PORT)
 	return redirect(url)
 
-@user.route('/users/<user_id>/update', methods=['POST'])
+@user.route('/users/<user_id>/update', methods=['GET', 'POST'])
 def update_password(user_id):
 	if 'logged_in' in session:
 		if session['logged_in'] == True:
+			if request.method == 'GET':
+				data = User.objects.get(user_id=user_id)
+				return render_template('profile.html', data=data.to_mongo())
 			if request.method == 'POST':
+				email = request.form['email']
 				old_pass = request.form['old_password']
 				new_pass = request.form['new_password']
 				data_form = {
+					'email': email,
 					'old_password': old_pass,
 					'new_password': new_pass
 				}
