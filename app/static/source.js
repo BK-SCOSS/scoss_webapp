@@ -24,30 +24,26 @@ $(function() {
 		success: function (data) {
             // console.log('wqw')
             problem_status = data['problem_status']
-            if (problem_status == checked) {
-                $.get("/api/problems/"+ problem_id + "/results", function(data){
-                    // if (data['results'].length > 0) {
-                       
-                    // }
-                    create_result(data)
-                    $("#run").removeClass("btn-primary")
-                    $("#run").addClass("btn-danger")
-                    $("#run").text("Rerun")
-                })
-            } else if (problem_status == running) {
+            if (problem_status == checked || problem_status == failed) {
+                $("#run").removeClass("btn-primary")
+                $("#run").addClass("btn-danger")
+                $("#run").text("Rerun")
+            } else if (problem_status == running || problem_status == waiting) {
+                $("#run").text("Running")
+				$("#run").prop("disabled", true)
                 var source = new EventSource('/problems/' + problem_id + '/status');
                 source.onmessage = function(event) {
-                    if (event.data == checked) {
+                    if (event.data == checked || event.data == failed) {
                         $("#run").removeClass("btn-primary")
                         $("#run").addClass("btn-danger")
                         $("#run").text("Rerun")
                         source.close()
+			            location.reload();
                     }
                 }
-                $("#run").text("Running")
-                $("#run").prop("disabled", true)
+                // $("#run").text("Running")
+                // $("#run").prop("disabled", true)
             }
-			// location.reload();
 		},
 		error: function (data) {
             // console.log("123")
@@ -85,19 +81,6 @@ $(function() {
 	// 	}
 	// })
 
-    function create_row_result(score_metric, a) {
-        td = $("<td>")
-        C = parseFloat(score_metric)*255
-        R = parseInt(C)
-        G = 0
-        B = 0
-        span = $("<span>", {"style": `color:rgb(${R}, ${G}, ${B});`})
-        span.text((score_metric * 100).toFixed(2) + "%")
-        a.append(span)
-        td.append(a)
-        item.append(td)
-    }
-
     $("#problem-run").submit(function(e){
         e.preventDefault(); // avoid to execute the actual submit of the form.
         $("#result").remove()
@@ -128,21 +111,21 @@ $(function() {
                     $("#run").text("Running...")
                     var source = new EventSource('/problems/' + problem_id + '/status');
                     source.onmessage = function(event) {
-                        if (event.data == checked) {
+                        if (event.data == checked || event.data == failed) {
                             source.close()
-                            $.get("/api/problems/"+ problem_id+"/results", function(data){
-                                if (data['results'].length > 0) {
-                                    location.reload()
-                                } else {
-                                    Toast.fire({
-										icon: 'error',
-										title: 'No matches found!'
-									})
-									$("#run").empty()
-									$("#run").text("Run")
-									$("#run").removeAttr("disabled")
-                                }
-                            });
+                            // $.get("/api/problems/"+ problem_id+"/results", function(data){
+                            // if (data['results'].length > 0) {
+                            location.reload()
+                            // } else {
+                            //     Toast.fire({
+                            //         icon: 'error',
+                            //         title: 'No matches found!'
+                            //     })
+                            //     $("#run").empty()
+                            //     $("#run").text("Run")
+                            //     $("#run").removeAttr("disabled")
+                            // }
+                            // });
                         }
                     }
                 },
@@ -151,13 +134,15 @@ $(function() {
                     alert(data.responseText)
                 }
             });
-            // location.reload()
         } else {
             Toast.fire({
                 icon: 'warning',
                 title: 'Please select metrics first!'
             })
         }
+        setTimeout(function(){ 
+			location.reload();
+		}, 1000);  
     })
 
     $(".sourcename").click(function(){

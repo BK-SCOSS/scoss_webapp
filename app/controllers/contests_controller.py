@@ -276,7 +276,7 @@ def get_ajax_contest_results(contest_id):
     data = []
     for sim in similarity_list:
         problem_id = sim['problem_id']
-        a_result = {'problem_id (problem_name)':'{} ({})'.format(problem_id, problem_dict[problem_id]), 
+        a_result = {'problem_name':problem_dict[problem_id], 
             'source1':sim['source1'], 'source2':sim['source2']}
         for metric, score in sim['scores'].items():
             if metric != 'mean':

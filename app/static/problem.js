@@ -34,20 +34,20 @@ $(document).ready(function() {
 		},
 		success: function (data) {
 			contest_status = data['contest_status']
-			if (contest_status == checked) {
+			if (contest_status == checked || contest_status == failed) {
 				updateBtnStatus()
-			} else if (contest_status == running) {
+			} else if (contest_status == running || contest_status == waiting) {
 				$("#run").text("Running")
 				$("#run").prop("disabled", true)
 				var source = new EventSource('/contests/' + contest_id + '/status');
 				source.onmessage = function(event) {
-					if (event.data == checked) {
+					if (event.data == checked || event.data == failed) {
 						updateBtnStatus()
 						source.close()
+						location.reload();
 					}
 				}
 			}
-			// location.reload();
 		},
 		error: function (data) {
 			Toast.fire({
@@ -56,23 +56,6 @@ $(document).ready(function() {
 			})
 		}
 	});
-	// $.get("/api/contests/"+ contest_id + "/status", function(data){
-	// 	console.log(contest_id)
-	// 	contest_status = data['contest_status']
-	// 	if (contest_status == checked) {
-	// 		updateBtnStatus()
-	// 	} else if (contest_status == running) {
-	// 		$("#run").text("Running")
-	// 		$("#run").prop("disabled", true)
-	// 		var source = new EventSource('/contests/' + contest_id + '/status');
-	// 		source.onmessage = function(event) {
-	// 			if (event.data == checked) {
-	// 				updateBtnStatus()
-	// 				source.close()
-	// 			}
-	// 		}
-	// 	}
-	// })
 
 	$("#contest-run").submit(function(e){
 		e.preventDefault(); // avoid to execute the actual submit of the form.
@@ -108,21 +91,21 @@ $(document).ready(function() {
 					var source = new EventSource('/contests/' + contest_id + '/status');
 					source.onmessage = function(event) {
 						console.log(event.data)
-						if (event.data == checked) {
+						if (event.data == checked || event.data == failed) {
 							source.close()
-							$.get("/api/contests/"+contest_id+"/results", function(data){
-								if (data['results'].length > 0) {
-									location.reload()
-								} else {
-									Toast.fire({
-										icon: 'error',
-										title: 'No matches found!'
-									})
-									$("#run").empty()
-									$("#run").text("Run")
-									$("#run").removeAttr("disabled")
-								}
-							});
+							// $.get("/api/contests/"+contest_id+"/results", function(data){
+							// if (data['results'].length > 0) {
+							location.reload()
+							// } else {
+							// 	Toast.fire({
+							// 		icon: 'error',
+							// 		title: 'No matches found!'
+							// 	})
+							// 	$("#run").empty()
+							// 	$("#run").text("Run")
+							// 	$("#run").removeAttr("disabled")
+							// }
+							// });
 						}
 					}
 				},
@@ -131,13 +114,16 @@ $(document).ready(function() {
 					alert(data.responseText)
 				}
 			});
-            // location.reload()
 		} else {
 			Toast.fire({
 				icon: 'warning',
 				title: 'Please select metrics first!'
 			})
 		}
+		setTimeout(function(){ 
+			location.reload();
+		}, 2000);  
+		
 	})
 
 	$(document).on("click",".btn-delete",function(){

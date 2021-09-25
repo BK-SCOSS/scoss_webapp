@@ -309,13 +309,18 @@ def run_source(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
+        url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
         if not data_problem.sources:
-            return jsonify({"error": "No sources to run"}), 400
+            # return jsonify({"error": "No sources to run"}), 400
+            req = requests.put(url=url_status, json={"problem_status": Status.checked},\
+                headers={'Authorization': request.headers['Authorization']})
+            if req.status_code != 200: 
+                return jsonify(req.json()), 400
+            return jsonify({'problem_id': problem_id}), 200
         if data_problem.problem_status not in [Status.running, Status.waiting]:
             doc_status = {
                 "problem_status": Status.waiting
             }
-            url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
             req = requests.put(url=url_status, json=doc_status,\
                 headers={'Authorization': request.headers['Authorization']})
             if req.status_code != 200: 
