@@ -29,6 +29,7 @@ from controllers.users_controller import users_controller
 from controllers.task_queue import tq
 from controllers.login_controller import login_controller
 from controllers.public_api import public_api
+from controllers.test_api import test_api
 
 from views.contests_page import contests
 from views.home_page import home
@@ -36,6 +37,7 @@ from views.users_page import user
 from views.login_page import login
 from views.problems_page import problems
 from views.tests_page import tests
+
 # from view.
 app.register_blueprint(contests_controller)
 app.register_blueprint(problems_controller)
@@ -48,7 +50,7 @@ app.register_blueprint(problems)
 app.register_blueprint(tests)
 app.register_blueprint(login_controller)
 app.register_blueprint(public_api)
-
+app.register_blueprint(test_api)
 
 
 

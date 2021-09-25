@@ -13,20 +13,34 @@ from controllers.task_queue import tq
 from controllers.similarity_project import do_project
 from uuid import uuid4
 import jwt
+import re
+from mongoengine.queryset.visitor import Q
 KEY = "scoss_web_2020"
 public_api = Blueprint('public_api', __name__)
 
 @public_api.route("/api/users/<user_id>/create_token")
 @jwt_required()
 def create_token(user_id):
-    timestamp = str(int(time.time()))
+    """
+    Tạo token public được lưu lại ở db
+    """
+    if User.objects(user_id=user_id).count() == 0:
+        return jsonify({"success": "False"})
+    # check public token 
     data_user = User.objects(user_id=user_id).first()
+    timestamp = str(int(time.time()))
     data_encode = {
         "user_id":  data_user.user_id,
         "username": data_user.username,
         "timestamp": timestamp
     }
     public_token = jwt.encode(data_encode, KEY, algorithm="HS256")
+    if public_token != None and public_token != 'delete':
+        if Project.objects(public_token=data_user.public_token).count() > 0:
+            data_projects = Project.objects(public_token=data_user.public_token).all()
+            for data_project in data_projects:
+                data_project.update(public_token=public_token)
+
     # print(public_token)
     User.objects(user_id=user_id).update(public_token=public_token)
     return jsonify({"success": "True", "public_token": public_token}), 200
@@ -34,6 +48,9 @@ def create_token(user_id):
 @public_api.route("/api/users/<user_id>/token")
 @jwt_required()
 def get_token(user_id):
+    """
+    lấy thông tin token public
+    """
     data_user = User.objects(user_id=user_id).first()
     public_token = data_user.public_token
     if public_token != None and public_token != "delete":
@@ -43,6 +60,9 @@ def get_token(user_id):
 @public_api.route("/api/users/<user_id>/delete_token", methods=["DELETE"])
 @jwt_required()
 def delete_token(user_id):
+    """
+    Thu hồi token public
+    """
     public_token = User.objects(user_id=user_id).first().public_token
     # print()
     if public_token != None and public_token != 'delete':
@@ -54,10 +74,14 @@ def delete_token(user_id):
 
 @public_api.route("/api/project", methods=["POST"])
 def add_project():
+    """
+    Thêm 1 project mới của người dùng api public từ tệp zip
+    """
     try:
         timestamp = str(int(time.time()))
         project_id = make_unique(timestamp)
         public_token = request.args.get("public_token")
+        project_name = request.form['project_name']
         set_operator = float(request.form['set_operator'])
         hash_operator = float(request.form['hash_operator'])
         count_operator = float(request.form['count_operator'])
@@ -117,21 +141,19 @@ def add_project():
                             sources.append(data_doc)
                     if list_name_contain_space:
                         print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
-                Project(project_id=project_id, public_token=public_token,
+                Project(project_id=project_id, public_token=public_token, project_name=project_name,
                     project_status=project_status, metrics=metrics, sources=sources).save()
                 tq.enqueue(do_project, args=(project_id, JOB_TIMEOUT), job_timeout=1000)
         else:
             return jsonify({"error": "Token không tồn tại"}), 400
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'project_id': project_id}), 200
-
-
-# url_scoss = "{}/api/projects/{}/results/scoss".format(config.API_URI_SR, str(project_id))
-# url_smoss = "{}/api/projects/{}/results/smoss".format(config.API_URI_SR, str(project_id))
-
+    return jsonify({'project_id': project_id, "url_result": "/project/{}/results".format(project_id)}), 200
 @public_api.route('/api/project', methods=['GET'])
 def get_project():
+    """
+    Lấy thông tin các project mà người sử dung api public up lên hệ thống
+    """
     try:
         public_token = request.args.get("public_token")
         # print(public_token)
@@ -142,6 +164,7 @@ def get_project():
             data_doc = {
                 'project_id': data_project.project_id,
                 'project_status': data_project.project_status,
+                'project_name': data_project.project_name,
                 'sources': data_project.sources,
                 'metrics': data_project.metrics
             }
@@ -152,10 +175,14 @@ def get_project():
 
 @public_api.route('/api/project/<project_id>', methods=['GET'])
 def get_project_id(project_id):
+    """
+    Lấy thông tin 1 project
+    """
     try:
         data_project = Project.objects.get(project_id=project_id)
         data_doc = {
             'project_id': data_project.project_id,
+            'project_name': data_project.project_name,
             'project_status': data_project.project_status,
             'sources': data_project.sources,
             'metrics': data_project.metrics
@@ -175,84 +202,85 @@ def updata_status(project_id):
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'project_id': project_id}), 200
 
-@public_api.route('/api/project/<project_id>/results/scoss', methods=['PUT'])
-def update_result_scoss(project_id):
+@public_api.route('/api/project/<project_id>/results', methods=['PUT'])
+def update_result(project_id):
     try:
-        similarity_list = request.json['similarity_list']
-        alignment_list = request.json['alignment_list']
-        Project.objects(project_id=project_id).update(
-            similarity_list=similarity_list, alignment_list=alignment_list)
+        result_list = request.json['result_list']
+        for result in result_list:
+            result_id = project_id + '_' + result['source1'] + '_' + result['source1']
+            scores = result['scores']
+            scores['mean'] = sum(list(scores.values()))/len(scores)
+            Result.objects(result_id=result_id).update_one(
+                set__problem_id=project_id, 
+                set__source1=result['source1'], 
+                set__source2=result['source2'], 
+                set__scores=scores, 
+                set__smoss_alignment=result['smoss_alignment'], 
+                upsert=True)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify({'project_id': project_id}), 200
-
-
-@public_api.route('/api/project/<project_id>/results/smoss', methods=['PUT'])
-def update_result_smoss(project_id):
-    try:
-        similarity_smoss_list = request.json['similarity_smoss_list']
-        alignment_smoss_list = request.json['alignment_smoss_list']
-        Project.objects(project_id=project_id).update(
-            similarity_smoss_list=similarity_smoss_list, alignment_smoss_list=alignment_smoss_list)
-    except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'project_id': project_id}), 200
-
-
 
 @public_api.route('/api/project/<project_id>/results', methods=['GET'])
 def get_results(project_id):
     try:
         data_project = Project.objects.get(project_id=project_id)
-        project_status = data_project.project_status
-        similarity_list = data_project.similarity_list
-        similarity_smoss_list = data_project.similarity_smoss_list
-        metrics = data_project.metrics
-        metric_list = []
-        res = {}
-        moss_threshold = 0
-        for metric in metrics:
-            metric_list.append(metric['name'])
-            if metric['name'] == 'moss_score':
-                moss_threshold = metric['threshold']
-
-        if 'moss_score' in metric_list:
-            for simi_smoss in similarity_smoss_list:
-                key = hash(simi_smoss['source1']) ^ hash(simi_smoss['source2'])
-                if simi_smoss['scores']['moss_score'] > moss_threshold:
-                    temp_list = simi_smoss
-                    res[key] = temp_list
-                
-            if len(metric_list) > 1:
-                for simi in similarity_list:
-                    key = hash(simi['source1']) ^ hash(simi['source2'])
-                    if key in res.keys():
-                        for metric in metric_list:
-                            if metric != 'moss_score':
-                                res[key]['scores'][metric] = simi['scores'][metric]
-            for k in list(res):
-                if len(res[k]['scores']) == 1:
-                    if 'moss_score' in res[k]['scores'].keys():
-                        del res[k]
-        else:
-            for simi in similarity_list:
-                key = hash(simi['source1']) ^ hash(simi['source2'])
-                temp_list = simi
-                res[key] = temp_list
-        check_zero = 0
-        for key in res:
+        project_name = data_project.project_name
+        similarity_list = Result.objects(problem_id=project_id)
+        result_list= []
+        for sim in similarity_list:
             total = 0
             num_of_score = 0
-            if len(res[key]) == 0:
-                check_zero += 1
-                continue
-            for score in res[key]['scores']:
-                total += res[key]['scores'][score]
+            for score in sim['scores'].values():
+                total += score
                 num_of_score += 1
+            a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores']}
             if num_of_score != 0:
-                res[key]['scores']['mean'] = total/num_of_score
-        if(len(res.keys()) == check_zero):
-            return jsonify({'project_id': project_id, 'results': [], 'project_status': project_status}), 200
+                a_result['scores']['mean'] = total/num_of_score
+            result_list.append(a_result)
     except Exception as e:
-        return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'project_id': project_id, 'results': list(res.values()), 'project_status': project_status}), 200
+        return jsonify({"error": "Exception: {}".format(e)}), 400 
+    return jsonify({'project_id': project_id, 'results': result_list, 'project_name': project_name, "project_status": data_project.project_status}), 200
+
+@public_api.route('/ajax/project/<project_id>/results', methods=['POST'])
+def get_ajax_project_results(project_id):
+    data_project = Project.objects.get(project_id=project_id)
+    order_columns = ['source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
+        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    draw = request.form['draw'] 
+    start = int(request.form['start'])
+    length = int(request.form['length'])
+    searchValue = request.form["search[value]"]
+    orderDirection = request.form["order[0][dir]"]
+    orderColumn = request.form["order[0][column]"]
+    totalRecords = Result.objects(problem_id=project_id).count()
+
+    regex = re.compile('.*{}.*'.format(searchValue), re.IGNORECASE)
+    totalRecordwithFilter = Result.objects.filter(Q(problem_id=project_id) & (Q(source1=regex)|Q(source2=regex))).count()
+
+    order = order_columns[int(orderColumn)-1]
+    if orderDirection == 'desc':
+        order = '-' + order
+    similarity_list = Result.objects.filter(Q(problem_id=project_id) & (Q(source1=regex)|Q(source2=regex))).\
+        order_by(order).skip(start).limit(length)
+
+    score_span = '<a href="/project/{}/compare?source1={}&source2={}&metric={}" target="_blank"><span style="color:rgb({}, 0, 0);">{}%</span></a>'
+    data = []
+    for sim in similarity_list:
+        a_result = {'source1':sim['source1'], 'source2':sim['source2']}
+        for metric, score in sim['scores'].items():
+            if metric != 'mean':
+                a_result[metric] = score_span.format(project_id, sim['source1'], sim['source2'], metric, int(score*255), round(score*100, 2))
+            else:
+                a_result[metric] = '<span style="color:rgb({}, 0, 0);">{}%</span>'.format(int(score*255), round(score*100, 2))
+        data.append(a_result)
+    return jsonify({'draw': draw, 'iTotalRecords': totalRecords, 'iTotalDisplayRecords': totalRecordwithFilter, 'data':data, 'status': data_project.project_status}), 200
+
+@public_api.route('/api/project/<project_id>/get_alignment', methods=['POST'])
+def get_alignment(project_id):
+    source1 = request.json['source1']
+    source2 = request.json['source2']
+    # metric = request.json['metric']
+    result = Result.objects(problem_id=project_id, source1=source1, source2=source2)
+    return jsonify({'result':result}), 200
+

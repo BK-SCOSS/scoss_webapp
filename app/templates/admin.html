@@ -251,16 +251,19 @@
 				}
 			});
 
-			$(document).on("click", ".btn-delete", function () {
+			$(document).on("click", "#del_key", function () {
 				user_id = $(this).attr('user_id');
 				if (confirm("Bạn chắc chắn muốn xóa chứ?")) {
 					$.ajax({
 						type: "DELETE",
 						contentType: 'application/json',
-						url: "/api/users/" + user_id,
+						headers: {
+							Authorization: 'Bearer '+ '{{session["token"]}}'
+						},
+						url: "/api/users/" + user_id + "/delete_token",
 						success: function (data) {
 							console.log('success')
-							alert(data['info'])
+							alert("Delete public token")
 							location.reload()
 						},
 						error: function (data) {
@@ -268,6 +271,24 @@
 						}
 					});
 				}
+			});
+			$(document).on("click", "#gen_key", function () {
+				$.ajax({
+					type: "POST",
+					contentType: 'application/json',
+					headers: {
+						Authorization: 'Bearer '+ '{{session["token"]}}'
+					},
+					url: "/api/users/" + user_id + "/create_token",
+					success: function (data) {
+						console.log('success')
+						alert("Delete public token")
+						location.reload()
+					},
+					error: function (data) {
+						console.log('Error:', data['error']);
+					}
+				});
 			});
 		})
 	</script>

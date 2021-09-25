@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block css %}
+<link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+            <h2 class="card-header" id="project-detail">
+                <!-- <div class="card-tools">
+                  <button class="btn btn-default" id="export" title="Save as CSV"><i class="fas fa-download"></i></button>
+                </div> -->
+            </h2>
+
+          <!-- /.card-header -->
+          <div class="card-body">
+            <table id="empTable" class="display"> 
+            </table>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block js%}
+<script>
+const init = 1
+const failed = 2
+const waiting = 3
+const running = 4
+const checked = 5
+$(document).ready(function() {
+  
+    var empDataTable = $('#empTable').DataTable({
+        order: [[7, "desc"]],
+        'processing': true,
+        'serverSide': true,
+        'serverMethod': 'post',
+        'ajax': {
+            'url':'/ajax/project/{{project_id}}/results'
+        },
+        searching: true,
+        sort: true,
+        columns: [
+            {title: 'project_id (project_name)', data: 'project_id (project_name)'},
+            {title: 'source1', data: 'source1'},
+            {title: 'source2', data: 'source2'},
+            {title: 'count_operator', data: 'count_operator'},
+            {title: 'hash_operator', data: 'hash_operator'},
+            {title: 'set_operator', data: 'set_operator'},
+            {title: 'moss_score', data: 'moss_score'},
+            {title: 'mean', data: 'mean'}
+        ],
+        columnDefs: [{
+            "defaultContent": "-",
+            "targets": "_all"
+        }],
+    });
+    $.ajax({
+		type: "GET",
+		contentType: 'application/json',
+		url: "/api/project/{{project_id}}/status",
+		success: function (data) {
+            console.log(data['project_status']);
+            project_status = data['project_status'];
+            project_status_span = getStatusLabel(data['project_status']);
+            var project_detail = `${data.project_name} - <small>${project_status_span}</small>`;
+            console.log(project_detail);
+            console.log(document.getElementById("project-detail"))
+            document.getElementById("project-detail").innerHTML = project_detail;
+			// location.reload();
+		},
+		error: function (data) {
+      console.log(data.responseText)
+		}
+	});
+});
+function getStatusLabel(statusValue) {
+    var badge, status_label;
+    switch(statusValue){
+        case init:
+            badge = "badge-secondary"
+            status_label = "init"
+            break
+        case waiting:
+            badge = "badge-info"
+            status_label = "waiting"
+            break
+        case running:
+            badge = "badge-primary"
+            status_label = "running"
+            break
+        case checked:
+            badge = "badge-success"
+            status_label = "checked"
+            break
+        case failed:
+            badge = "badge-danger"
+            status_label = "failed"
+            break
+    }
+    return `<span class="status badge ${badge}">${status_label}</span>`
+}
+</script>
+{% endblock %}

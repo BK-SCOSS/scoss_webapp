@@ -62,7 +62,7 @@ def update_password(user_id):
 		if session['logged_in'] == True:
 			if request.method == 'GET':
 				data = User.objects.get(user_id=user_id)
-				return render_template('profile.html', data=data)
+				return render_template('profile.html', data=data.to_mongo())
 			if request.method == 'POST':
 				email = request.form['email']
 				old_pass = request.form['old_password']

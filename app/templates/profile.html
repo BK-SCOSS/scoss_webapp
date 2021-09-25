@@ -52,12 +52,18 @@
         <tbody>
           <tr>
             <td style="width: 15%;"><h3 class="card-title">Public key</h3></td>
-            <td style="width: 75%;"><textarea style="width:100%;height:100%;margin:0;padding:0; border: none;" rows=4 cols=1 disabled>sdfjhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdfsaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhfdsajklfdsaaaaaaaaaaaaaaaaaaaaaaa</textarea></td>
-            <td style="width: 10%;"><button class="float-right button btn btn-primary">Generate</button></td>
-            <td style="width: 10%;"><button class="float-right button btn btn-danger">Delete</button></td>
+            <td style="width: 75%;"><textarea id="display_key" style="width:100%;height:100%;margin:0;padding:0; border: none;" rows=4 cols=1 disabled></textarea></td>
+            <td style="width: 10%;"><button class="float-right button btn btn-primary" id="gen_key">Generate</button></td>
+            <td style="width: 10%;"><button class="float-right button btn btn-danger" id="del_key">Delete</button></td>
           </tr>
         </tbody>
       </table>
 </div>
-
+{% endblock %}
+{% block js %}
+<script>
+    token ="{{session['token']}}"
+    user_id = "{{data['user_id']}}"
+</script>
+<script src="{{ url_for('static', filename = 'profile.js')}}"></script>
 {% endblock %}
