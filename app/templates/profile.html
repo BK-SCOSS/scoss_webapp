@@ -48,16 +48,24 @@
     </div>
 </div>
 <div class="row">
-    <table class="table" >
-        <tbody>
-          <tr>
-            <td style="width: 15%;"><h3 class="card-title">Public key</h3></td>
-            <td style="width: 75%;"><textarea id="display_key" style="width:100%;height:100%;margin:0;padding:0; border: none;" rows=4 cols=1 disabled></textarea></td>
-            <td style="width: 10%;"><button class="float-right button btn btn-primary" id="gen_key">Generate</button></td>
-            <td style="width: 10%;"><button class="float-right button btn btn-danger" id="del_key">Delete</button></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="username" class="col-sm-2 control-label">Public key</label>
+                    <div class="col-sm-7">
+                        <code style="color: black;" id="display_key"></code>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="float-right button btn btn-primary" id="gen_key">Generate</button>
+                    </div>
+                    <div class="col-sm-1">
+                        <button class="float-right button btn btn-danger" id="del_key">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 {% block js %}

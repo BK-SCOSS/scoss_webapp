@@ -81,74 +81,79 @@ def add_project():
         timestamp = str(int(time.time()))
         project_id = make_unique(timestamp)
         public_token = request.args.get("public_token")
+        if User.objects(public_token=public_token).count() == 0:
+            return jsonify({"success": "False", "error": "public token does not exist!"})
         project_name = request.form['project_name']
-        set_operator = float(request.form['set_operator'])
-        hash_operator = float(request.form['hash_operator'])
-        count_operator = float(request.form['count_operator'])
-        moss_score = float(request.form['moss_score'])
-        metrics = [
-            {
+        metrics = []
+        if 'set_operator' in request.form.keys():
+            set_operator = float(request.form['set_operator'])
+            metrics.append({
                 "name": "set_operator",
                 "threshold": set_operator
-            },
-                    {
+            })
+        if 'hash_operator' in request.form.keys():
+            hash_operator = float(request.form['hash_operator'])
+            metrics.append({
                 "name": "hash_operator",
                 "threshold": hash_operator
-            },
-                    {
+            })
+        if 'count_operator' in request.form.keys():
+            count_operator = float(request.form['count_operator'])
+            metrics.append({
                 "name": "count_operator",
                 "threshold": count_operator
-            },
-                    {
+            })
+        if 'moss_score' in request.form.keys():
+            moss_score = float(request.form['moss_score'])
+            metrics.append({
                 "name": "moss_score",
                 "threshold": moss_score
-            }
-        ]
+            })           
+        if len(metrics) == 0:
+            return jsonify({"success": "False", "error": "No metrics"})  
         if public_token != None and public_token != "delete":
-            check_token = User.objects(public_token=public_token).count()
-            if check_token != 0:
-                # metrics = request.form['metrics']
-                if ZipFile(request.files["file"], "r").testzip() is not None:
-                    return jsonify({"error":"Tệp zip bị hỏng"}),400
-                sources = []
-                project_status = Status.waiting
-                with ZipFile(request.files['file'], 'r') as zf:
-                    zfiles = zf.namelist()
-                    supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
-                    if len(supported_files) != len(zfiles):
-                        # zfiles contains some unsupported files: wrong extensions, wrong directories,...
-                        # Push some notification in the future
-                        unsupported_files = set(zfiles) - set(supported_files)
-                        print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
-                    list_name_contain_space = []
-                    for file in supported_files:
-                        try:
-                            source_str = zf.read(file).decode('utf-8')
-                        except:
-                            source_str = zf.read(file).decode('cp437')
-                        file_parts = file.split('/')
-                        filename = file_parts[-1]
-                        if ' ' in filename:
-                            list_name_contain_space.append(filename)
-                            filename = filename.replace(' ', '_')
-                        if len(file_parts) > 1 and filename != '':
-                            data_doc = {
-                                "pathfile": filename,
-                                "lang": filename.split('.')[-1],
-                                'mask': filename,
-                                'source_str': source_str
-                            }
-                            sources.append(data_doc)
-                    if list_name_contain_space:
-                        print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
-                Project(project_id=project_id, public_token=public_token, project_name=project_name,
-                    project_status=project_status, metrics=metrics, sources=sources).save()
-                tq.enqueue(do_project, args=(project_id, JOB_TIMEOUT), job_timeout=1000)
+            # metrics = request.form['metrics']
+            if ZipFile(request.files["file"], "r").testzip() is not None:
+                return jsonify({"error":"Tệp zip bị hỏng"}),400
+            sources = []
+            project_status = Status.waiting
+            with ZipFile(request.files['file'], 'r') as zf:
+                zfiles = zf.namelist()
+                supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
+                if len(supported_files) != len(zfiles):
+                    # zfiles contains some unsupported files: wrong extensions, wrong directories,...
+                    # Push some notification in the future
+                    unsupported_files = set(zfiles) - set(supported_files)
+                    print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+                list_name_contain_space = []
+                for file in supported_files:
+                    try:
+                        source_str = zf.read(file).decode('utf-8')
+                    except:
+                        source_str = zf.read(file).decode('cp437')
+                    file_parts = file.split('/')
+                    filename = file_parts[-1]
+                    if ' ' in filename:
+                        list_name_contain_space.append(filename)
+                        filename = filename.replace(' ', '_')
+                    if len(file_parts) > 1 and filename != '':
+                        data_doc = {
+                            "pathfile": filename,
+                            "lang": filename.split('.')[-1],
+                            'mask': filename,
+                            'source_str': source_str
+                        }
+                        sources.append(data_doc)
+                if list_name_contain_space:
+                    print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
+            Project(project_id=project_id, public_token=public_token, project_name=project_name,
+                project_status=project_status, metrics=metrics, sources=sources).save()
+            tq.enqueue(do_project, args=(project_id, JOB_TIMEOUT), job_timeout=1000)
         else:
             return jsonify({"error": "Token không tồn tại"}), 400
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'project_id': project_id, "url_result": "/project/{}/results".format(project_id)}), 200
+    return jsonify({'project_id': project_id, "url_result": "{}/project/{}/results".format(API_URI_SR, project_id)}), 200
 @public_api.route('/api/project', methods=['GET'])
 def get_project():
     """
@@ -191,6 +196,19 @@ def get_project_id(project_id):
         return jsonify({"error": "Exception: {}".format(e)}), 400
     return jsonify(data_doc), 200
 
+@public_api.route('/api/project/<project_id>', methods=['DELETE'])
+def delete_project_id(project_id):
+    """
+    Xóa project
+    """
+    try:
+        if Project.objects(project_id=project_id).count() > 0:
+            data_project = Project.objects(project_id=project_id).delete()
+        else:
+            return jsonify({"error": "Not project!"}), 400
+    except Exception as e:
+        return jsonify({"error": "Exception: {}".format(e)}), 400
+    return jsonify({"success": "True"}), 200
 
 @public_api.route('/api/project/<project_id>/status', methods=['PUT'])
 def updata_status(project_id):
@@ -228,13 +246,21 @@ def get_results(project_id):
         project_name = data_project.project_name
         similarity_list = Result.objects(problem_id=project_id)
         result_list= []
+        url_alignment = []
         for sim in similarity_list:
             total = 0
             num_of_score = 0
             for score in sim['scores'].values():
                 total += score
                 num_of_score += 1
-            a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores']}
+            for metric in sim['scores'].keys():
+                if metric != 'mean':
+                    url_alignment.append({
+                        'metric': metric,
+                        'url_alignment': "{}/project/{}/compare?source1={}&source2={}&metric={}".format(API_URI_SR,
+                        project_id, sim['source1'], sim['source2'], metric)
+                    })
+            a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores'], "url_alignment": url_alignment}
             if num_of_score != 0:
                 a_result['scores']['mean'] = total/num_of_score
             result_list.append(a_result)

@@ -34,7 +34,6 @@ const checked = 5
 $(document).ready(function() {
   
     var empDataTable = $('#empTable').DataTable({
-        order: [[7, "desc"]],
         'processing': true,
         'serverSide': true,
         'serverMethod': 'post',
@@ -44,7 +43,6 @@ $(document).ready(function() {
         searching: true,
         sort: true,
         columns: [
-            {title: 'project_id (project_name)', data: 'project_id (project_name)'},
             {title: 'source1', data: 'source1'},
             {title: 'source2', data: 'source2'},
             {title: 'count_operator', data: 'count_operator'},

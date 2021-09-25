@@ -40,8 +40,8 @@ def add_zip(project_id):
         project_status = Status.init
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
-            if len(zfiles) > 15:
-                return jsonify({"error": "Does not support testing greater than 10 files"}), 400
+            if len(zfiles) > 50:
+                return jsonify({"error": "Does not support testing greater than 50 files"}), 400
             supported_files = [f for f in zfiles if f.endswith(SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
             if not supported_files:
                 print("Problems: Wrong zip file's format", flush=True)
