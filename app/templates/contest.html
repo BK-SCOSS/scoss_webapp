@@ -34,7 +34,6 @@
 				</div>
 			</div>
 			<!-- /.card-header -->
-			{% if data|length > 0 %}
 			<div class="card-body">
 				<table class="display" id="contest-table">
 					<thead>
@@ -50,28 +49,9 @@
 						</tr>
 					</thead>
 					<tbody>
-						{%for context in data %}
-						<tr>
-							<td>{{loop.index}}</td>
-							<td><a href="/contests/{{context['contest_id']}}/problems">{{context['contest_name']}}</a>
-							</td>
-							<td class="text-center"><i>{{context['username']}}</i></td>
-							<td class="text-center"><i>{{context['created_at']}}</i></td>
-							<td class="text-center project-state">
-								<span class="status badge">{{context['contest_status']}}</span>
-							</td>
-							<td class="text-center py-0 align-middle">
-								{% if session['role'] == 0 or session['user_id'] == context['user_id'] %}
-								<a class="btn btn-danger btn-delete" contest_id="{{context['contest_id']}}"><i
-										class="fas fa-trash"></i></a>
-								{% endif %}
-							</td>
-						</tr>
-						{%endfor%}
 					</tbody>
 				</table>
 			</div>
-			{%endif%}
 		</div>
 	</div>
 </div>
@@ -109,13 +89,89 @@
 {% endblock %}
 
 {% block js %}
+<script id="token" src="{{ url_for('static', filename = 'contest.js', token=session['token']) }}"></script>
 <script>
+	headers = {{headers | tojson}}
+	session = {{session|tojson}}
 	c = $('#contest-table').DataTable({
-		"columnDefs": [{
+		ajax:{
+			url: "{{url}}",
+			headers: headers
+		},
+		columns: [
+			{data: null},
+			{
+				data: 'contest_name', 
+				createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+					var contest_name = cellData
+					var contest_id = rowData.contest_id
+					var a = `<a href="/contests/${contest_id}/problems">${contest_name}</a>`
+					$(cell).html(a);
+				}
+			},
+			{
+				data: 'username', 
+				className: 'text-center'
+			},
+			{
+				data: 'created_at', 
+				className: 'text-center'
+			},
+			{
+				data: 'contest_status', 
+				className: 'text-center project-state',
+				createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+					// var badge, status_label;
+					switch(cellData){
+						case init:
+							badge = "badge-secondary"
+							status_label = "init"
+							break
+						case waiting:
+							badge = "badge-info"
+							status_label = "waiting"
+							break
+						case running:
+							badge = "badge-primary"
+							status_label = "running"
+							break
+						case checked:
+							badge = "badge-success"
+							status_label = "checked"
+							break
+						case failed:
+							badge = "badge-danger"
+							status_label = "failed"
+							break
+					}
+					var contest_status = cellData
+					var contest_id = rowData.contest_id
+					var span = `<span class="status badge ${badge}" value="${contest_status}">${status_label}</span>`
+					$(cell).html(span);
+				}
+			},
+			{
+				data: null,
+				className: 'text-center py-0 align-middle',
+				createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+					var contest_id = rowData.contest_id
+					var a = ''
+					if (session['role'] == 0 || session['user_id'] == rowData.user_id) {
+						a = `<a class="btn btn-danger btn-delete" contest_id="${contest_id}"><i
+							class="fas fa-trash"></i></a>`
+					}
+					$(cell).html(a);
+				}
+			}
+		],
+		order: [[ 3, "desc" ]],
+		columnDefs: [
+			{
 			"searchable": false,
 			"orderable": false,
 			"targets": 0
-		}],
+			},
+		],
 	})
 
 	c.on('order.dt search.dt', function () {
@@ -124,5 +180,4 @@
 		});
 	}).draw()
 </script>
-<script id="token" src="{{ url_for('static', filename = 'contest.js', token=session['token']) }}"></script>
 {% endblock %}

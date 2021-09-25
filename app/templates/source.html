@@ -2,19 +2,25 @@
 
 {% block title %}SCOSS - Sources{% endblock %}
 
+{% block css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/styles/default.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/languages/go.min.js"></script>
+{% endblock %}
+
 {% block header %}
 <div class="container">
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1 class="m-0 text-dark">
-                {{problem_name}} - <small><span class="badge status" value="{{problem_status}}"></span></small>
+            <h1 class="m-0 text-dark" id="problem-detail">
             </h1>
         </div><!-- /.col -->
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item"><a href="/contest">Contests</a></li>
-                <li class="breadcrumb-item"><a href="/contests/{{contest_id}}/problems">{{contest_name}}</a></li>
-                <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources">{{problem_name}}</a></li>
+                <li class="breadcrumb-item"><a id="contest_name"></a></li>
+                <li class="breadcrumb-item"><a href="/problems/{{problem_id}}/sources" id="problem_name"></a></li>
             </ol>
         </div><!-- /.col -->
     </div><!-- /.row -->
@@ -46,47 +52,10 @@
             <div class="card-body">
                 <table class="display" id="source-table">
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                        </tr>
                     </thead>
                     <tbody>
-                        {%if data|length > 0%}
-                        {%for da in data%}
-                        <tr>
-                            <td>{{loop.index}}</td>
-                            {%if da['mask'] == ''%}
-                            <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal"
-                                data-target="#sourcecontent-modal">
-                                {{da['pathfile']}}
-                            </td>
-                            {%else%}
-                            <td data-row="{{da['source_str']}}" class="sourcename" data-toggle="modal"
-                                data-target="#sourcecontent-modal">
-                                {{da['mask']}}
-                            </td>
-                            {%endif%}
-                        </tr>
-                        {%endfor%}
-                        {%endif%}
                     </tbody>
-                    <tr>
-                        <td>#</td>
-                        <td id="source-name" colspan="2">
-                            <a href="#" id="create-source" onclick="createSource()">
-                                <b>Add new source</b>
-                            </a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#</td>
-                        <td id="delete-link" colspan="2">
-                            <a href="#" id="delete-all">
-                                <b style="color: red;">Delete all source</b>
-                            </a>
-                        </td>
-                    </tr>
+                    
                 </table>
             </div>
             <!-- /.card-body -->
@@ -213,49 +182,9 @@
 
 {% block js %}
 <script>
-    var problem_id = '{{problem_id}}'
-    var metrics = {{ metrics| tojson }}
+    problem_id ="{{problem_id}}"
+    url = "{{url}}"
 </script>
 <script id="token" src="{{ url_for('static', filename = 'main.js', token=session['token']) }}"></script>
 <script src="{{ url_for('static', filename = 'source.js', token=session['token']) }}"></script>
-<script>
-    t = $('#source-table').DataTable({
-        "columnDefs": [ {
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
-        }],
-    })
-
-    t.on( 'order.dt search.dt', function () {
-        t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
-            cell.innerHTML = i+1;
-        } );
-    } ).draw()
-
-    $('#result-table').DataTable({
-        order: [[6, "desc"]],
-        'processing': true,
-        'serverSide': true,
-        'serverMethod': 'post',
-        'ajax': {
-            'url':'/ajax/problems/'+problem_id+'/results'
-        },
-        searching: true,
-        sort: true,
-        columns: [
-            {title: 'source1', data: 'source1'},
-            {title: 'source2', data: 'source2'},
-            {title: 'count_operator', data: 'count_operator'},
-            {title: 'hash_operator', data: 'hash_operator'},
-            {title: 'set_operator', data: 'set_operator'},
-            {title: 'moss_score', data: 'moss_score'},
-            {title: 'mean', data: 'mean'}
-        ],
-        columnDefs: [{
-            "defaultContent": "-",
-            "targets": "_all"
-        }],
-    });
-</script>
 {% endblock %}

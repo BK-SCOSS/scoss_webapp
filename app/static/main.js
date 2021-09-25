@@ -19,41 +19,6 @@ $(document).ready(function() {
         timer: 5000
     })
 
-    $(".status").each(function(){
-		switch($(this).text()){
-            case init.toString():
-                $(this).addClass("badge-secondary")
-                $(this).text("init")
-                break
-            case waiting.toString():
-                $(this).addClass("badge-info")
-                $(this).text("waiting")
-                break
-            case running.toString():
-                $(this).addClass("badge-primary")
-                $(this).text("running")
-                break
-			case checked.toString():
-				$(this).addClass("badge-success")
-                $(this).text("checked")
-                break
-			case failed.toString():
-				$(this).addClass("badge-danger")
-                $(this).text("failed")
-                break
-		}
-	})
-
-    if (metrics.length > 0)  {
-        for (metric of metrics) {
-            metric_name = metric['name']
-            console.log(metric_name)
-            $("#"+metric_name).prop("disabled", false)
-            $("#"+metric_name).val(metric['threshold']  * 100)
-            $("#"+metric_name+"_check").prop("checked", true)
-        }
-    }
-
     $('#reset').click(function resetStatus() {
         type = $(this).attr('dtype')
         // console.log(type)
@@ -100,3 +65,30 @@ document.getElementById('hash_operator_check').onchange = function() {
 document.getElementById('moss_score_check').onchange = function() {
     document.getElementById('moss_score').disabled = !this.checked;
 };
+
+function getStatusLabel(statusValue) {
+    var badge, status_label;
+    switch(statusValue){
+        case init:
+            badge = "badge-secondary"
+            status_label = "init"
+            break
+        case waiting:
+            badge = "badge-info"
+            status_label = "waiting"
+            break
+        case running:
+            badge = "badge-primary"
+            status_label = "running"
+            break
+        case checked:
+            badge = "badge-success"
+            status_label = "checked"
+            break
+        case failed:
+            badge = "badge-danger"
+            status_label = "failed"
+            break
+    }
+    return `<span class="status badge ${badge}">${status_label}</span>`
+}

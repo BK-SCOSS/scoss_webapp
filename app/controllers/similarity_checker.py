@@ -143,27 +143,6 @@ def do_job(problem_id, header, timeout=510):
 
     try:
         logs = run_problem_with_timeout(problem_id, header, timeout)
-        url_problem_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
-        res = requests.get(url=url_problem_result)
-        if(len(res.json()['results']) > 0):
-            contest_id = res.json()['contest_id']
-            problem_id = res.json()['problem_id']
-            problem_name = res.json()['problem_name']
-            data = []
-            for result in res.json()['results']:
-                doc = {
-                    "source1": result['source1'],
-                    "source2": result['source2'],
-                    "scores": result['scores'],
-                    "problem_id": problem_id,
-                    "problem_name": problem_name
-                }
-                data.append(doc)
-            doc_result = {
-                "data": data
-            }
-            url_problem_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
-            requests.put(url=url_problem_result, json=doc_result)
         if len(logs['exception']) > 0:
             update_status_failed(problem_id, header)
             raise Exception
