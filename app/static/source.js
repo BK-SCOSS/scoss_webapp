@@ -1,5 +1,9 @@
 params = new URL(document.getElementById("token").src).searchParams;
 var token = params.get('token')
+var tableHeader = [
+    {title: 'source1', data: 'source1'},
+    {title: 'source2', data: 'source2'}
+];
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -18,72 +22,76 @@ $(function() {
 		url: url,
 		headers: {
 			Authorization: 'Bearer '+token
-		}
-	}).done( function(data) {		
-        t = $('#source-table').DataTable({
-			data: data.sources,
-			columns: [
-                {data: null, title: '#', width: '10%'},
-                {
-                    data: 'pathfile',
-                    title: 'Name',
-                    className: 'sourcename',
-                    createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
-                        $(cell).attr('data-row', rowData.source_str);
-                        $(cell).attr('data-toggle', 'modal');
-                        $(cell).attr('data-target', '#sourcecontent-modal');
-                        if (cellData == '') {
-                            $(cell).cell.data(rowData.mask)
+		},
+        async: false,
+        success: function(data) {		
+            t = $('#source-table').DataTable({
+                data: data.sources,
+                columns: [
+                    {data: null, title: '#', width: '10%'},
+                    {
+                        data: 'pathfile',
+                        title: 'Name',
+                        className: 'sourcename',
+                        createdCell: function (cell, cellData, rowData, rowIndex, colIndex) {
+                            $(cell).attr('data-row', rowData.source_str);
+                            $(cell).attr('data-toggle', 'modal');
+                            $(cell).attr('data-target', '#sourcecontent-modal');
+                            if (cellData == '') {
+                                $(cell).cell.data(rowData.mask)
+                            }
                         }
                     }
+                ]
+            })
+
+            t.on( 'order.dt search.dt', function () {
+                t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+                    cell.innerHTML = i+1;
+                } );
+            } ).draw()
+            additionRow = `<tr>
+                <td>#</td>
+                <td id="source-name" colspan="2">
+                    <a href="#" id="create-source" onclick="createSource()">
+                        <b>Add new source</b>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td>#</td>
+                <td id="delete-link" colspan="2">
+                    <a href="#" id="delete-all">
+                        <b style="color: red;">Delete all source</b>
+                    </a>
+                </td>
+            </tr>`
+            $("#source-table").append(additionRow)
+
+            problem_status_span = getStatusLabel(data.problem_status)
+            var problem_detail = `${data.problem_name} - <small>${problem_status_span}</small>`
+            $("#problem-detail").html(problem_detail)
+
+            $("#contest_name").text(data.contest_name)
+            $("#contest_name").attr('href', `/contests/${data.contest_id}/problems`)
+            $("#problem_name").text(data.problem_name)
+            metrics = data.metrics
+            
+            if (metrics.length > 0)  {
+                for (metric of metrics) {
+                    metric_name = metric['name']
+                    $("#"+metric_name).prop("disabled", false)
+                    $("#"+metric_name).val(metric['threshold']  * 100)
+                    $("#"+metric_name+"_check").prop("checked", true)
+                    tableHeader.push({title: metric_name, data: metric_name})
                 }
-            ]
-		})
-
-		t.on( 'order.dt search.dt', function () {
-			t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
-				cell.innerHTML = i+1;
-			} );
-		} ).draw()
-        additionRow = `<tr>
-            <td>#</td>
-            <td id="source-name" colspan="2">
-                <a href="#" id="create-source" onclick="createSource()">
-                    <b>Add new source</b>
-                </a>
-            </td>
-        </tr>
-        <tr>
-            <td>#</td>
-            <td id="delete-link" colspan="2">
-                <a href="#" id="delete-all">
-                    <b style="color: red;">Delete all source</b>
-                </a>
-            </td>
-        </tr>`
-        $("#source-table").append(additionRow)
-
-		problem_status_span = getStatusLabel(data.problem_status)
-		var problem_detail = `${data.problem_name} - <small>${problem_status_span}</small>`
-		$("#problem-detail").html(problem_detail)
-
-        $("#contest_name").text(data.contest_name)
-        $("#contest_name").attr('href', `/contests/${data.contest_id}/problems`)
-		$("#problem_name").text(data.problem_name)
-		metrics = data.metrics
-        
-        if (metrics.length > 0)  {
-            for (metric of metrics) {
-                metric_name = metric['name']
-                $("#"+metric_name).prop("disabled", false)
-                $("#"+metric_name).val(metric['threshold']  * 100)
-                $("#"+metric_name+"_check").prop("checked", true)
             }
         }
 	})
+    
+    tableHeader.push({title: 'mean', data: 'mean'})
 
     $('#result-table').DataTable({
-        order: [[6, "desc"]],
         'processing': true,
         'serverSide': true,
         'serverMethod': 'post',
@@ -92,19 +100,13 @@ $(function() {
         },
         searching: true,
         sort: true,
-        columns: [
-            {title: 'source1', data: 'source1'},
-            {title: 'source2', data: 'source2'},
-            {title: 'count_operator', data: 'count_operator'},
-            {title: 'hash_operator', data: 'hash_operator'},
-            {title: 'set_operator', data: 'set_operator'},
-            {title: 'moss_score', data: 'moss_score'},
-            {title: 'mean', data: 'mean'}
-        ],
+        columns: tableHeader,
+        order: [tableHeader.length - 1, 'desc'],
         columnDefs: [{
             "defaultContent": "-",
             "targets": "_all"
         }],
+        // order: [[$(this).find('th').length - 1, "desc"]],
     });
 
     $.ajax({
@@ -118,15 +120,9 @@ $(function() {
             // console.log('wqw')
             problem_status = data['problem_status']
             if (problem_status == checked) {
-                $.get("/api/problems/"+ problem_id + "/results", function(data){
-                    // if (data['results'].length > 0) {
-                       
-                    // }
-                    create_result(data)
-                    $("#run").removeClass("btn-primary")
-                    $("#run").addClass("btn-danger")
-                    $("#run").text("Rerun")
-                })
+                $("#run").removeClass("btn-primary")
+                $("#run").addClass("btn-danger")
+                $("#run").text("Rerun")
             } else if (problem_status == running) {
                 var source = new EventSource('/problems/' + problem_id + '/status');
                 source.onmessage = function(event) {
@@ -151,33 +147,7 @@ $(function() {
 			})
 		}
 	});
-    // $.get("/api/problems/"+ problem_id + "/status", function(data){
-	// 	problem_status = data['problem_status']
-	// 	if (problem_status == checked) {
-    //         $.get("/api/problems/"+ problem_id + "/results", function(data){
-    //             // if (data['results'].length > 0) {
-                   
-    //             // }
-    //             create_result(data)
-    //             $("#run").removeClass("btn-primary")
-    //             $("#run").addClass("btn-danger")
-    //             $("#run").text("Rerun")
-    //         })
-	// 	} else if (problem_status == running) {
-    //         var source = new EventSource('/problems/' + problem_id + '/status');
-	// 		source.onmessage = function(event) {
-	// 			if (event.data == checked) {
-	// 				$("#run").removeClass("btn-primary")
-    //                 $("#run").addClass("btn-danger")
-    //                 $("#run").text("Rerun")
-	// 				source.close()
-	// 			}
-	// 		}
-	// 		$("#run").text("Running")
-	// 		$("#run").prop("disabled", true)
-	// 	}
-	// })
-
+    
     $("#problem-run").submit(function(e){
         e.preventDefault(); // avoid to execute the actual submit of the form.
         $("#result").remove()

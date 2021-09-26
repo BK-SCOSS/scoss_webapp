@@ -31,9 +31,10 @@ def admin():
 					return render_template('admin.html', data=data.json()['users'])
 				else: 
 					username = request.form['username']
+					email = request.form['email']
 					password = '12345'
 					role = 1
-					data_form = {'username': username, 'role': role, 'password': password}
+					data_form = {'username': username, 'email': email, 'role': role, 'password': password}
 					url = URL + '/api/users/add'
 					headers = {'Authorization': "Bearer {}".format(session['token'])}	
 					req = requests.post(url=url,json=data_form, headers=headers)

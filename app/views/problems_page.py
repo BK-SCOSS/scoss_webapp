@@ -47,8 +47,6 @@ def problem(contest_id):
 					return redirect(url_for('login_page.login_page'))
 				if 'problem_id' in req.json().keys():
 					return redirect(url_for('problems_page.problem', problem_name=problem_name, contest_id=contest_id))
-				else:
-					return redirect(url_for('problems_page.problem', info='wrong', contest_id=contest_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/sources', methods=['GET', 'POST'])
@@ -77,8 +75,6 @@ def source(problem_id):
 					return redirect(url_for('login_page.login_page'))
 				if 'contest_id' in req.json().keys():
 					return redirect(url_for('contest_page.contest'))
-				else:
-					return redirect(url_for('contest_page.contest', info='wrong', error=req.json()['error']))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/add_file', methods=['POST'])
@@ -93,15 +89,16 @@ def add_file(problem_id):
 				url = URL + '/api/problems/{}/sources/add'.format(problem_id)
 				headers = {'Authorization': "Bearer {}".format(session['token'])}		
 				req = requests.post(url=url, data=data_form, files={'files': (filename, sourceFile)}, headers=headers)
-				if 'error' in req.json().keys():
-					flash(req.json()['error'], MessageStatus.error)
 				if req.status_code != 200 and 'msg' in req.json():
 					session.clear()
 					return redirect(url_for('login_page.login_page'))
-				if 'problem_id' in req.json().keys():
-					return redirect(url_for('problems_page.source', problem_id=problem_id))
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
 				else:
-					return redirect(url_for('problems_page.source', problem_id=problem_id))
+					flash("Successfully add!", MessageStatus.success)
+					if (len(req.json()['messages']) > 0):
+						flash(req.json()['messages'], MessageStatus.warning)
+				return redirect(url_for('problems_page.source', problem_id=problem_id))
 	return redirect(url_for('login_page.login_page'))
 
 @problems.route('/problems/<problem_id>/from_zip', methods=['POST'])
@@ -118,6 +115,8 @@ def add_zip_file(problem_id):
 						flash(req.json()['error'], MessageStatus.error)
 					else: 
 						flash("Successfully import!", MessageStatus.success)
+						if (len(req.json()['messages']) > 0):
+							flash(req.json()['messages'], MessageStatus.warning)
 					if req.status_code != 200 and 'msg' in req.json():
 						session.clear()
 						return redirect(url_for('login_page.login_page'))

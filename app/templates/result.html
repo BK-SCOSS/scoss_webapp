@@ -5,25 +5,30 @@
 <link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<style>
+th { font-size: 15px; }
+td { font-size: 14px; }
+</style>
 {% endblock %}
 
 {% block content %}
     <div class="row">
       <div class="col-12">
-        <div style="text-align: center; margin-bottom: 10px;">
-          <span>If you have any problem with the result, please email to {{author_email}}</span>
+        <div style="text-align: center; margin-bottom: 10px; color: red;">
+          <span>If you have any problem with the result, please email to <strong>{{author_email}}</strong></span>
         </div>
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Results</h3>
-            <!-- <div class="card-tools">
+            <div class="card-tools">
               <button class="btn btn-default" id="export" title="Save as CSV"><i class="fas fa-download"></i></button>
-            </div> -->
+            </div>
           </div>
           <!-- /.card-header -->
-          <div class="card-body">
+          <div class="card-body" style="font-size:small;">
             <table id="empTable" class="display"> 
             </table>
+          </div>
         </div>
       </div>
     </div>
@@ -31,9 +36,18 @@
 
 {% block js%}
 <script>
+all_metrics = {{all_metrics | tojson}}
+columns = [
+  {title: 'problem_id (problem_name)', data: 'problem_id (problem_name)'},
+  {title: 'source1', data: 'source1'},
+  {title: 'source2', data: 'source2'}
+]
+for (metric of all_metrics) {
+  columns.push({title: metric, data: metric})
+}
+columns.push({title: 'mean', data: 'mean'})
 $(document).ready(function() {
     var empDataTable = $('#empTable').DataTable({
-        order: [[7, "desc"]],
         'processing': true,
         'serverSide': true,
         'serverMethod': 'post',
@@ -42,16 +56,8 @@ $(document).ready(function() {
         },
         searching: true,
         sort: true,
-        columns: [
-            {title: 'problem_id (problem_name)', data: 'problem_id (problem_name)'},
-            {title: 'source1', data: 'source1'},
-            {title: 'source2', data: 'source2'},
-            {title: 'count_operator', data: 'count_operator'},
-            {title: 'hash_operator', data: 'hash_operator'},
-            {title: 'set_operator', data: 'set_operator'},
-            {title: 'moss_score', data: 'moss_score'},
-            {title: 'mean', data: 'mean'}
-        ],
+        columns: columns,
+        order: [columns.length - 1, "desc"],
         columnDefs: [{
             "defaultContent": "-",
             "targets": "_all"
