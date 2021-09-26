@@ -65,7 +65,7 @@ def add_zip_file(contest_id):
 					if 'error' in req.json().keys():
 						flash(req.json()['error'], MessageStatus.error)
 					else: 
-						flash(["Successfully import!"], MessageStatus.success)
+						flash("Successfully import!", MessageStatus.success)
 						if (len(req.json()['messages']) > 0):
 							flash(req.json()['messages'], MessageStatus.warning)
 					return redirect(url_for('problems_page.problem', contest_id= contest_id))

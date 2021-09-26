@@ -8,6 +8,8 @@ from models.models import Status
 import config
 import timeout_decorator
 
+from random import randint
+
 all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
 
 def flatten_dict(alignment_list):
@@ -53,8 +55,7 @@ def cal_smoss(sources, metrics):
     for source in sources:
         lang = source['lang']
         if lang not in smosses:
-            smoss = SMoss(lang=lang)
-            # smoss = SMoss(lang=lang, userid=randint(20000, 90000))
+            smoss = SMoss(lang=lang, userid=randint(32000, 50000))
             smoss.set_threshold(metrics[0]['threshold'])
             smosses[lang] = smoss
 
@@ -78,7 +79,7 @@ def cal_smoss(sources, metrics):
 
 
 
-def run_project_with_timeout(project_id, timeout=510):
+def run_project_with_timeout(project_id, project_name, timeout=510):
     # @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
     def run_project(project_id, _timeout):
         logs = {'str': '', 'exception': []}
@@ -119,7 +120,8 @@ def run_project_with_timeout(project_id, timeout=510):
             similarity_dict = cal_scoss(data_project['sources'], scoss_metrics)
         elif smoss_metrics:
             similarity_dict = cal_smoss(data_project['sources'], smoss_metrics)
-        requests.put(url=url_result, json={'result_list':list(similarity_dict.values())})
+        # print('similarity_dict = ', similarity_dict, flush=True)
+        requests.put(url=url_result, json={'result_list':list(similarity_dict.values()), 'project_name':project_name})
         # update status
         doc_status = {
             "project_status": Status.checked
@@ -129,7 +131,7 @@ def run_project_with_timeout(project_id, timeout=510):
         return logs
     return run_project(project_id,_timeout=timeout-5)
 
-def do_project(project_id, timeout=510):
+def do_project(project_id, project_name, timeout=510):
     def update_status_failed(project_id):
         url_status = "{}/api/project/{}/status".format(config.API_URI_SR, str(project_id))
         # update status
@@ -138,7 +140,7 @@ def do_project(project_id, timeout=510):
         }
         requests.put(url=url_status, json=doc_status)       
     try:
-        logs = run_project_with_timeout(project_id, timeout)
+        logs = run_project_with_timeout(project_id, project_name, timeout)
         if len(logs['exception']) > 0:
             update_status_failed(project_id)
             raise Exception

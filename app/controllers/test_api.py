@@ -96,7 +96,7 @@ def run_source(project_id):
                 return jsonify(req.json()), 400
             # print(tq.count)
             # tq.empty()
-            tq.enqueue(do_project, args=(project_id, JOB_TIMEOUT), job_timeout=1000)
+            tq.enqueue(do_project, args=(project_id, data_project.project_name, JOB_TIMEOUT), job_timeout=1000)
         
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400

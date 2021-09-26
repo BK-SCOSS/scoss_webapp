@@ -44,11 +44,11 @@ class Problem(db.Document):
     contest_id = db.StringField()
     user_id = db.StringField()
     log = db.StringField()
-    results = db.ListField()
 
 class Result(db.Document):
     result_id = db.StringField(required=True, unique=True)
     problem_id = db.StringField(required=True)
+    problem_name = db.StringField(required=True)
     source1 = db.StringField(required=True)
     source2 = db.StringField(required=True)
     scores = db.DictField()
@@ -62,7 +62,6 @@ class Project(db.Document):
     sources = db.ListField()
     metrics = db.ListField()
     log = db.StringField()
-    results = db.ListField()
 
 class Counter(db.Document):
     name = db.StringField()

@@ -298,6 +298,7 @@ def update_result(problem_id):
             scores['mean'] = sum(list(scores.values()))/len(scores)
             Result.objects(result_id=result_id).update_one(
                 set__problem_id=problem_id, 
+                set__problem_name=request.json['problem_name'], 
                 set__source1=result['source1'], 
                 set__source2=result['source2'], 
                 set__scores=scores, 
@@ -333,7 +334,7 @@ def run_source(problem_id):
                 return jsonify(req.json()), 400
             # print(tq.count)
             # tq.empty()
-            tq.enqueue(do_job, args=(problem_id, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
+            tq.enqueue(do_job, args=(problem_id, data_problem.problem_name, request.headers['Authorization'], config.JOB_TIMEOUT), job_timeout=1000)
         
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
