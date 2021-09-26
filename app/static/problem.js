@@ -90,7 +90,7 @@ $(document).ready(function() {
 			<td id="problem-name" colspan="3"><a href="#" id="create-problem" onclick="createProblem()"><b>Add new problem</b></a></td>
 		</tr>`
 
-		$("#problem-table").append(additionRow)
+		$("#problem-table").append(additionalRow)
 
 		contest_status_span = getStatusLabel(data.contest_data.contest_status)
 		var contest_detail = `${data.contest_data.contest_name} - <small>${contest_status_span}</small>`
