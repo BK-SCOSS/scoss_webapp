@@ -99,7 +99,10 @@ $(document).ready(function() {
         'serverSide': true,
         'serverMethod': 'post',
         'ajax': {
-            'url':'/ajax/contests/{{contest_id}}/results'
+            'url':'/ajax/contests/{{contest_id}}/results',
+            "data": {
+              "metrics": JSON.stringify(all_metrics)
+            }
         },
         searching: true,
         sort: true,

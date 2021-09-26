@@ -14,6 +14,7 @@ import requests
 import config
 import copy
 import re
+import json
 
 problems_controller = Blueprint('problems_controller', __name__)
 
@@ -255,8 +256,9 @@ def delete_all_sources(problem_id):
 
 @problems_controller.route('/ajax/problems/<problem_id>/results', methods=['POST'])
 def get_ajax_problem_results(problem_id):
-    order_columns = ['source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
-        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    order_columns = ['source1', 'source2']
+    order_columns += ['scores__{}'.format(m['name']) for m in json.loads(request.form['metrics'])]
+    order_columns.append('scores__mean')
     draw = request.form['draw'] 
     start = int(request.form['start'])
     length = int(request.form['length'])
@@ -313,6 +315,7 @@ def update_result(problem_id):
 def run_source(problem_id):
     try:
         # print(problem_id)
+        Result.objects(problem_id=problem_id).delete()
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
