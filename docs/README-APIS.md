@@ -45,11 +45,6 @@ Body
 * url_result (string): Đường dẫn tới file kết quả check độ trùng lặp
 
 #### 2 . APi lấy kết quả `/api/project/<project_id>/results` method GET 
-**Request**
-
-Query Parameters
-
-* public_token (string): token xác thực API
 
 **Response**
 
@@ -59,12 +54,6 @@ Query Parameters
 * results: Link kết quả kiểm tra độ trùng lặp
 
 #### 3. APi lấy tất cả thông tin project `/api/project` method GET
-
-**Request**
-
-Query Parameters
-
-* public_token (string): token xác thực API
 
 **Response**
 
@@ -77,13 +66,6 @@ Danh sách các project được tạo bao gồm các thông tin:
 * metrics (list): Danh sách các độ đo
 
 #### 4. APi lấy thông tin chi tiết project `/api/project/<project_id>` method GET 
-
-**Request**
-
-Query Parameters
-
-* public_token (string): token xác thực API
-
 **Response**
 
 Thông tin chi tiết project
@@ -95,7 +77,6 @@ Thông tin chi tiết project
 * metrics (list): Danh sách các độ đo
 
 #### 5. APi xóa project `/api/project/<project_id>` method DELETE  
-
 **Request**
 
 Query Parameters
