@@ -255,7 +255,7 @@ def run_contest(contest_id):
 
 @contests_controller.route('/ajax/contests/<contest_id>/results', methods=['POST'])
 def get_ajax_contest_results(contest_id):
-    order_columns = ['problem_id', 'source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
+    order_columns = ['problem_name', 'source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
         'scores__set_operator', 'scores__moss_score', 'scores__mean']
     draw = request.form['draw'] 
     start = int(request.form['start'])
@@ -271,12 +271,12 @@ def get_ajax_contest_results(contest_id):
     totalRecords = Result.objects(problem_id__in=list(problem_dict.keys())).count()
 
     regex = re.compile('.*{}.*'.format(searchValue), re.IGNORECASE)
-    totalRecordwithFilter = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).count()
+    totalRecordwithFilter = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_name=regex)|Q(source1=regex)|Q(source2=regex))).count()
 
     order = order_columns[int(orderColumn)]
     if orderDirection == 'desc':
         order = '-' + order
-    similarity_list = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_id=regex)|Q(source1=regex)|Q(source2=regex))).\
+    similarity_list = Result.objects.filter(Q(problem_id__in=list(problem_dict.keys())) & (Q(problem_name=regex)|Q(source1=regex)|Q(source2=regex))).\
         order_by(order).skip(start).limit(length)
 
     score_span = '<a href="/problems/{}/compare?source1={}&source2={}&metric={}" target="_blank"><span style="color:rgb({}, 0, 0);">{}%</span></a>'

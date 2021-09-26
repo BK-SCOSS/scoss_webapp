@@ -233,6 +233,7 @@ def update_result(project_id):
             scores['mean'] = sum(list(scores.values()))/len(scores)
             Result.objects(result_id=result_id).update_one(
                 set__problem_id=project_id, 
+                set__problem_name=request.json['project_name'], 
                 set__source1=result['source1'], 
                 set__source2=result['source2'], 
                 set__scores=scores, 
