@@ -2,13 +2,13 @@ from models.models import User
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, flash
 from scoss import smoss
 import requests
 from sctokenizer import Source
 from scoss import Scoss
 from scoss.metrics import all_metrics
-from models.models import db
+from models.models import db, MessageStatus
 from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import Environment
 from config import URL
@@ -28,6 +28,8 @@ def admin():
 					if data.status_code != 200 and 'msg' in data.json():
 						session.clear()
 						return redirect(url_for('login_page.login_page'))
+					if 'error' in data.json().keys():
+						flash(data.json()['error'], MessageStatus.error)
 					return render_template('admin.html', data=data.json()['users'])
 				else: 
 					username = request.form['username']
@@ -41,11 +43,10 @@ def admin():
 					if req.status_code != 200 and 'msg' in req.json():
 						session.clear()
 						return redirect(url_for('login_page.login_page'))
-					if 'user_id' in req.json().keys():
-						return redirect(url_for('users_page.admin'))
-					else:
-						return redirect(url_for('users_page.admin', info='wrong'))
-
+					if 'error' in req.json().keys():
+						flash(req.json()['error'], MessageStatus.error)
+					return redirect(url_for('users_page.admin'))
+	
 @user.route('/admin/redis', methods=['GET'])
 def admin_rq():
 	return redirect('/rq')
@@ -80,8 +81,11 @@ def update_password(user_id):
 				if req.status_code != 200 and 'msg' in req.json():
 					session.clear()
 					return redirect(url_for('login_page.login_page'))
-				if 'info' in req.json().keys():
-					return redirect(base_url)
+				if 'error' in req.json().keys():
+					flash(req.json()['error'], MessageStatus.error)
+				else:
+					flash(req.json()['info'], MessageStatus.success)
+				return redirect(base_url)
 	else:
 		return redirect(url_for('login_page.login_page'))
 
