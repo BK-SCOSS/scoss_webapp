@@ -23,11 +23,7 @@ def contest():
 				user_id = session['user_id']
 				role = session['role']
 				headers = {'Authorization': "Bearer {}".format(session['token'])}
-				if int(role) == 0:
-					url = '/api/contests'
-					# data = requests.get(url=url, headers=headers)
-				else:	
-					url = '/api/users/' + user_id + '/contests'
+				url = '/api/users/' + user_id + '/contests'
 					# data = requests.get(url=url, headers=headers)
 				# if data.status_code != 200 and 'msg' in data.json():
 				# 	session.clear()

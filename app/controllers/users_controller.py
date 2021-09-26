@@ -105,6 +105,11 @@ def update_user(user_id):
 @jwt_required()
 def delete_user(user_id):  
     try:
+        if User.objects(user_id=user_id).count() == 0:
+            return jsonify({"success": "False", "error": "user not does not exist"})
+        data_user = User.objects(user_id=user_id).first()
+        if data_user.public_token != None and data_user.public_token != 'delete':
+            Project.objects(public_token=data_user.public_token).delete()
         User.objects(user_id=user_id).delete()
         info = 'Delete user_id:' + user_id
     except Exception as e:

@@ -1,311 +1,172 @@
 {% extends "base.html" %}
 
-{% block title %}SCOSS - Test{% endblock %}
+{% block title %}SCOSS - Sources{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/styles/default.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.2.0/build/languages/go.min.js"></script>
+{% endblock %}
+
+{% block header %}
+<div class="container">
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1 class="m-0 text-dark" id="project-detail">
+                Test Page
+            </h1>
+        </div><!-- /.col -->
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+            </ol>
+        </div><!-- /.col -->
+    </div><!-- /.row -->
+</div>
+{% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
+    <div class="col-md-9">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">List source</h3>
                 <div class="card-tools">
-                    <form action="/test/from_zip" class="form-horizontal"  method="POST" enctype=multipart/form-data>
-                        <div class="form-group row">
+                    <form action="/project/test_scoss/from_zip" class="form-horizontal" method="POST"
+                        enctype=multipart/form-data style="margin:0;">
+                        <div class="form-group row" style="margin:0;">
                             <div class="col-sm-9">
-                                <input type="file" name="zipfile">
+                                <input type="file" name="file">
                             </div>
                             <div class="col-sm-3">
-                                <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">						
-                            </div>					
-                        </div>		
+                                <input type="submit" class="btn btn-primary" value="Submit" style="float:right;">
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
             <!-- /.card-header -->
-            <div class="card-body table-responsive p-0">
-                <table class="table table-hover table-bordered">
-                    <tr>
-                        <th style="width: 4em;">#</th>
-                        <th>Name</th>
-                    </tr>
-                    {%if data|length > 0%}
-                    {%for da in data%}
-                    <tr>
-                    <td>{{loop.index}}</td>
-                    {%if da['mask'] == ''%}
-                    <td><a href="#">{{da['pathfile']}}</a></td>
-                    {%else%}
-                    <td><a href="#">{{da['mask']}}</a></td>
-                    {%endif%}
-                    </tr>
-                    {%endfor%}
-                    {%endif%}
-                    <tr>
-                        <td>#</td>
-                        <td id="source-name" colspan="2"><a href="#" id="create-source" onclick="createSource()"><b>Add new source</b></a></td>
-                    </tr>
+
+            <div class="card-body">
+                <table class="display" id="source-table">
+                    <thead>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    
                 </table>
             </div>
             <!-- /.card-body -->
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-sm-12">
-        <div class="card card-info">
+    <div class="col-md-3">
+        <div class="card card-info" style="position:sticky; top: 0;">
             <div class="card-header">
-                <h3 class="card-title">Run contest</h3>
+                <h3 class="card-title">Test</h3>
             </div>
             <!-- /.card-header -->
-            <form class="form-horizontal" action="/test/run" method="POST">
+            <form class="form-horizontal" method="POST" id="project-run">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-sm-5">
+                        <div class="col-sm-12">
                             <div class="form-group row">
-                                <div class="custom-control custom-checkbox col-sm-6">
-                                    <input class="custom-control-input" type="checkbox" id="countCheckBox">
-                                    <label for="countCheckBox" class="custom-control-label"><b>CountOperator: </b></label>        
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="count_operator_check">
+                                    <label for="count_operator_check" class="custom-control-label"><b>CountOperator:
+                                        </b></label>
                                 </div>
-                                <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="countOperator" name="count_operator" min="0" max="100" value="50" disabled>        
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="count_operator" name="count_operator"
+                                        min="0" max="100" value="70" disabled>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-2"></div>
-                        <div class="col-sm-5">
-                            <div class="form-group row">
-                                <div class="custom-control custom-checkbox col-sm-6">
-                                    <input class="custom-control-input" type="checkbox" id="setCheckBox">
-                                    <label for="setCheckBox" class="custom-control-label"><b>SetOperator: </b></label>  
-                                </div>
-                                <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="setOperator" name="set_operator" min="0" max="100" value="50" disabled> 
-                                </div>
-                            </div>
-                        </div>		
                     </div>
-    
                     <div class="row">
-                        <div class="col-sm-5">
+                        <div class="col-sm-12">
                             <div class="form-group row">
-                                <div class="custom-control custom-checkbox col-sm-6">
-                                    <input class="custom-control-input" type="checkbox" id="hashCheckBox">
-                                    <label for="hashCheckBox" class="custom-control-label"><b>HashOperator: </b></label>									</div>
-                                <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="hashOperator" name="hash_operator" min="0" max="100" value="50" disabled>	
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="set_operator_check">
+                                    <label for="set_operator_check" class="custom-control-label"><b>SetOperator:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="set_operator" name="set_operator"
+                                        min="0" max="100" value="70" disabled>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-2"></div>
-                        <div class="col-sm-5">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12">
                             <div class="form-group row">
-                                <div class="custom-control custom-checkbox col-sm-6">
-                                    <input class="custom-control-input" type="checkbox" id="smossCheckBox">
-                                    <label for="smossCheckBox" class="custom-control-label"><b>SMOSS Metric: </b></label>        
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="hash_operator_check">
+                                    <label for="hash_operator_check" class="custom-control-label"><b>HashOperator:
+                                        </b></label>
                                 </div>
-                                <div class="col-sm-6">
-                                    <input type="number" class="form-control" id="smossMetric" name="moss_score" min="0" max="100" value="50" disabled>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="hash_operator" name="hash_operator"
+                                        min="0" max="100" value="70" disabled>
                                 </div>
                             </div>
-                        </div>		
+                        </div>
                     </div>
-                </div>
-                <div class="card-footer">	
-                    <input type="submit" class="btn btn-primary" value="Run">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group row">
+                                <div class="custom-control custom-checkbox col-sm-8">
+                                    <input class="custom-control-input" type="checkbox" id="moss_score_check">
+                                    <label for="moss_score_check" class="custom-control-label"><b>SMOSS Metric:
+                                        </b></label>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" id="moss_score" name="moss_score" min="0"
+                                        max="100" value="70" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
-        </div>	
+            <div class="card-footer">
+                <!-- <input type="submit" class="btn btn-primary"> -->
+                <button type="submit" class="btn btn-primary" id="run" form="project-run">
+                    Run
+                </button>
+                <button class="btn btn-info" id="reset" dtype="project">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="sourcecontent-modal" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="title"></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre><code id="source-content"></code></pre>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
-{% block js%}
-<script type="text/javascript">
-    document.getElementById('countCheckBox').onchange = function() {
-        document.getElementById('countOperator').disabled = !this.checked;
-    };
 
-    document.getElementById('setCheckBox').onchange = function() {
-        document.getElementById('setOperator').disabled = !this.checked;
-    };
-
-    document.getElementById('hashCheckBox').onchange = function() {
-        document.getElementById('hashOperator').disabled = !this.checked;
-    };
-
-    document.getElementById('smossCheckBox').onchange = function() {
-        document.getElementById('smossMetric').disabled = !this.checked;
-    };
-
-    function createSource() {
-        const form = document.createElement('form')
-        const input = document.createElement('input')
-        const file = document.createElement('input')
-        const submit = document.createElement('input')
-        const row = document.createElement('div')
-        const col10 = document.createElement('div')
-        const col2 = document.createElement('div')
-
-        form.method = "POST"
-        form.action = "/test"
-        form.className = "form-horizontal"
-        form.enctype = "multipart/form-data"
-
-        row.className = "form-group row"
-        col10.className = "col-sm-10"
-        col2.className = "col-sm-2"
-
-        input.className = "form-control"
-        input.name = "mask"
-        input.style = "width: 50%;"
-        input.placeholder = "Enter file name"
-
-        file.name = "file"
-        file.type = "file"
-
-        submit.type = 'submit'
-        submit.className = 'btn btn-primary'
-        submit.style = "float: right;"
-        submit.name = 'submit'
-        submit.value = 'Submit'
-
-        col10.appendChild(input)
-        col10.append(file)
-        col2.appendChild(submit)
-
-        row.appendChild(col10)
-        row.appendChild(col2)
-
-        form.appendChild(row)
-
-        link = document.getElementById('create-source').remove()
-        
-        document.getElementById('source-name').appendChild(form)
-    }
-</script>
-
+{% block js %}
 <script>
-    $(function() {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-
-        function create_row_result(score_metric, metrics) {
-            td = $("<td>")
-            C = parseFloat(score_metric)*255
-            R = parseInt(C)
-            G = 0
-            B = 0
-            a = $("<a>", {"href": `/problems/{{problem_id}}/compare?source1=${source1}&source2=${source2}&metrics=${metrics}`, 
-                        "target": "_blank", 
-                        "style": `color:rgb(${R}, ${G}, ${B});`})
-            a.text(score_metric.toFixed(2))
-            td.append(a)
-            item.append(td)
-        }
-
-        function create_result(heads, links) {
-            row = $("<div>", {id: "result", "class": "row"})
-            col = $("<div>", {"class": "col-12"})
-            card = $("<div>", {"class": "card"})
-            card_header = $("<div>", {"class": "card-header"})
-            card_body = $("<div>", {"class": "card-body"})
-            table = $("<table>", {"class": "table table-hover table-bordered"})
-            header = $("<tr>")
-            
-            for (head in heads) {
-                header.append("<th>" + heads[head] + "<i class='fa fa-sort'></i></th>")
-            }
-            table.append(header)
-            for (link of links) {
-                source1 = link['source1']
-                source2 = link['source2']
-                item = $("<tr>", {"class": "item"})
-                item.append("<td>" + source1 + "</a></td>")
-                item.append("<td>" + source2 + "</a></td>")
-                for (metric in link['scores']) {
-                    if (metric == 'mean') {
-                        continue
-                    }
-                    create_row_result(link['scores'][metric], metric)
-                }
-                create_row_result(link['scores']['mean'], 'mean')
-                table.append(item)
-            }
-            card_body.append(table)
-            card_header.append("<h3 class='card-title'>Result</h3>")
-            card.append(card_header)
-            card.append(card_body)
-            col.append(card)
-            row.append(col)
-            $(".content .container").append(row)
-        }
-
-        $("#problem-run").submit(function(e){
-            e.preventDefault(); // avoid to execute the actual submit of the form.
-
-            var form = $(this);
-            var list_operator = form.serializeArray()
-            console.log(list_operator)
-            if (list_operator.length > 0) {
-                var send_data = []
-                list_operator.forEach(element => {
-                    var temp = {
-                        'name': element['name'],
-                        'threshold': element['value']/100
-                    }
-                    send_data.push(temp)
-                });
-                var data_form = {'metrics': send_data}
-                $.ajax({
-                    type: "POST",
-                    url: "/test/run",
-                    contentType: 'application/json',
-                    data: JSON.stringify(data_form),
-                    success: function()
-                    {   
-                        var result = JSON.stringify(data)
-                        if (data['results'].length > 0) {
-                            $("#result").remove()
-                            var heads = []
-                            heads.push('source1')
-                            heads.push('source2')
-                            for(metric in data.results[0].scores) {
-                                if (metric == 'mean') {
-                                    continue
-                                }
-                                heads.push(metric)
-                            }
-                            heads.push('mean')
-                            create_result(heads, links=data['results'])
-                        } else {
-                            Toast.fire({
-                                icon: 'error',
-                                title: 'No result in database'
-                            })
-                        }
-                    },
-                    error: function(data)
-                    {
-                        alert(data['error'])
-                    }
-                });
-            } else {
-                Toast.fire({
-                    icon: 'warning',
-                    title: 'Please select metrics first!'
-                })
-            }
-        })
-    });
+    project_id ="{{project_id}}"
+    url = "{{url}}"
 </script>
+<script id="token" src="{{ url_for('static', filename = 'main_test.js') }}"></script>
+<script src="{{ url_for('static', filename = 'test.js')}}"></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint
+from flask import Flask, render_template, url_for, request, redirect, session, jsonify, Blueprint, flash
 from scoss import smoss
 import requests
 from sctokenizer import Source
@@ -13,174 +13,111 @@ from jinja2 import Environment
 from config import URL
 from zipfile import ZipFile
 from controllers.similarity_checker import cal_smoss, cal_scoss
+from scoss import align_source
+from models.models import db, MessageStatus
 
 tests = Blueprint('tests_page', __name__)
 
-@tests.route('/test', methods=['GET', 'POST'])
-def test():
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'GET':
-				if 'sources' in session:
-					return render_template('test.html', data=session['sources'])
-				else:
-					session['sources'] = []
-					return render_template('test.html')
+
+@tests.route('/test', methods=['GET'])
+def source():
+	if request.method == 'GET':
+		project_id =  request.args.get("project_id")
+		url = '/api/project/test_scoss'
+		if project_id == "test_scoss":
+			return render_template('test.html', project_id= "test_scoss", url=url)
+	return render_template('test.html')
+
+
+
+@tests.route('/project/<project_id>/from_zip', methods=['POST'])
+def add_zip_file(project_id):
+	if request.method == 'POST':
+		if request.files:
+			zip_file = request.files['file'].read()					
+			url = URL + '/api/project/{}/from_zip'.format(project_id)	
+			req = requests.post(url=url, files={'file': zip_file})
+			if 'error' in req.json().keys():
+				flash(req.json()['error'], MessageStatus.error)
+				return redirect(url_for('tests_page.source'))
+			else: 
+				flash("Successfully import!", MessageStatus.success)
+			return redirect(url_for('tests_page.source', project_id= "test_scoss"))
+		return redirect(url_for('tests_page.source'))
+	return redirect(url_for('login_page.login_page'))
+
+@tests.route('/project/<project_id>/results', methods=['GET'])
+def results(project_id):
+	if request.method == 'GET':
+		return render_template('public_api_result.html', project_id=project_id)
+	return redirect(url_for('login_page.login_page'))
+
+
+def scoss_alignment(source1, source2, src_str1, src_str2, metric, score, lang):
+	score_metric = round(score, 4)
+	score_alignment = align_source(metric, src_str1, src_str2, lang)
+	data1 = [i.replace('<', '&lt').replace('>', '&gt') for i in src_str1.split('\n')]
+	data2 = [i.replace('<', '&lt').replace('>', '&gt') for i in src_str2.split('\n')]
+	html1 = ''
+	html2 = ''
+	for line in score_alignment:
+		if line[0] == -1 :
+			html1 += '<pre >  </pre>'
+			temp2 = '<pre >'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+			html2 += temp2
+		elif line[1] == -1 :
+			html2 += '<pre >  </pre>'
+			temp1 = '<pre >'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+			html1 += temp1
+		elif line[0] != -1 and line[0] != -1:
+			if line[2] >=0.25 and line[2] <0.75:
+				temp1 = '<pre style="color: #ffb600">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: #ffb600">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
+			elif line[2] >= 0.75:
+				temp1 = '<pre style="color: red">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: red">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
 			else:
-				mask = request.form['mask']
-				sourceFile = request.files['file']
-				data_doc = {
-					"pathfile": sourceFile.filename,
-					"lang": sourceFile.filename.split('.')[-1],
-					'mask': mask,
-					'source_str': sourceFile.read().decode('utf-8')
-				}
-				if 'sources' in session:
-					temp = session['sources']
-					temp.append(data_doc)
-					session['sources'] = temp
+				temp1 = '<pre style="color: black">'+  str(line[0])+ '	'+  data1[line[0]-1] + '</pre>'
+				html1 += temp1
+				temp2 = '<pre style="color: black">'+  str(line[1])+ '	'+  data2[line[1]-1] + '</pre>'
+				html2 += temp2
+	C = int(score_metric*255)
+	R = C
+	G = 0
+	B = 0
+	span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'
+	with open('app/templates/comparison.html', 'r') as f:
+		HTML2 = f.read()
+	return Environment().from_string(HTML2).render(file1=source1, file2=source2, \
+					metric=metric, score=span, data1=html1, data2=html2)
 
-				return redirect(url_for('tests_page.test'))
-	return redirect(url_for('login_page.login_page'))
+@tests.route('/project/<project_id>/compare', methods=['GET'])
+def compare(project_id):
+	source1 = request.args.get('source1')
+	source2 = request.args.get('source2')
+	metric = request.args.get('metric')
+	url_get_alignment = URL + '/api/project/{}/get_alignment'.format(project_id)
+	result = requests.post(url=url_get_alignment, json={'source1':source1, 'source2':source2}).json()
+	
+	if metric == 'moss_score':
+		return result['result'][0]['smoss_alignment']
+	
+	url_get_project = URL + '/api/project/{}'.format(project_id)
+	project = requests.get(url=url_get_project).json()
+	sources = project['sources']
+	source1_dict = {}
+	source2_dict = {}
+	for src in sources:
+		if src['mask'] == source1:
+			source1_dict = src
+		if src['mask'] == source2:
+			source2_dict = src
+		if source1_dict and source2_dict:
+			break
 
-@tests.route('/test/from_zip', methods=['POST'])
-def from_zip():
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'POST':
-				if request.files:
-					sourceFile = request.files['zipfile']
-					sources = []
-					with ZipFile(sourceFile, 'r') as zf:
-						zfile = zf.namelist()
-						for file in zfile:
-							if len(file.split('/')) > 1 and file.split('/')[-1] != '':
-								data_doc = {
-									"pathfile": file.split('/')[-1],
-									"lang": file.split('.')[-1],
-									'mask': '',
-									'source_str': zf.read(file).decode('utf-8')
-								}
-								sources.append(data_doc)
-
-					if 'sources' in session:
-						temp = session['sources']
-						fin = temp + sources 
-						session['sources'] = fin
-
-					return redirect(url_for('tests_page.test'))
-	return redirect(url_for('login_page.login_page'))
-
-@tests.route('/test/run', methods=['POST'])
-def run():
-	if 'logged_in' in session:
-		if session['logged_in'] == True:
-			if request.method == 'POST':
-				sources = session['sources']
-				list_operator = request.form
-				metrics = []
-				metric_list = []
-
-				for op in list_operator:
-					temp = {
-						'name': op,
-						'threshold': float(int(list_operator[op])/100)
-					}
-					metrics.append(temp)
-					metric_list.append(op)
-
-				for metric in all_metrics:
-					for met in metrics:
-						if metric.get_name() == met['name']:
-							similarity_list, alignment_list = cal_scoss(sources, metrics)
-							break
-				for met in metrics:
-					if met['name'] == 'moss_score':
-						similarity_smoss_list, alignment_smoss_list = cal_smoss(sources, metrics)
-						break
-				
-				if len(similarity_list) >= 0 and len(similarity_smoss_list) >= 0:
-					results = get_results(similarity_list, similarity_smoss_list, metrics)
-				else:
-					results = []
-
-				if len(results) > 0:
-					heads = []
-					heads.append('source1')
-					heads.append('source2')
-					for metric in results[0]['results'][0]['scores']:
-						if (metric == 'mean'):
-							continue
-						heads.append(metric)
-					heads.append('mean')
-
-					for problem in results:
-						for prob_res in problem['results']:
-							for metric in prob_res['scores']:
-								score_metric = prob_res['scores'][metric]
-								score_metric = round(score_metric, 4)
-								C = int(score_metric*255)
-								R = C
-								G = 0
-								B = 0
-								span = '<span style="color: rgb({}, {}, {})">'.format(R,G,B) + str(format(score_metric*100, '.2f')) +'%</span>'								
-								prob_res['scores'][metric] = span
-
-					return render_template('result.html', heads=heads, data=results)
-				else:
-					return render_template('result.html', error="No result in database!")
-	return redirect(url_for('login_page.login_page'))
-
-def get_results(similarity_list, similarity_smoss_list, metrics):
-	metric_list = []
-	res = {}
-	for metric in metrics:
-		metric_list.append(metric['name'])
-	if 'moss_score' in metric_list:
-		if len(metric_list) == 1:
-			for simi in similarity_list:             
-				key = hash(simi['source1'])^hash(simi['source2'])
-				temp_list = simi 
-				res[key] = temp_list
-		else: 
-			for simi in similarity_list:             
-				key = hash(simi['source1'])^hash(simi['source2'])
-				temp_list = simi 
-				temp_list['scores']['moss_score'] =  0
-				res[key] = temp_list
-			for simi_smoss in similarity_smoss_list:        
-				key = hash(simi_smoss['source1'])^hash(simi_smoss['source2'])
-				if key in res.keys():
-					temp_list = simi_smoss
-					for metric in metric_list:
-						temp_list['scores'][metric] =  0
-					temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
-					res[key] = temp_list
-			for simi in similarity_list:
-				for simi_smoss in similarity_smoss_list:
-					if (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2'])\
-						or (simi['source1'] == simi_smoss['source1'] and simi['source2'] == simi_smoss['source2']):
-						key = hash(simi['source1'])^hash(simi['source2'])
-						temp_list = simi 
-						temp_list['scores']['moss_score'] =  simi_smoss['scores']['moss_score']
-						res[key] = temp_list
-	else:
-		for simi in similarity_list:             
-			key = hash(simi['source1'])^hash(simi['source2'])
-			temp_list = simi 
-			res[key] = temp_list
-	check_zero = 0
-	for key in res:
-		total = 0
-		num_of_score = 0
-		if len(res[key]) == 0:
-			check_zero+=1
-			continue
-		for score in res[key]['scores']:
-			total += res[key]['scores'][score]
-			num_of_score +=1
-		if num_of_score != 0:
-			res[key]['scores']['mean'] = total/num_of_score
-	if(len(res.keys()) == check_zero):
-			return []
-	return list(res.values())
+	score = result['result'][0]['scores'][metric]
+	return scoss_alignment(source1, source2, source1_dict['source_str'], source2_dict['source_str'], metric, score, source1_dict['lang'])

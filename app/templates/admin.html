@@ -249,6 +249,9 @@
 					$.ajax({
 						type: "DELETE",
 						contentType: 'application/json',
+						headers: {
+							Authorization: 'Bearer '+ '{{session["token"]}}'
+						},
 						url: "/api/users/" + user_id,
 						success: function (data) {
 							console.log('success')

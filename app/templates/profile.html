@@ -45,38 +45,33 @@
                 </form>
             </div>
         </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Public key</h3>
-            </div>
             <div class="card-body">
-                <div style="text-align: center;">
-                    <button>Generate new public key</button>
+                <div class="form-group row">
+                    <label for="username" class="col-sm-2 control-label">Public key</label>
+                    <div class="col-sm-7">
+                        <code style="color: black;" id="display_key"></code>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="float-right button btn btn-primary" id="gen_key">Generate</button>
+                    </div>
+                    <div class="col-sm-1">
+                        <button class="float-right button btn btn-danger" id="del_key">Delete</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
-
 {% block js %}
 <script>
-    $("input[name='confirm']").on('keyup', function () {
-        if ($("input[name='new_password']").val() == $("input[name='confirm']").val()) {
-            $("input[name='confirm']").removeClass('is-invalid');
-            $("input[name='confirm']").addClass('is-valid');
-        } else {
-            $("input[name='confirm']").removeClass('is-valid');
-            $("input[name='confirm']").addClass('is-invalid');
-        }
-    });
-    
-    $("#update_profile").submit(function(e){
-        if ($("input[name='new_password']").val() != $("input[name='confirm']").val())
-        {
-            e.preventDefault(); // avoid to execute the actual submit of the form.
-        }
-    })
+    token ="{{session['token']}}"
+    user_id = "{{data['user_id']}}"
 </script>
+<script src="{{ url_for('static', filename = 'profile.js')}}"></script>
 {% endblock %}

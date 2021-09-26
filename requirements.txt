@@ -52,5 +52,7 @@ timeout-decorator
 rq-dashboard
 rq
 tqdm
+flask_jwt_extended
+PyJWT
 python-dotenv
 flask_jwt_extended
