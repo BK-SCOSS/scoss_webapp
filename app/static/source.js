@@ -1,9 +1,6 @@
 params = new URL(document.getElementById("token").src).searchParams;
 var token = params.get('token')
-var tableHeader = [
-    {title: 'source1', data: 'source1'},
-    {title: 'source2', data: 'source2'}
-];
+var tableHeader = [];
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -27,6 +24,7 @@ $(function() {
         success: function(data) {		
             t = $('#source-table').DataTable({
                 data: data.sources,
+                scrollX: true,
                 columns: [
                     {data: null, title: '#', width: '10%'},
                     {
@@ -78,6 +76,9 @@ $(function() {
             metrics = data.metrics
             
             if (metrics.length > 0)  {
+                tableHeader.push({title: 'source1', data: 'source1'})
+                tableHeader.push({title: 'source2', data: 'source2'})
+
                 for (metric of metrics) {
                     metric_name = metric['name']
                     $("#"+metric_name).prop("disabled", false)
@@ -85,11 +86,11 @@ $(function() {
                     $("#"+metric_name+"_check").prop("checked", true)
                     tableHeader.push({title: metric_name, data: metric_name})
                 }
+                tableHeader.push({title: 'mean', data: 'mean'})
             }
         }
 	})
     
-    tableHeader.push({title: 'mean', data: 'mean'})
 
     $('#result-table').DataTable({
         'processing': true,
@@ -100,6 +101,7 @@ $(function() {
         },
         searching: true,
         sort: true,
+        scrollX: true,
         columns: tableHeader,
         order: [tableHeader.length - 1, 'desc'],
         columnDefs: [{
