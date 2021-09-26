@@ -119,24 +119,26 @@ $(function() {
 		success: function (data) {
             // console.log('wqw')
             problem_status = data['problem_status']
-            if (problem_status == checked) {
+            if (problem_status == checked || problem_status == failed) {
                 $("#run").removeClass("btn-primary")
                 $("#run").addClass("btn-danger")
                 $("#run").text("Rerun")
-            } else if (problem_status == running) {
+            } else if (problem_status == running || problem_status == waiting) {
+                $("#run").text("Running")
+				$("#run").prop("disabled", true)
                 var source = new EventSource('/problems/' + problem_id + '/status');
                 source.onmessage = function(event) {
-                    if (event.data == checked) {
+                    if (event.data == checked || event.data == failed) {
                         $("#run").removeClass("btn-primary")
                         $("#run").addClass("btn-danger")
                         $("#run").text("Rerun")
                         source.close()
+			            location.reload();
                     }
                 }
-                $("#run").text("Running")
-                $("#run").prop("disabled", true)
+                // $("#run").text("Running")
+                // $("#run").prop("disabled", true)
             }
-			// location.reload();
 		},
 		error: function (data) {
             // console.log("123")
@@ -178,21 +180,21 @@ $(function() {
                     $("#run").text("Running...")
                     var source = new EventSource('/problems/' + problem_id + '/status');
                     source.onmessage = function(event) {
-                        if (event.data == checked) {
+                        if (event.data == checked || event.data == failed) {
                             source.close()
-                            $.get("/api/problems/"+ problem_id+"/results", function(data){
-                                if (data['results'].length > 0) {
-                                    location.reload()
-                                } else {
-                                    Toast.fire({
-										icon: 'error',
-										title: 'No matches found!'
-									})
-									$("#run").empty()
-									$("#run").text("Run")
-									$("#run").removeAttr("disabled")
-                                }
-                            });
+                            // $.get("/api/problems/"+ problem_id+"/results", function(data){
+                            // if (data['results'].length > 0) {
+                            location.reload()
+                            // } else {
+                            //     Toast.fire({
+                            //         icon: 'error',
+                            //         title: 'No matches found!'
+                            //     })
+                            //     $("#run").empty()
+                            //     $("#run").text("Run")
+                            //     $("#run").removeAttr("disabled")
+                            // }
+                            // });
                         }
                     }
                 },
@@ -201,13 +203,15 @@ $(function() {
                     alert(data.responseText)
                 }
             });
-            // location.reload()
         } else {
             Toast.fire({
                 icon: 'warning',
                 title: 'Please select metrics first!'
             })
         }
+        setTimeout(function(){ 
+			location.reload();
+		}, 1000);  
     })
 
     $("#source-table").on("click", ".sourcename", function(){
