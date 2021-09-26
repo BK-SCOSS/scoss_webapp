@@ -95,7 +95,7 @@ def update_user(user_id):
             current_user.update(email=email, password=new_password)
             info = 'Update infomation for user_id:' + user_id
         else:
-            info = "Wrong password!"
+            return jsonify({'error': "Wrong password!"})
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'info': info})
