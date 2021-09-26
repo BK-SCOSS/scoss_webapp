@@ -65,7 +65,9 @@ def add_zip_file(contest_id):
 					if 'error' in req.json().keys():
 						flash(req.json()['error'], MessageStatus.error)
 					else: 
-						flash("Successfully import!", MessageStatus.success)
+						flash(["Successfully import!"], MessageStatus.success)
+						if (len(req.json()['messages']) > 0):
+							flash(req.json()['messages'], MessageStatus.warning)
 					return redirect(url_for('problems_page.problem', contest_id= contest_id))
 				return redirect(url_for('problems_page.problem', contest_id= contest_id))
 	return redirect(url_for('login_page.login_page'))
@@ -73,5 +75,15 @@ def add_zip_file(contest_id):
 @contests.route('/contests/<contest_id>/results', methods=['GET'])
 def results(contest_id):
 	if request.method == 'GET':
+		url = URL + '/api/users/email'
+		params = {'contest_id': contest_id}
+		req = requests.get(url=url, params=params)
+		if 'error' in req.json().keys():
+			flash(req.json()['error'], MessageStatus.error)
+		else: 
+			email = req.json()['email']
+			all_metrics = req.json()['all_metrics']
+			return render_template('result.html', contest_id=contest_id, \
+				author_email=email, all_metrics=all_metrics)
 		return render_template('result.html', contest_id=contest_id)
 	return redirect(url_for('login_page.login_page'))

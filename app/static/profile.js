@@ -63,4 +63,21 @@ $(document).ready(function() {
         });
     
     });
+
+    $("input[name='confirm']").on('keyup', function () {
+        if ($("input[name='new_password']").val() == $("input[name='confirm']").val()) {
+            $("input[name='confirm']").removeClass('is-invalid');
+            $("input[name='confirm']").addClass('is-valid');
+        } else {
+            $("input[name='confirm']").removeClass('is-valid');
+            $("input[name='confirm']").addClass('is-invalid');
+        }
+    });
+    
+    $("#update_profile").submit(function(e){
+        if ($("input[name='new_password']").val() != $("input[name='confirm']").val())
+        {
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+        }
+    })
 })

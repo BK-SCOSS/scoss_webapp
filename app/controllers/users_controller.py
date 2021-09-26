@@ -34,6 +34,23 @@ def username():
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'user_id':data_users.user_id, 'username': data_users.username, 'role':data_users.role})
 
+@users_controller.route('/api/users/email', methods=['GET'])
+# @jwt_required()
+def getEmailAndMetrics():
+    try:
+        contest_id = request.args.get('contest_id')
+        contest = Contest.objects.get(contest_id=contest_id)
+        email = User.objects.get(user_id=contest.user_id).email
+        problems = Problem.objects(contest_id=contest_id)
+        all_metrics = []
+        for problem in problems:
+            for metric in problem.metrics:
+                if metric['name'] not in all_metrics:
+                    all_metrics.append(metric['name'])            
+    except Exception as e:
+        return jsonify({"error":"Exception: {}".format(e)}),400
+    return jsonify({'email': email, 'all_metrics': all_metrics})
+
 @users_controller.route('/api/users/add', methods=['POST'])
 @admin_required
 @jwt_required()
@@ -43,10 +60,11 @@ def add_user():
         timestamp = str(int(time.time()))
         user_id = make_unique(timestamp)
         username = request.json['username']
+        email = request.json['email']
         password = request.json['password']
         role = request.json['role'] #0- admin , 1-user
         password = generate_password_hash(password)
-        User(user_id=user_id, username=username, password=password, role=role).save()
+        User(user_id=user_id, username=username, email=email, password=password, role=role).save()
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
     return jsonify({'user_id': user_id})

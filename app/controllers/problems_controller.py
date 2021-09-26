@@ -142,6 +142,7 @@ def add_zip(problem_id):
             return jsonify({"error":"The zip file is corrupted"}), 400
         data_problem = Problem.objects.get(problem_id=problem_id)
         sources = data_problem.sources
+        messages = []
         with ZipFile(request.files['file'], 'r') as zf:
             zfiles = zf.namelist()
             supported_files = [f for f in zfiles if f.endswith(config.SUPPORTED_EXTENSIONS)] # Get the files with correct extensions
@@ -153,6 +154,7 @@ def add_zip(problem_id):
                 # Push some notification in the future
                 unsupported_files = set(zfiles) - set(supported_files)
                 print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+                messages.append('Your zip file contains some unexpected files: {}'.format(unsupported_files))
             list_name_contain_space = []
             for file in supported_files:
                 try:
@@ -174,10 +176,11 @@ def add_zip(problem_id):
                     sources.append(data_doc)
             if list_name_contain_space:
                 print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
+                messages.append('These are spaces in your filename(s), we replace them with "_"')
         Problem.objects(problem_id=problem_id).update(sources=sources)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id}), 200
+    return jsonify({'problem_id': problem_id, 'messages': messages}), 200
 
 
 @problems_controller.route('/api/problems/<problem_id>/sources/add', methods=['POST'])
@@ -188,6 +191,7 @@ def add_source(problem_id):
         file = request.files['files']
         filename = file.filename
         extension = filename.split('.')[-1]
+        messages = []
         if mask == '':
             return jsonify({'error': "Source name must not be empty"}), 400
 
@@ -200,6 +204,7 @@ def add_source(problem_id):
         
         if ' ' in mask:
             print('These are spaces in your filename, we replace them with "_"', flush=True)
+            messages.append('These are spaces in your filename(s), we replace them with "_"')
             mask = mask.replace(' ', '_')
 
         if mask in exist_masks:
@@ -215,7 +220,7 @@ def add_source(problem_id):
         Problem.objects(problem_id=problem_id).update(sources=sources)
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'problem_id': problem_id}), 200
+    return jsonify({'problem_id': problem_id, 'messages': messages}), 200
 
 @problems_controller.route('/api/problems/<problem_id>/sources/delete_all', methods=['DELETE'])
 @jwt_required()
@@ -288,7 +293,7 @@ def update_result(problem_id):
     try:
         result_list = request.json['result_list']
         for result in result_list:
-            result_id = problem_id + '_' + result['source1'] + '_' + result['source1']
+            result_id = problem_id + '_' + result['source1'] + '_' + result['source2']
             scores = result['scores']
             scores['mean'] = sum(list(scores.values()))/len(scores)
             Result.objects(result_id=result_id).update_one(
@@ -310,13 +315,18 @@ def run_source(problem_id):
         data_problem = Problem.objects.get(problem_id=problem_id)
         metrics = request.json['metrics']
         Problem.objects(problem_id=problem_id).update(metrics=metrics)
+        url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
         if not data_problem.sources:
-            return jsonify({"error": "No sources to run"}), 400
+            # return jsonify({"error": "No sources to run"}), 400
+            req = requests.put(url=url_status, json={"problem_status": Status.checked},\
+                headers={'Authorization': request.headers['Authorization']})
+            if req.status_code != 200: 
+                return jsonify(req.json()), 400
+            return jsonify({'problem_id': problem_id}), 200
         if data_problem.problem_status not in [Status.running, Status.waiting]:
             doc_status = {
                 "problem_status": Status.waiting
             }
-            url_status = "{}/api/problems/{}/status".format(URL, str(problem_id))
             req = requests.put(url=url_status, json=doc_status,\
                 headers={'Authorization': request.headers['Authorization']})
             if req.status_code != 200: 

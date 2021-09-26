@@ -140,6 +140,7 @@ def add_zip(contest_id):
     """
     try: 
         contest_list = {}
+        messages = []
         if ZipFile(request.files["file"], "r").testzip() is not None:
             return jsonify({"error":"The zip file is corrupted"}), 400
         with ZipFile(request.files['file'], 'r') as zf:
@@ -153,6 +154,7 @@ def add_zip(contest_id):
                 # Push some notification in the future
                 unsupported_files = set(zfiles) - set(supported_files)
                 print('Your zip file contains some unexpected files:', unsupported_files, flush=True)
+                messages.append('Your zip file contains some unexpected files: {}'.format(unsupported_files))
             list_name_contain_space = []
             for file in supported_files:
                 file_parts = file.split('/')
@@ -182,6 +184,9 @@ def add_zip(contest_id):
                                 'source_str': source_str
                             }
                         ]
+            if list_name_contain_space:
+                print('These are spaces in your filename(s), we replace them with "_"', flush=True) # list_name_contain_space
+                messages.append('These are spaces in your filename(s), we replace them with "_"')
         url_contest = '{}/api/contests/{}/problems/add'.format(URL, contest_id)
         for problem_key, problem_value in contest_list.items():
             req = requests.post(url=url_contest, json={'problem_name': problem_key},\
@@ -199,7 +204,7 @@ def add_zip(contest_id):
                 return jsonify({'error': req.json()['error']}), 400
     except Exception as e:
         return jsonify({"error":"Exception: {}".format(e)}),400
-    return jsonify({'contest_id': contest_id}), 200
+    return jsonify({'contest_id': contest_id, 'messages': messages}), 200
 
 @contests_controller.route('/api/contests/<contest_id>/run', methods = ['POST'])
 @jwt_required()
@@ -278,7 +283,7 @@ def get_ajax_contest_results(contest_id):
     data = []
     for sim in similarity_list:
         problem_id = sim['problem_id']
-        a_result = {'problem_id (problem_name)':'{} ({})'.format(problem_id, problem_dict[problem_id]), 
+        a_result = {'problem_name':problem_dict[problem_id], 
             'source1':sim['source1'], 'source2':sim['source2']}
         for metric, score in sim['scores'].items():
             if metric != 'mean':
