@@ -288,7 +288,7 @@ def update_result(problem_id):
     try:
         result_list = request.json['result_list']
         for result in result_list:
-            result_id = problem_id + '_' + result['source1'] + '_' + result['source1']
+            result_id = problem_id + '_' + result['source1'] + '_' + result['source2']
             scores = result['scores']
             scores['mean'] = sum(list(scores.values()))/len(scores)
             Result.objects(result_id=result_id).update_one(

@@ -9,9 +9,9 @@ import config
 import timeout_decorator
 from jinja2 import Environment
 
-# from random import randint
+from random import randint
 
-all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
+# all_scoss_metric_names = [metric.get_name() for metric in all_metrics]
 
 def flatten_dict(alignment_list):
     match_dict = {}
@@ -56,8 +56,7 @@ def cal_smoss(sources, metrics):
     for source in sources:
         lang = source['lang']
         if lang not in smosses:
-            smoss = SMoss(lang=lang)
-            # smoss = SMoss(lang=lang, userid=randint(20000, 90000))
+            smoss = SMoss(lang=lang, userid=randint(32000, 60000))
             smoss.set_threshold(metrics[0]['threshold'])
             smosses[lang] = smoss
 
@@ -85,8 +84,8 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
         logs = {'str': '', 'exception': []}
         logs['str'] += f"Running problem {problem_id}\n"
         url = "{}/api/problems/{}".format(config.API_URI_SR, str(problem_id))
-        url_result = "{}/api/problems/{}/results".format(config.API_URI_SR, str(problem_id))
-        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
+        url_result = "{}/api/problems/{}/results".format(config.API_URI_SR, problem_id)
+        url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, problem_id)
 
         req = requests.get(url, headers={'Authorization': header})
         data_problem = req.json()
@@ -96,25 +95,27 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
         }
         requests.put(url=url_status, json=doc_status, headers={'Authorization': header})
 
-        metric_list = []
         scoss_metrics = []
         smoss_metrics = []
         for met in data_problem['metrics']:
-            metric_list.append(met['name'])
-            if met['name'] in all_scoss_metric_names:
-                scoss_metrics.append(met)
-            elif met['name'] == 'moss_score':
+            if met['name'] == 'moss_score':
                 smoss_metrics.append(met)
+            else:
+                scoss_metrics.append(met)
 
         logs['str'] += f"Running..."
+        similarity_dict = {}
         if scoss_metrics and smoss_metrics:
             scoss_similarity_dict = cal_scoss(data_problem['sources'], scoss_metrics)
             smoss_similarity_dict = cal_smoss(data_problem['sources'], smoss_metrics)
+
             for key in list(scoss_similarity_dict):
                 if key in smoss_similarity_dict:
                     scoss_similarity_dict[key]['smoss_alignment'] = smoss_similarity_dict[key]['smoss_alignment']
                     for metric in list(smoss_similarity_dict[key]['scores']):
                         scoss_similarity_dict[key]['scores'][metric] = smoss_similarity_dict[key]['scores'][metric]
+                else:
+                    del scoss_similarity_dict[key]
             similarity_dict = scoss_similarity_dict
         elif scoss_metrics:
             similarity_dict = cal_scoss(data_problem['sources'], scoss_metrics)
