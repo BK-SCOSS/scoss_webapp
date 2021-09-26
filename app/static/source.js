@@ -1,6 +1,7 @@
 params = new URL(document.getElementById("token").src).searchParams;
 var token = params.get('token')
 var tableHeader = [];
+var metrics;
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -97,7 +98,10 @@ $(function() {
         'serverSide': true,
         'serverMethod': 'post',
         'ajax': {
-            'url':'/ajax/problems/'+problem_id+'/results'
+            'url':'/ajax/problems/'+problem_id+'/results',
+            'data': {
+              "metrics": JSON.stringify(metrics)
+            }
         },
         searching: true,
         sort: true,

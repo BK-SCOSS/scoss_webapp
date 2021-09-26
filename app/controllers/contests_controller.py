@@ -8,6 +8,7 @@ import requests
 from utils import make_unique
 from flask_jwt_extended import jwt_required
 import re
+import json
 
 contests_controller = Blueprint('contests_controller', __name__)
 
@@ -255,8 +256,9 @@ def run_contest(contest_id):
 
 @contests_controller.route('/ajax/contests/<contest_id>/results', methods=['POST'])
 def get_ajax_contest_results(contest_id):
-    order_columns = ['problem_name', 'source1', 'source2', 'scores__count_operator', 'scores__hash_operator', 
-        'scores__set_operator', 'scores__moss_score', 'scores__mean']
+    order_columns = ['problem_name', 'source1', 'source2']
+    order_columns += ['scores__{}'.format(m) for m in json.loads(request.form['metrics'])]
+    order_columns.append('scores__mean')
     draw = request.form['draw'] 
     start = int(request.form['start'])
     length = int(request.form['length'])
