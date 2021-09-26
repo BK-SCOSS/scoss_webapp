@@ -13,7 +13,7 @@ __pycache__/
 .idea
 .vim/*
 *.DS_Store
-app/config.py
+# app/config.py
 # Distribution / packaging
 .Python
 build/
@@ -135,9 +135,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# thaidd virtual env
-virtual/
-./app/config.py
-./app/mongo-init.js
-config.py
-app/config.py
+app/mongo-init.js
