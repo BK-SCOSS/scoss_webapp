@@ -202,6 +202,9 @@ def delete_project_id(project_id):
     Xóa project
     """
     try:
+        public_token = request.args.get("public_token")
+        if User.objects(public_token=public_token).count() == 0:
+            return jsonify({"success": "False", "error": "public token does not exist!"})
         if Project.objects(project_id=project_id).count() > 0:
             data_project = Project.objects(project_id=project_id).delete()
         else:
