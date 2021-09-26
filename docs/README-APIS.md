@@ -18,7 +18,8 @@ Query Parameters
 
 Body (from-data)
 
-* project_name (string): Tên project 
+* project_name (string): Tên project
+*  
 Có thể sử dụng môt hoặc nhiều độ đo
 * set_operator (float): Đặt ngưỡng cho độ đo trung lập set_operator. Giá trị nằm trong khoảng 0-1
 * hash_operator (float): Đặt ngưỡng cho độ đo trung lập hash_operator. Giá trị nằm trong khoảng 0-1
