@@ -35,7 +35,7 @@
 			</div>
 			<!-- /.card-header -->
 			<div class="card-body">
-				<table class="display" id="contest-table">
+				<table class="display nowrap" id="contest-table" style="width: 100%;">
 					<thead>
 						<tr>
 							<th style="width: 4em;">#</th>
@@ -98,6 +98,7 @@
 			url: "{{url}}",
 			headers: headers
 		},
+        scrollX: true,
 		columns: [
 			{data: null},
 			{
@@ -164,7 +165,7 @@
 				}
 			}
 		],
-		order: [[ 3, "desc" ]],
+		order: [ 3, "desc" ],
 		columnDefs: [
 			{
 			"searchable": false,

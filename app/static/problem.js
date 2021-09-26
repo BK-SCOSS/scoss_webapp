@@ -76,6 +76,7 @@ $(document).ready(function() {
 		p = $('#problem-table').DataTable({
 			data: data.problems,
 			columns: columns,
+			scrollX: true
 		})
 
 		p.on( 'order.dt search.dt', function () {
@@ -83,6 +84,13 @@ $(document).ready(function() {
 				cell.innerHTML = i+1;
 			} );
 		} ).draw()
+
+		additionalRow = `<tr>
+			<td>#</td>
+			<td id="problem-name" colspan="3"><a href="#" id="create-problem" onclick="createProblem()"><b>Add new problem</b></a></td>
+		</tr>`
+
+		$("#problem-table").append(additionRow)
 
 		contest_status_span = getStatusLabel(data.contest_data.contest_status)
 		var contest_detail = `${data.contest_data.contest_name} - <small>${contest_status_span}</small>`
