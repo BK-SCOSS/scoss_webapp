@@ -196,9 +196,9 @@ def compare(problem_id):
 			source1_dict = {}
 			source2_dict = {}
 			for src in sources:
-				if src['mask'] == source1:
+				if src['mask'] == source1 or src['pathfile'] == source1:
 					source1_dict = src
-				if src['mask'] == source2:
+				if src['mask'] == source2 or src['pathfile'] == source2:
 					source2_dict = src
 				if source1_dict and source2_dict:
 					break

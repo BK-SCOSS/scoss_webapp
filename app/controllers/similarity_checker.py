@@ -56,7 +56,7 @@ def cal_smoss(sources, metrics):
     for source in sources:
         lang = source['lang']
         if lang not in smosses:
-            smoss = SMoss(lang=lang, userid=randint(32000, 60000))
+            smoss = SMoss(lang=lang, userid=randint(32000, 50000))
             smoss.set_threshold(metrics[0]['threshold'])
             smosses[lang] = smoss
 
@@ -78,7 +78,7 @@ def cal_smoss(sources, metrics):
             smoss_similarity_dict[key]['smoss_alignment'] = sm_comparisons[i]['scores']
     return smoss_similarity_dict
 
-def run_problem_with_timeout(problem_id, header, timeout=510):
+def run_problem_with_timeout(problem_id, problem_name, header, timeout=510):
     # @timeout_decorator.timeout(timeout, use_signals=False, timeout_exception=StopIteration)
     def run_problem(problem_id, header, _timeout):
         logs = {'str': '', 'exception': []}
@@ -121,7 +121,7 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
             similarity_dict = cal_scoss(data_problem['sources'], scoss_metrics)
         elif smoss_metrics:
             similarity_dict = cal_smoss(data_problem['sources'], smoss_metrics)
-        requests.put(url=url_result, json={'result_list':list(similarity_dict.values())}, headers={'Authorization': header})
+        requests.put(url=url_result, json={'result_list':list(similarity_dict.values()), 'problem_name': problem_name}, headers={'Authorization': header})
         # update status
         doc_status = {
             "problem_status": Status.checked
@@ -131,7 +131,7 @@ def run_problem_with_timeout(problem_id, header, timeout=510):
         return logs
     return run_problem(problem_id, header,_timeout=timeout-5)
 
-def do_job(problem_id, header, timeout=510):
+def do_job(problem_id, problem_name, header, timeout=510):
     def update_status_failed(problem_id, header):
         url_status = "{}/api/problems/{}/status".format(config.API_URI_SR, str(problem_id))
         # update status
@@ -143,7 +143,7 @@ def do_job(problem_id, header, timeout=510):
             headers={'Authorization': header})
 
     try:
-        logs = run_problem_with_timeout(problem_id, header, timeout)
+        logs = run_problem_with_timeout(problem_id, problem_name, header, timeout)
         if len(logs['exception']) > 0:
             update_status_failed(problem_id, header)
             raise Exception
