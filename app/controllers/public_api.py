@@ -4,7 +4,7 @@ from flask import config, request, jsonify, Blueprint, Response
 import time
 from zipfile import ZipFile
 from models.models import *
-from config import URL, SUPPORTED_EXTENSIONS, API_URI_SR, JOB_TIMEOUT
+from config import URL, SUPPORTED_EXTENSIONS, API_URI_SR, JOB_TIMEOUT, API_URI
 import requests
 from utils import make_unique
 # from config import *
@@ -153,7 +153,7 @@ def add_project():
             return jsonify({"error": "Token không tồn tại"}), 400
     except Exception as e:
         return jsonify({"error": "Exception: {}".format(e)}), 400
-    return jsonify({'project_id': project_id, "url_result": "{}/project/{}/results".format(API_URI_SR, project_id)}), 200
+    return jsonify({'project_id': project_id, "url_result": "{}/project/{}/results".format(API_URI, project_id)}), 200
 @public_api.route('/api/project', methods=['GET'])
 def get_project():
     """
@@ -261,7 +261,7 @@ def get_results(project_id):
                 if metric != 'mean':
                     url_alignment.append({
                         'metric': metric,
-                        'url_alignment': "{}/project/{}/compare?source1={}&source2={}&metric={}".format(API_URI_SR,
+                        'url_alignment': "{}/project/{}/compare?source1={}&source2={}&metric={}".format(API_URI,
                         project_id, sim['source1'], sim['source2'], metric)
                     })
             a_result = {'source1':sim['source1'], 'source2':sim['source2'], 'scores':sim['scores'], "url_alignment": url_alignment}
