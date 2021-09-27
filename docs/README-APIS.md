@@ -54,6 +54,11 @@ Body
 * results: Link kết quả kiểm tra độ trùng lặp
 
 #### 3. APi lấy tất cả thông tin project `/api/project` method GET
+**Request**
+
+Query Parameters
+
+* public_token (string): token xác thực API
 
 **Response**
 
