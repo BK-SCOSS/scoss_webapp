@@ -20,6 +20,7 @@ Body (from-data)
 * project_name (string): project's name
 * file: the zip file containing sources for similarity checking.
 File zip có format như sau:
+
 ```sh
     Problem A/
     ├── a.cpp
@@ -28,7 +29,7 @@ File zip có format như sau:
     ├── ...
 
 ``` 
-  and one or more of the following metrics:
+and one or more of the following metrics:
 * count_operator (float): the threshold for the count operator, which is in the range (0,1).
 * set_operator (float): the threshold for the set operator, which is in the range (0,1).
 * hash_operator (float): the threshold for the hash operator, which is in the range (0,1).
@@ -79,7 +80,7 @@ Project details:
 * sources (string): source code list.
 * metrics (list): metric list.
 
-#### 5. APi to delete a project `/api/project/<project_id>` with DELETE method   
+#### 5. API to delete a project `/api/project/<project_id>` with DELETE method   
 **Request**
 
 Query Parameters
