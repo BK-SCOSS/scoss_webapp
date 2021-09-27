@@ -36,7 +36,7 @@ def get_contest_user(user_id):
     try:
         data_contests = Contest.objects()
         res = []
-	if User.objects(user_id=user_id).count() > 0:
+        if User.objects(user_id=user_id).count() > 0:
             jsonify({"error":"No user"}),400
         data_user = User.objects.get(user_id=user_id)
         role = data_user.role
@@ -44,7 +44,7 @@ def get_contest_user(user_id):
         if str(role) == '0':
             for data_contest in data_contests:
                 temp = data_contest.to_mongo()
-	        if User.objects(user_id=temp['user_id']).count() > 0:
+                if User.objects(user_id=temp['user_id']).count() > 0:
                     data_user_contest = User.objects.get(user_id=temp['user_id'])
                     temp['username'] = data_user_contest.username
                 else:
